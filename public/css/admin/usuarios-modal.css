@@ -1,0 +1,548 @@
+/* Estilos para el Modal de Usuarios */
+
+/* Step Indicators */
+.step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.step-number {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #E5E7EB;
+    color: #6B7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.step-label {
+    font-size: 13px;
+    color: #6B7280;
+    text-align: center;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+.step-indicator.active .step-number {
+    background-color: #2563EB;
+    color: white;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.step-indicator.active .step-label {
+    color: #2563EB;
+    font-weight: 600;
+}
+
+.step-indicator.completed .step-number {
+    background-color: #10B981;
+    color: white;
+}
+
+.step-indicator.completed .step-label {
+    color: #10B981;
+}
+
+.step-line {
+    height: 3px;
+    background-color: #E5E7EB;
+    flex: 1;
+    margin: 0 20px;
+    margin-top: -32px;
+    transition: background-color 0.3s ease;
+    min-width: 40px;
+}
+
+.step-indicator.completed + .step-line {
+    background-color: #10B981;
+}
+
+/* Tab Content */
+.tab-content {
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Form Fields with Error */
+input.error, select.error, textarea.error {
+    border-color: #EF4444 !important;
+    animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.error-message {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+.error-message.hidden {
+    display: none;
+}
+
+/* Photo Preview */
+#photoPreview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Roles Checkboxes */
+.role-checkbox-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.role-checkbox-item:hover {
+    background-color: #F3F4F6;
+}
+
+.role-checkbox-item input[type="checkbox"]:checked + label {
+    font-weight: 600;
+    color: #2563EB;
+}
+
+/* Password Strength Indicator */
+.strength-weak #strength1 {
+    background-color: #EF4444;
+}
+
+.strength-medium #strength1,
+.strength-medium #strength2 {
+    background-color: #F59E0B;
+}
+
+.strength-good #strength1,
+.strength-good #strength2,
+.strength-good #strength3 {
+    background-color: #3B82F6;
+}
+
+.strength-strong #strength1,
+.strength-strong #strength2,
+.strength-strong #strength3,
+.strength-strong #strength4 {
+    background-color: #10B981;
+}
+
+/* Loading State */
+button.loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+}
+
+button.loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid transparent;
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px 24px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 9999;
+    animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s;
+    max-width: 400px;
+}
+
+.toast-success {
+    background-color: #10B981;
+    color: white;
+}
+
+.toast-error {
+    background-color: #EF4444;
+    color: white;
+}
+
+.toast-warning {
+    background-color: #F59E0B;
+    color: white;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(400px);
+    }
+}
+
+/* Highlight New Row */
+@keyframes highlightRow {
+    0% {
+        background-color: #D1FAE5;
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+.highlight-new {
+    animation: highlightRow 3s ease;
+}
+
+/* Modal Overlay Animation */
+#userModal {
+    animation: fadeInOverlay 0.2s ease;
+    
+}
+
+#userModal > div {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .step-label {
+        font-size: 10px;
+    }
+
+    .step-number {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .step-line {
+        margin: 0 8px;
+        margin-top: -24px;
+    }
+}
+
+/* Custom Scrollbar */
+.tab-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tab-content::-webkit-scrollbar-track {
+    background: #F3F4F6;
+    border-radius: 10px;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+    background: #9CA3AF;
+    border-radius: 10px;
+}
+
+.tab-content::-webkit-scrollbar-thumb:hover {
+    background: #6B7280;
+}
+
+/* Confirmation Dialog */
+.confirmation-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 24px;
+    border-radius: 30px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    z-index: 10000;
+    min-width: 400px;
+    animation: zoomIn 0.2s ease;
+}
+
+@keyframes zoomIn {
+    from {
+        transform: translate(-50%, -50%) scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+.confirmation-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+}
+
+/* ========================================
+   MODAL VER DETALLE DE USUARIO
+   ======================================== */
+
+/* View Modal Animations */
+#viewUserModal {
+    animation: fadeInOverlay 0.2s ease;
+}
+
+#viewUserModal > div {
+    animation: slideDown 0.3s ease;
+}
+
+/* View Tab Buttons */
+.view-tab-button {
+    transition: all 0.2s ease;
+}
+
+.view-tab-button.active {
+    border-color: #2563EB !important;
+    color: #2563EB !important;
+}
+
+.view-tab-button:hover:not(.active) {
+    border-color: #D1D5DB;
+    color: #374151;
+}
+
+/* View Tab Content */
+.view-tab-content {
+    animation: fadeIn 0.3s ease;
+}
+
+.view-tab-content.hidden {
+    display: none;
+}
+
+/* User Photo Circle */
+#viewUserPhoto {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Info Cards */
+.bg-gray-50 {
+    transition: all 0.2s ease;
+}
+
+.bg-gray-50:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Timeline Styles */
+.view-tab-content .relative.border-l-2 {
+    padding-left: 1rem;
+}
+
+/* Activity Timeline */
+.view-tab-content .absolute.w-8.h-8 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 4px white;
+}
+
+/* Badge Styles for Roles */
+.bg-purple-50.border-purple-200 {
+    transition: all 0.2s ease;
+}
+
+.bg-purple-50.border-purple-200:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Permission Pills */
+.bg-blue-50.text-blue-700 {
+    transition: all 0.2s ease;
+    cursor: help;
+}
+
+.bg-blue-50.text-blue-700:hover {
+    background-color: #DBEAFE;
+    transform: scale(1.05);
+}
+
+/* Statistics Cards */
+.bg-blue-50.border-l-4,
+.bg-green-50.border-l-4,
+.bg-purple-50.border-l-4,
+.bg-yellow-50.border-l-4 {
+    transition: all 0.2s ease;
+}
+
+.bg-blue-50.border-l-4:hover,
+.bg-green-50.border-l-4:hover,
+.bg-purple-50.border-l-4:hover,
+.bg-yellow-50.border-l-4:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Print Styles */
+@media print {
+    #viewUserModal > div {
+        position: relative !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .view-tab-button {
+        display: none !important;
+    }
+
+    .view-tab-content {
+        display: block !important;
+        page-break-inside: avoid;
+    }
+
+    button {
+        display: none !important;
+    }
+
+    #viewUserModal .px-6.py-4.bg-gray-50 {
+        display: none !important;
+    }
+}
+
+/* Loader Animation for View Modal */
+.view-tab-content .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Responsive Adjustments for View Modal */
+@media (max-width: 768px) {
+    #viewUserModal > div {
+        width: 95% !important;
+        max-width: 95% !important;
+    }
+
+    .view-tab-button {
+        font-size: 11px;
+        padding: 12px 4px;
+    }
+
+    #viewUserPhoto {
+        width: 120px !important;
+        height: 120px !important;
+    }
+
+    .grid.grid-cols-1.md\\:grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .grid.grid-cols-1.md\\:grid-cols-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Smooth Scroll for Tab Content */
+.view-tab-content {
+    scroll-behavior: smooth;
+}
+
+/* Link Styles */
+.view-tab-content a {
+    transition: all 0.2s ease;
+}
+
+.view-tab-content a:hover {
+    text-decoration: underline;
+}
+
+/* Empty States */
+.text-gray-500.text-center {
+    padding: 3rem 1rem;
+    font-style: italic;
+}
+
+/* Modal Width Responsive */
+@media (min-width: 1536px) {
+    #viewUserModal > div {
+        max-width: 1280px;
+    }
+}
