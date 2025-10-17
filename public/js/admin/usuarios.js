@@ -18,7 +18,7 @@ async function manejarRespuestaFetch(response) {
         
         // Verificar si contiene el formulario de login
         if (texto.includes('login') || texto.includes('csrf') || texto.includes('password')) {
-            showToast('Su sesión ha expirado. Redirigiendo al login...', 'error');
+            mostrarToast('Su sesión ha expirado. Redirigiendo al login...', 'error');
             
             setTimeout(() => {
                 window.location.href = '/login';
@@ -33,14 +33,14 @@ async function manejarRespuestaFetch(response) {
         try {
             const data = await response.json();
             
-            showToast('Su sesión ha expirado. Redirigiendo al login...', 'error');
+            mostrarToast('Su sesión ha expirado. Redirigiendo al login...', 'error');
             
             setTimeout(() => {
                 window.location.href = data.redirect || '/login';
             }, 2000);
         } catch {
             // Si no hay JSON, simplemente redirigir
-            showToast('Su sesión ha expirado. Redirigiendo al login...', 'error');
+            mostrarToast('Su sesión ha expirado. Redirigiendo al login...', 'error');
             setTimeout(() => {
                 window.location.href = '/login';
             }, 2000);
@@ -56,7 +56,7 @@ async function manejarRespuestaFetch(response) {
             
             // Si la respuesta indica redirección al login
             if (data.redirect) {
-                showToast('Redirigiendo al login...', 'info');
+                mostrarToast('Redirigiendo al login...', 'info');
                 setTimeout(() => {
                     window.location.href = data.redirect;
                 }, 1500);
@@ -76,7 +76,7 @@ async function manejarRespuestaFetch(response) {
             const data = await response.json();
             
             if (data.redirect) {
-                showToast('Sesión expirada. Redirigiendo al login...', 'error');
+                mostrarToast('Sesión expirada. Redirigiendo al login...', 'error');
                 setTimeout(() => {
                     window.location.href = data.redirect;
                 }, 2000);
@@ -87,7 +87,7 @@ async function manejarRespuestaFetch(response) {
                 throw error;
             }
             // Si no es JSON válido, puede ser que la sesión expiró
-            showToast('Error de conexión. Recargando página...', 'error');
+            mostrarToast('Error de conexión. Recargando página...', 'error');
             setTimeout(() => {
                 window.location.reload();
             }, 2000);
@@ -113,21 +113,21 @@ let debounceTimer = null;
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', function() {
-    loadUsers();
-    loadAreas();
-    loadRoles();
-    setupEventListeners();
+    cargarUsuarios();
+    cargarAreas();
+    cargarRoles();
+    configurarEscuchadoresEventos();
 });
 
 // Configurar event listeners
-function setupEventListeners() {
+function configurarEscuchadoresEventos() {
     // Búsqueda con debounce
     document.getElementById('searchInput').addEventListener('input', function(e) {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             currentFilters.search = e.target.value;
             currentPage = 1;
-            loadUsers();
+            cargarUsuarios();
         }, 500);
     });
 
@@ -135,11 +135,11 @@ function setupEventListeners() {
     document.getElementById('filterArea').addEventListener('change', function(e) {
         currentFilters.area_id = e.target.value;
         currentPage = 1;
-        loadUsers();
+        cargarUsuarios();
 
         // Cargar equipos del área seleccionada
         if (e.target.value) {
-            loadEquipos(e.target.value);
+            cargarEquipos(e.target.value);
         } else {
             document.getElementById('filterEquipo').innerHTML = '<option value="">Todos los equipos</option>';
         }
@@ -148,19 +148,19 @@ function setupEventListeners() {
     document.getElementById('filterEquipo').addEventListener('change', function(e) {
         currentFilters.equipo_id = e.target.value;
         currentPage = 1;
-        loadUsers();
+        cargarUsuarios();
     });
 
     document.getElementById('filterRol').addEventListener('change', function(e) {
         currentFilters.rol = e.target.value;
         currentPage = 1;
-        loadUsers();
+        cargarUsuarios();
     });
 
     // Items por página
     document.getElementById('perPageSelect').addEventListener('change', function(e) {
         currentPage = 1;
-        loadUsers();
+        cargarUsuarios();
     });
 
     // Seleccionar todos
@@ -176,14 +176,14 @@ function setupEventListeners() {
                 selectedUsers = [];
             }
         });
-        updateBulkActionBar();
+        actualizarBarraAccionesMasivas();
     });
 }
 
 // Cargar usuarios vía AJAX
-async function loadUsers() {
+async function cargarUsuarios() {
     try {
-        showSkeletonLoader();
+        mostrarCargadorEsqueleto();
 
         const perPage = document.getElementById('perPageSelect').value;
         const params = new URLSearchParams({
@@ -205,20 +205,20 @@ async function loadUsers() {
         if (!response.ok) throw new Error('Error al cargar usuarios');
 
         const data = await response.json();
-        renderUsers(data.data);
-        renderPagination(data);
-        updateFilterBadge();
+        renderizarUsuarios(data.data);
+        renderizarPaginacion(data);
+        actualizarIndicadorFiltros();
 
     } catch (error) {
         console.error('Error:', error);
         if (error.message !== 'Sesión expirada' && error.message !== 'No encontrado - Redirigiendo') {
-            showToast('Error al cargar usuarios', 'error');
+            mostrarToast('Error al cargar usuarios', 'error');
         }
     }
 }
 
 // Renderizar usuarios en la tabla
-function renderUsers(users) {
+function renderizarUsuarios(users) {
     const tbody = document.getElementById('usersTableBody');
 
     if (users.length === 0) {
@@ -245,7 +245,7 @@ function renderUsers(users) {
                 <input type="checkbox" class="user-checkbox rounded border-gray-300"
                        value="${user.id}"
                        ${selectedUsers.includes(user.id.toString()) ? 'checked' : ''}
-                       onchange="toggleUserSelection(${user.id})">
+                       onchange="alternarSeleccionUsuario(${user.id})">
             </td>
             <td class="px-6 py-4">
                 <div class="flex items-center">
@@ -295,7 +295,7 @@ function renderUsers(users) {
             <td class="px-6 py-4">
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" class="sr-only peer" ${user.activo ? 'checked' : ''}
-                           onchange="toggleUserStatus(${user.id}, this.checked)">
+                           onchange="alternarEstadoUsuario(${user.id}, this.checked)">
                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                 </label>
             </td>
@@ -309,11 +309,11 @@ function renderUsers(users) {
                     <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                         <div class="py-1">
                             <a href="#" onclick="verUsuario(${user.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ver Detalle</a>
-                            <a href="#" onclick="editUser(${user.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
-                            <a href="#" onclick="manageRoles(${user.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Gestionar Roles</a>
-                            <a href="#" onclick="resetPassword(${user.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Restablecer Contraseña</a>
-                            <a href="#" onclick="viewActivity(${user.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ver Actividad</a>
-                            <a href="#" onclick="deleteUser(${user.id}); return false;" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</a>
+                            <a href="#" onclick="editarUsuario(${user.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
+                            <a href="#" onclick="gestionarRoles(${user.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Gestionar Roles</a>
+                            <a href="#" onclick="restablecerPassword(${user.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Restablecer Contraseña</a>
+                            <a href="#" onclick="verActividad(${user.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ver Actividad</a>
+                            <a href="#" onclick="eliminarUsuario(${user.id}); return false;" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</a>
                         </div>
                     </div>
                 </div>
@@ -323,7 +323,7 @@ function renderUsers(users) {
 }
 
 // Renderizar paginación
-function renderPagination(data) {
+function renderizarPaginacion(data) {
     document.getElementById('showingFrom').textContent = data.from || 0;
     document.getElementById('showingTo').textContent = data.to || 0;
     document.getElementById('totalUsers').textContent = data.total || 0;
@@ -333,7 +333,7 @@ function renderPagination(data) {
 
     // Botón anterior
     html += `
-        <button onclick="changePage(${data.current_page - 1})"
+        <button onclick="cambiarPagina(${data.current_page - 1})"
                 ${data.current_page === 1 ? 'disabled' : ''}
                 class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${data.current_page === 1 ? 'cursor-not-allowed opacity-50' : ''}">
             Anterior
@@ -344,7 +344,7 @@ function renderPagination(data) {
     for (let i = 1; i <= data.last_page; i++) {
         if (i === 1 || i === data.last_page || (i >= data.current_page - 2 && i <= data.current_page + 2)) {
             html += `
-                <button onclick="changePage(${i})"
+                <button onclick="cambiarPagina(${i})"
                         class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium ${
                             i === data.current_page
                                 ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
@@ -360,7 +360,7 @@ function renderPagination(data) {
 
     // Botón siguiente
     html += `
-        <button onclick="changePage(${data.current_page + 1})"
+        <button onclick="cambiarPagina(${data.current_page + 1})"
                 ${data.current_page === data.last_page ? 'disabled' : ''}
                 class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${data.current_page === data.last_page ? 'cursor-not-allowed opacity-50' : ''}">
             Siguiente
@@ -371,13 +371,13 @@ function renderPagination(data) {
 }
 
 // Cambiar página
-function changePage(page) {
+function cambiarPagina(page) {
     currentPage = page;
-    loadUsers();
+    cargarUsuarios();
 }
 
 // Mostrar skeleton loader
-function showSkeletonLoader() {
+function mostrarCargadorEsqueleto() {
     const tbody = document.getElementById('usersTableBody');
     tbody.innerHTML = `
         <tr class="skeleton-row">
@@ -399,7 +399,7 @@ function showSkeletonLoader() {
 }
 
 // Cargar áreas
-async function loadAreas() {
+async function cargarAreas() {
     try {
         const response = await fetch('/admin/api/areas');
         const areas = await response.json();
@@ -413,7 +413,7 @@ async function loadAreas() {
 }
 
 // Cargar equipos por área
-async function loadEquipos(areaId) {
+async function cargarEquipos(areaId) {
     try {
         const response = await fetch(`/admin/api/equipos?area_id=${areaId}`);
         const equipos = await response.json();
@@ -427,7 +427,7 @@ async function loadEquipos(areaId) {
 }
 
 // Cargar roles
-async function loadRoles() {
+async function cargarRoles() {
     try {
         const response = await fetch('/admin/api/roles');
         const roles = await response.json();
@@ -441,7 +441,7 @@ async function loadRoles() {
 }
 
 // Filtrar por tab
-function filterByTab(tab) {
+function filtrarPorTab(tab) {
     // Actualizar UI de tabs
     document.querySelectorAll('.tab-button').forEach(btn => {
         btn.classList.remove('border-blue-600', 'text-blue-600');
@@ -463,11 +463,11 @@ function filterByTab(tab) {
     }
 
     currentPage = 1;
-    loadUsers();
+    cargarUsuarios();
 }
 
 // Limpiar filtros
-function clearFilters() {
+function limpiarFiltros() {
     currentFilters = {
         search: '',
         tipo: '',
@@ -483,11 +483,11 @@ function clearFilters() {
     document.getElementById('filterRol').value = '';
 
     currentPage = 1;
-    loadUsers();
+    cargarUsuarios();
 }
 
 // Actualizar badge de filtros
-function updateFilterBadge() {
+function actualizarIndicadorFiltros() {
     let count = 0;
     if (currentFilters.search) count++;
     if (currentFilters.area_id) count++;
@@ -506,18 +506,18 @@ function updateFilterBadge() {
 }
 
 // Toggle selección de usuario
-function toggleUserSelection(userId) {
+function alternarSeleccionUsuario(userId) {
     const index = selectedUsers.indexOf(userId.toString());
     if (index > -1) {
         selectedUsers.splice(index, 1);
     } else {
         selectedUsers.push(userId.toString());
     }
-    updateBulkActionBar();
+    actualizarBarraAccionesMasivas();
 }
 
 // Actualizar barra de acciones múltiples
-function updateBulkActionBar() {
+function actualizarBarraAccionesMasivas() {
     const bar = document.getElementById('bulkActionBar');
     const count = document.getElementById('selectedCount');
 
@@ -530,15 +530,15 @@ function updateBulkActionBar() {
 }
 
 // Limpiar selección
-function clearSelection() {
+function limpiarSeleccion() {
     selectedUsers = [];
     document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
     document.getElementById('selectAll').checked = false;
-    updateBulkActionBar();
+    actualizarBarraAccionesMasivas();
 }
 
 // Mostrar toast
-function showToast(message, type = 'success') {
+function mostrarToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white ${
         type === 'success' ? 'bg-green-500' : 'bg-red-500'
@@ -563,7 +563,7 @@ let availableAreas = [];
 let availableEquipos = [];
 
 // Abrir modal de creación
-function openCreateModal() {
+function abrirModalCrear() {
     document.getElementById('modalTitle').textContent = 'Crear Nuevo Usuario';
     document.getElementById('userForm').reset();
     document.getElementById('userModal').classList.remove('hidden');
@@ -579,14 +579,14 @@ function openCreateModal() {
     `;
 
     // Cargar datos necesarios
-    loadAreasForModal();
-    loadRolesForModal();
+    cargarAreasForModal();
+    cargarRolesForModal();
 
     // Mostrar tab 1
-    showTab(1);
+    mostrarTab(1);
 
     // Limpiar errores
-    clearAllErrors();
+    limpiarTodosLosErrores();
 
     // Listener para detectar cambios en el formulario
     document.getElementById('userForm').addEventListener('input', function() {
@@ -595,7 +595,7 @@ function openCreateModal() {
 }
 
 // Cerrar modal con confirmación
-function closeModalWithConfirmation() {
+function cerrarModalConConfirmacion() {
     if (formChanged) {
         const confirmDialog = document.createElement('div');
         confirmDialog.innerHTML = `
@@ -604,10 +604,10 @@ function closeModalWithConfirmation() {
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">¿Descartar cambios?</h3>
                 <p class="text-gray-600 mb-6">Hay cambios sin guardar. ¿Estás seguro de que deseas salir?</p>
                 <div class="flex gap-3 justify-end">
-                    <button onclick="cancelClose()" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    <button onclick="cancelarCierre()" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                         Continuar Editando
                     </button>
-                    <button onclick="confirmClose()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    <button onclick="confirmarCierre()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
                         Descartar
                     </button>
                 </div>
@@ -615,27 +615,27 @@ function closeModalWithConfirmation() {
         `;
         document.body.appendChild(confirmDialog);
     } else {
-        closeModal();
+        cerrarModal();
     }
 }
 
-function cancelClose() {
+function cancelarCierre() {
     document.querySelector('.confirmation-overlay').parentElement.remove();
 }
 
-function confirmClose() {
+function confirmarCierre() {
     document.querySelector('.confirmation-overlay').parentElement.remove();
-    closeModal();
+    cerrarModal();
 }
 
-function closeModal() {
+function cerrarModal() {
     document.getElementById('userModal').classList.add('hidden');
     formChanged = false;
     currentTab = 1;
 }
 
 // Navegación entre tabs
-function showTab(tabNumber) {
+function mostrarTab(tabNumber) {
     // Ocultar todos los tabs
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
     document.querySelectorAll('.step-indicator').forEach(indicator => {
@@ -673,19 +673,19 @@ function showTab(tabNumber) {
     currentTab = tabNumber;
 }
 
-function nextTab() {
-    if (validateCurrentTab()) {
-        showTab(currentTab + 1);
+function siguienteTab() {
+    if (validarTabActual()) {
+        mostrarTab(currentTab + 1);
     }
 }
 
-function prevTab() {
-    showTab(currentTab - 1);
+function anteriorTab() {
+    mostrarTab(currentTab - 1);
 }
 
 // Validación de tab actual
-function validateCurrentTab() {
-    clearAllErrors();
+function validarTabActual() {
+    limpiarTodosLosErrores();
     let isValid = true;
 
     if (currentTab === 1) {
@@ -697,30 +697,30 @@ function validateCurrentTab() {
         const email = document.getElementById('email').value;
 
         if (!tipoDoc) {
-            showError('tipo_documento', 'Debe seleccionar un tipo de documento');
+            mostrarError('tipo_documento', 'Debe seleccionar un tipo de documento');
             isValid = false;
         }
 
         if (!cedula) {
-            showError('cedula', 'El número de documento es obligatorio');
+            mostrarError('cedula', 'El número de documento es obligatorio');
             isValid = false;
         }
 
         if (!nombre) {
-            showError('nombre', 'El nombre es obligatorio');
+            mostrarError('nombre', 'El nombre es obligatorio');
             isValid = false;
         }
 
         if (!apellidos) {
-            showError('apellidos', 'Los apellidos son obligatorios');
+            mostrarError('apellidos', 'Los apellidos son obligatorios');
             isValid = false;
         }
 
         if (!email) {
-            showError('email', 'El email es obligatorio');
+            mostrarError('email', 'El email es obligatorio');
             isValid = false;
-        } else if (!isValidEmail(email)) {
-            showError('email', 'El formato del email no es válido');
+        } else if (!esEmailValido(email)) {
+            mostrarError('email', 'El formato del email no es válido');
             isValid = false;
         }
     } else if (currentTab === 2) {
@@ -733,17 +733,17 @@ function validateCurrentTab() {
             const cargo = document.getElementById('cargo').value;
 
             if (!areaId) {
-                showError('area_id', 'Debe seleccionar un área');
+                mostrarError('area_id', 'Debe seleccionar un área');
                 isValid = false;
             }
 
             if (!equipoId) {
-                showError('equipo_id', 'Debe seleccionar un equipo');
+                mostrarError('equipo_id', 'Debe seleccionar un equipo');
                 isValid = false;
             }
 
             if (!cargo) {
-                showError('cargo', 'El cargo es obligatorio');
+                mostrarError('cargo', 'El cargo es obligatorio');
                 isValid = false;
             }
         }
@@ -753,12 +753,12 @@ function validateCurrentTab() {
 }
 
 // Funciones de validación
-function isValidEmail(email) {
+function esEmailValido(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
 }
 
-function showError(fieldId, message) {
+function mostrarError(fieldId, message) {
     const field = document.getElementById(fieldId);
     const errorSpan = field.parentElement.querySelector('.error-message');
 
@@ -769,7 +769,7 @@ function showError(fieldId, message) {
     }
 }
 
-function clearAllErrors() {
+function limpiarTodosLosErrores() {
     document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
     document.querySelectorAll('.error-message').forEach(el => {
         el.classList.add('hidden');
@@ -778,7 +778,7 @@ function clearAllErrors() {
 }
 
 // Toggle tipo de usuario (Funcionario/Ciudadano)
-function toggleTipoUsuario() {
+function alternarTipoUsuario() {
     const tipoUsuario = document.querySelector('input[name="tipo_usuario"]:checked').value;
     const funcionarioFields = document.getElementById('funcionarioFields');
     const ciudadanoMessage = document.getElementById('ciudadanoMessage');
@@ -807,11 +807,11 @@ function toggleTipoUsuario() {
     }
 
     // Recargar roles según tipo de usuario
-    loadRolesForModal();
+    cargarRolesForModal();
 }
 
 // Cargar áreas para el modal
-async function loadAreasForModal() {
+async function cargarAreasForModal() {
     try {
         const response = await fetch('/admin/api/areas');
         const areas = await response.json();
@@ -822,12 +822,12 @@ async function loadAreasForModal() {
             areas.map(area => `<option value="${area.id}">${area.nombre}</option>`).join('');
     } catch (error) {
         console.error('Error loading areas:', error);
-        showToast('Error al cargar áreas', 'error');
+        mostrarToast('Error al cargar áreas', 'error');
     }
 }
 
 // Cargar equipos por área
-async function loadEquiposByArea() {
+async function cargarEquiposByArea() {
     const areaId = document.getElementById('area_id').value;
     const equipoSelect = document.getElementById('equipo_id');
 
@@ -858,7 +858,7 @@ async function loadEquiposByArea() {
 
     } catch (error) {
         console.error('Error loading equipos:', error);
-        showToast('Error al cargar equipos', 'error');
+        mostrarToast('Error al cargar equipos', 'error');
         equipoSelect.disabled = false;
         equipoSelect.innerHTML = '<option value="">Error al cargar equipos</option>';
     }
@@ -872,7 +872,7 @@ let editingUserId = null;
 let originalUserData = null;
 let userMetadata = null;
 
-async function editUser(id) {
+async function editarUsuario(id) {
     editingUserId = id;
     document.getElementById('modalTitle').textContent = 'Editar Usuario';
     document.getElementById('userModal').classList.remove('hidden');
@@ -880,7 +880,7 @@ async function editUser(id) {
     formChanged = false;
 
     // Mostrar skeleton loaders
-    showSkeletonLoaders();
+    mostrarCargadorEsqueletos();
 
     // Cargar datos del usuario
     try {
@@ -895,34 +895,34 @@ async function editUser(id) {
         document.getElementById('modalTitle').textContent = `Editar Usuario: ${data.user.nombre} ${data.user.apellidos}`;
 
         // Llenar formulario con datos
-        await fillFormWithUserData(data.user);
+        await llenarFormularioConDatosUsuario(data.user);
 
         // Deshabilitar campo de cédula (no se puede cambiar)
         document.getElementById('cedula').disabled = true;
         document.getElementById('cedula').classList.add('bg-gray-100', 'cursor-not-allowed');
 
         // Mostrar advertencias si es coordinador o líder
-        showRoleWarnings();
+        mostrarAdvertenciasRol();
 
         // Cambiar el evento del formulario a PUT
         const form = document.getElementById('userForm');
-        form.removeEventListener('submit', handleFormSubmit);
-        form.addEventListener('submit', handleEditFormSubmit);
+        form.removeEventListener('submit', manejarEnvioFormulario);
+        form.addEventListener('submit', manejarEnvioFormularioEditar);
 
         // Cambiar texto del botón
         document.getElementById('submitButton').textContent = 'Guardar Cambios';
 
-        showTab(1);
-        clearAllErrors();
+        mostrarTab(1);
+        limpiarTodosLosErrores();
 
     } catch (error) {
         console.error('Error:', error);
-        showToast('Error al cargar datos del usuario', 'error');
-        closeModal();
+        mostrarToast('Error al cargar datos del usuario', 'error');
+        cerrarModal();
     }
 }
 
-function showSkeletonLoaders() {
+function mostrarCargadorEsqueletos() {
     // Mostrar loaders en lugar del contenido
     const tabs = document.querySelectorAll('.tab-content');
     tabs.forEach(tab => {
@@ -941,7 +941,7 @@ function showSkeletonLoaders() {
     });
 }
 
-async function fillFormWithUserData(user) {
+async function llenarFormularioConDatosUsuario(user) {
     // Restaurar contenido original de los tabs
     const tabs = document.querySelectorAll('.tab-content');
     tabs.forEach(tab => {
@@ -978,16 +978,16 @@ async function fillFormWithUserData(user) {
     const tipoUsuarioRadio = document.querySelector(`input[name="tipo_usuario"][value="${user.tipo_usuario}"]`);
     if (tipoUsuarioRadio) {
         tipoUsuarioRadio.checked = true;
-        toggleTipoUsuario();
+        alternarTipoUsuario();
     }
 
     // Cargar áreas y equipos
-    await loadAreasForModal();
+    await cargarAreasForModal();
 
     if (user.tipo_usuario === 'interno') {
         if (user.area_id) {
             document.getElementById('area_id').value = user.area_id;
-            await loadEquiposByArea();
+            await cargarEquiposByArea();
 
             if (user.equipo_id) {
                 document.getElementById('equipo_id').value = user.equipo_id;
@@ -998,7 +998,7 @@ async function fillFormWithUserData(user) {
     }
 
     // Cargar y seleccionar roles
-    await loadRolesForModal();
+    await cargarRolesForModal();
 
     // Esperar un momento para que se rendericen los checkboxes
     setTimeout(() => {
@@ -1008,7 +1008,7 @@ async function fillFormWithUserData(user) {
                 checkbox.checked = true;
             }
         });
-        updateRolePreview();
+        actualizarVistaRol();
     }, 100);
 
     // Estado activo
@@ -1021,7 +1021,7 @@ async function fillFormWithUserData(user) {
     document.getElementById('password_confirmation').placeholder = 'Solo si cambia la contraseña';
 }
 
-function showRoleWarnings() {
+function mostrarAdvertenciasRol() {
     // Remover advertencias anteriores
     const existingWarnings = document.querySelectorAll('.role-warning');
     existingWarnings.forEach(w => w.remove());
@@ -1111,7 +1111,7 @@ async function verUsuario(id) {
     const modal = document.getElementById('viewUserModal');
     if (!modal) {
         console.error('Modal viewUserModal no encontrado en el DOM');
-        showToast('Error: Modal no encontrado', 'error');
+        mostrarToast('Error: Modal no encontrado', 'error');
         return;
     }
     
@@ -1146,7 +1146,7 @@ async function verUsuario(id) {
     } catch (error) {
         console.error('Error al cargar usuario:', error);
         if (error.message !== 'Sesión expirada' && error.message !== 'No encontrado - Redirigiendo') {
-            showToast('Error al cargar detalles del usuario', 'error');
+            mostrarToast('Error al cargar detalles del usuario', 'error');
         }
         cerrarModalVerUsuario();
     }
@@ -1533,7 +1533,7 @@ function cerrarModalVerUsuario() {
 
 function editarUsuarioDesdeVista() {
     cerrarModalVerUsuario();
-    editUser(idUsuarioVistaActual);
+    editarUsuario(idUsuarioVistaActual);
 }
 
 function enviarEmailAUsuario() {
@@ -1548,19 +1548,19 @@ function imprimirPerfilUsuario() {
 
 function gestionarRolesUsuario() {
     cerrarModalVerUsuario();
-    manageRoles(idUsuarioVistaActual);
+    gestionarRoles(idUsuarioVistaActual);
 }
 
 function removerRolUsuario(nombreRol) {
     if (confirm(`¿Está seguro de remover el rol "${nombreRol}"?`)) {
         // TODO: Implementar remoción de rol
-        showToast('Funcionalidad próximamente', 'info');
+        mostrarToast('Funcionalidad próximamente', 'info');
     }
 }
 
 function verActividadCompleta() {
     // TODO: Implementar vista completa de actividad
-    showToast('Vista completa de actividad próximamente', 'info');
+    mostrarToast('Vista completa de actividad próximamente', 'info');
 }
 
 // ========================================
@@ -1569,7 +1569,7 @@ function verActividadCompleta() {
 
 let currentToggleUser = null;
 
-async function toggleUserStatus(id, checked) {
+async function alternarEstadoUsuario(id, checked) {
     // Cargar datos del usuario primero
     try {
         const response = await fetch(`/admin/usuarios/${id}`);
@@ -1581,24 +1581,24 @@ async function toggleUserStatus(id, checked) {
 
         // Abrir modal de confirmación
         if (checked) {
-            openActivateModal();
+            abrirModalActivar();
         } else {
-            openDeactivateModal();
+            abrirModalDesactivar();
         }
 
     } catch (error) {
         console.error('Error:', error);
-        showToast('Error al cargar información del usuario', 'error');
+        mostrarToast('Error al cargar información del usuario', 'error');
 
         // Revertir el toggle si hubo error
-        const toggle = document.querySelector(`input[onchange="toggleUserStatus(${id}, this.checked)"]`);
+        const toggle = document.querySelector(`input[onchange="alternarEstadoUsuario(${id}, this.checked)"]`);
         if (toggle) {
             toggle.checked = !checked;
         }
     }
 }
 
-function openDeactivateModal() {
+function abrirModalDesactivar() {
     const modal = document.getElementById('toggleStatusModal');
     const user = currentToggleUser;
 
@@ -1638,7 +1638,7 @@ function openDeactivateModal() {
     if (user.metadata) {
         detailsHTML += `<p class="text-gray-700"><strong>Tareas activas:</strong> ${user.metadata.tareas_activas}</p>`;
     }
-    detailsHTML += `<p class="text-gray-700"><strong>Último acceso:</strong> ${formatDate(user.updated_at)}</p>`;
+    detailsHTML += `<p class="text-gray-700"><strong>Último acceso:</strong> ${formatearFecha(user.updated_at)}</p>`;
     document.getElementById('toggleUserDetails').innerHTML = detailsHTML;
 
     // Advertencia
@@ -1668,7 +1668,7 @@ function openDeactivateModal() {
     // Mostrar sección de reasignación si tiene tareas activas
     if (user.metadata && user.metadata.tareas_activas > 0) {
         document.getElementById('reasignarTareasSection').classList.remove('hidden');
-        loadUsuariosParaReasignar(user.area_id);
+        cargarUsuariosParaReasignar(user.area_id);
     } else {
         document.getElementById('reasignarTareasSection').classList.add('hidden');
     }
@@ -1686,7 +1686,7 @@ function openDeactivateModal() {
     modal.classList.remove('hidden');
 }
 
-function openActivateModal() {
+function abrirModalActivar() {
     const modal = document.getElementById('toggleStatusModal');
     const user = currentToggleUser;
 
@@ -1759,10 +1759,10 @@ function openActivateModal() {
     modal.classList.remove('hidden');
 }
 
-function closeToggleModal() {
+function cerrarModalAlternar() {
     // Revertir el toggle en la tabla ANTES de limpiar currentToggleUser
     if (currentToggleUser) {
-        const toggle = document.querySelector(`input[onchange="toggleUserStatus(${currentToggleUser.id}, this.checked)"]`);
+        const toggle = document.querySelector(`input[onchange="alternarEstadoUsuario(${currentToggleUser.id}, this.checked)"]`);
         if (toggle) {
             toggle.checked = currentToggleUser.activo;
         }
@@ -1772,7 +1772,7 @@ function closeToggleModal() {
     currentToggleUser = null;
 }
 
-async function confirmToggleStatus() {
+async function confirmarAlternarEstado() {
     if (!currentToggleUser) return;
 
     const nuevoEstado = !currentToggleUser.activo;
@@ -1784,14 +1784,14 @@ async function confirmToggleStatus() {
     if (!nuevoEstado && currentToggleUser.metadata && currentToggleUser.metadata.tareas_activas > 0) {
         const reasignarSelect = document.getElementById('reasignarTareasSelect').value;
         if (!reasignarSelect) {
-            showToast('Debe seleccionar una opción para reasignar las tareas', 'error');
+            mostrarToast('Debe seleccionar una opción para reasignar las tareas', 'error');
             return;
         }
 
         if (reasignarSelect === 'otro') {
             reasignarA = document.getElementById('otroUsuarioSelect').value;
             if (!reasignarA) {
-                showToast('Debe seleccionar un usuario para reasignar las tareas', 'error');
+                mostrarToast('Debe seleccionar un usuario para reasignar las tareas', 'error');
                 return;
             }
         } else {
@@ -1827,32 +1827,32 @@ async function confirmToggleStatus() {
             // Guardar el ID antes de cerrar el modal (que establece currentToggleUser a null)
             const userId = currentToggleUser.id;
 
-            closeToggleModal();
-            showToast(data.message, 'success');
+            cerrarModalAlternar();
+            mostrarToast(data.message, 'success');
 
             // Actualizar toggle en la tabla
-            const toggle = document.querySelector(`input[onchange="toggleUserStatus(${userId}, this.checked)"]`);
+            const toggle = document.querySelector(`input[onchange="alternarEstadoUsuario(${userId}, this.checked)"]`);
             if (toggle) {
                 toggle.checked = nuevoEstado;
             }
 
             // Actualizar badge de estado en la tabla
-            updateUserStatusInTable(userId, nuevoEstado);
+            actualizarEstadoUsuarioEnTabla(userId, nuevoEstado);
 
             // Recargar la lista después de un momento
             setTimeout(() => {
-                loadUsers();
+                cargarUsuarios();
             }, 500);
 
         } else if (response.status === 403) {
-            showToast(data.message, 'error');
+            mostrarToast(data.message, 'error');
         } else {
             throw new Error(data.message || 'Error al cambiar estado del usuario');
         }
 
     } catch (error) {
         console.error('Error:', error);
-        showToast(error.message || 'Error al cambiar estado del usuario', 'error');
+        mostrarToast(error.message || 'Error al cambiar estado del usuario', 'error');
 
     } finally {
         confirmButton.disabled = false;
@@ -1860,7 +1860,7 @@ async function confirmToggleStatus() {
     }
 }
 
-async function loadUsuariosParaReasignar(areaId) {
+async function cargarUsuariosParaReasignar(areaId) {
     try {
         const response = await fetch(`/admin/api/equipos?area_id=${areaId}`);
         const equipos = await response.json();
@@ -1876,7 +1876,7 @@ async function loadUsuariosParaReasignar(areaId) {
     }
 }
 
-function updateUserStatusInTable(userId, activo) {
+function actualizarEstadoUsuarioEnTabla(userId, activo) {
     const row = document.querySelector(`tr input.user-checkbox[value="${userId}"]`)?.closest('tr');
     if (!row) return;
 
@@ -1903,7 +1903,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Helper para formatear fechas
-function formatDate(dateString) {
+function formatearFecha(dateString) {
     if (!dateString) return 'Nunca';
 
     const date = new Date(dateString);
@@ -1925,33 +1925,33 @@ function formatDate(dateString) {
     });
 }
 
-function deleteUser(id) {
+function eliminarUsuario(id) {
     if (confirm('¿Estás seguro de eliminar este usuario?')) {
         alert(`Eliminar usuario ${id} - Próximo paso`);
     }
 }
 
-function manageRoles(id) {
+function gestionarRoles(id) {
     alert(`Gestionar roles usuario ${id} - Próximo paso`);
 }
 
-function resetPassword(id) {
+function restablecerPassword(id) {
     alert(`Restablecer contraseña usuario ${id} - Próximo paso`);
 }
 
-function viewActivity(id) {
+function verActividad(id) {
     alert(`Ver actividad usuario ${id} - Próximo paso`);
 }
 
-function bulkExport() {
+function exportarMasivo() {
     alert('Exportar seleccionados - Próximo paso');
 }
 
-function bulkChangeStatus() {
+function cambiarEstadoMasivo() {
     alert('Cambiar estado en lote - Próximo paso');
 }
 
-function bulkAssignRole() {
+function asignarRolMasivo() {
     alert('Asignar rol en lote - Próximo paso');
 }
 
@@ -1959,7 +1959,7 @@ function bulkAssignRole() {
 // CARGA DE ROLES Y VALIDACIÓN
 // ========================================
 
-async function loadRolesForModal() {
+async function cargarRolesForModal() {
     const tipoUsuario = document.querySelector('input[name="tipo_usuario"]:checked')?.value || 'interno';
     const container = document.getElementById('rolesContainer');
 
@@ -1982,7 +1982,7 @@ async function loadRolesForModal() {
                        value="${role.name}"
                        id="role_${role.id}"
                        class="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
-                       onchange="updateRolePreview()">
+                       onchange="actualizarVistaRol()">
                 <label for="role_${role.id}" class="ml-2 text-sm text-gray-700 cursor-pointer flex-1">
                     ${role.name}
                 </label>
@@ -2004,7 +2004,7 @@ async function loadRolesForModal() {
     }
 }
 
-function updateRolePreview() {
+function actualizarVistaRol() {
     const selectedRoles = Array.from(document.querySelectorAll('input[name="roles[]"]:checked'))
         .map(cb => cb.value);
 
@@ -2025,14 +2025,14 @@ function updateRolePreview() {
 // UPLOAD Y PREVIEW DE FOTO
 // ========================================
 
-function handlePhotoUpload(event) {
+function manejarSubidaFoto(event) {
     const file = event.target.files[0];
 
     if (!file) return;
 
     // Validar tamaño (máx 2MB)
     if (file.size > 2 * 1024 * 1024) {
-        showToast('La imagen no debe superar 2MB', 'error');
+        mostrarToast('La imagen no debe superar 2MB', 'error');
         event.target.value = '';
         return;
     }
@@ -2040,7 +2040,7 @@ function handlePhotoUpload(event) {
     // Validar tipo
     const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     if (!validTypes.includes(file.type)) {
-        showToast('Solo se permiten imágenes JPG y PNG', 'error');
+        mostrarToast('Solo se permiten imágenes JPG y PNG', 'error');
         event.target.value = '';
         return;
     }
@@ -2061,7 +2061,7 @@ function handlePhotoUpload(event) {
 // FORTALEZA DE CONTRASEÑA
 // ========================================
 
-function checkPasswordStrength() {
+function verificarFortalezaPassword() {
     const password = document.getElementById('password').value;
     const strengthBars = ['strength1', 'strength2', 'strength3', 'strength4'];
     const label = document.getElementById('strengthLabel');
@@ -2102,10 +2102,10 @@ function checkPasswordStrength() {
         }
     }
 
-    checkPasswordMatch();
+    verificarCoincidenciaPassword();
 }
 
-function checkPasswordMatch() {
+function verificarCoincidenciaPassword() {
     const password = document.getElementById('password').value;
     const confirmation = document.getElementById('password_confirmation').value;
     const message = document.getElementById('passwordMatchMessage');
@@ -2128,7 +2128,7 @@ function checkPasswordMatch() {
     }
 }
 
-function togglePasswordVisibility(fieldId) {
+function alternarVisibilidadPassword(fieldId) {
     const field = document.getElementById(fieldId);
     field.type = field.type === 'password' ? 'text' : 'password';
 }
@@ -2140,15 +2140,15 @@ function togglePasswordVisibility(fieldId) {
 document.addEventListener('DOMContentLoaded', function() {
     const userForm = document.getElementById('userForm');
     if (userForm) {
-        userForm.addEventListener('submit', handleFormSubmit);
+        userForm.addEventListener('submit', manejarEnvioFormulario);
     }
 });
 
-async function handleFormSubmit(e) {
+async function manejarEnvioFormulario(e) {
     e.preventDefault();
 
     // Validación final
-    if (!validateFinalForm()) {
+    if (!validarFormularioFinal()) {
         return;
     }
 
@@ -2193,21 +2193,21 @@ async function handleFormSubmit(e) {
 
         if (response.ok) {
             // Éxito
-            showToast('Usuario creado exitosamente', 'success');
-            closeModal();
+            mostrarToast('Usuario creado exitosamente', 'success');
+            cerrarModal();
 
             // Agregar nueva fila a la tabla
-            addNewUserToTable(data.user);
+            agregarNuevoUsuarioATabla(data.user);
 
             // Recargar lista de usuarios
             setTimeout(() => {
-                loadUsers();
+                cargarUsuarios();
             }, 500);
 
         } else if (response.status === 422) {
             // Errores de validación
-            handleValidationErrors(data.errors);
-            showToast('Por favor corrija los errores en el formulario', 'error');
+            manejarErroresValidacion(data.errors);
+            mostrarToast('Por favor corrija los errores en el formulario', 'error');
 
         } else {
             // Error del servidor
@@ -2216,7 +2216,7 @@ async function handleFormSubmit(e) {
 
     } catch (error) {
         console.error('Error:', error);
-        showToast(error.message || 'Error al guardar usuario', 'error');
+        mostrarToast(error.message || 'Error al guardar usuario', 'error');
 
     } finally {
         // Restaurar botón
@@ -2226,14 +2226,14 @@ async function handleFormSubmit(e) {
     }
 }
 
-function validateFinalForm() {
-    clearAllErrors();
+function validarFormularioFinal() {
+    limpiarTodosLosErrores();
     let isValid = true;
 
     // Validar roles
     const rolesChecked = document.querySelectorAll('input[name="roles[]"]:checked').length;
     if (rolesChecked === 0) {
-        showToast('Debe seleccionar al menos un rol', 'error');
+        mostrarToast('Debe seleccionar al menos un rol', 'error');
         isValid = false;
     }
 
@@ -2242,22 +2242,22 @@ function validateFinalForm() {
     const confirmation = document.getElementById('password_confirmation').value;
 
     if (!password) {
-        showError('password', 'La contraseña es obligatoria');
+        mostrarError('password', 'La contraseña es obligatoria');
         isValid = false;
     } else if (password.length < 8) {
-        showError('password', 'La contraseña debe tener al menos 8 caracteres');
+        mostrarError('password', 'La contraseña debe tener al menos 8 caracteres');
         isValid = false;
     }
 
     if (password !== confirmation) {
-        showError('password_confirmation', 'Las contraseñas no coinciden');
+        mostrarError('password_confirmation', 'Las contraseñas no coinciden');
         isValid = false;
     }
 
     return isValid;
 }
 
-function handleValidationErrors(errors) {
+function manejarErroresValidacion(errors) {
     // Mostrar errores en los campos correspondientes
     for (const [field, messages] of Object.entries(errors)) {
         const fieldElement = document.querySelector(`[name="${field}"]`);
@@ -2275,25 +2275,25 @@ function handleValidationErrors(errors) {
 
             // Navegar al tab si no es el actual
             if (tabNumber !== currentTab) {
-                showTab(tabNumber);
+                mostrarTab(tabNumber);
             }
 
             // Mostrar error
             if (field === 'cedula' && errorMessage.includes('existe')) {
-                showError(field, errorMessage);
+                mostrarError(field, errorMessage);
                 // Agregar link para ver usuario existente
                 const errorSpan = fieldElement.parentElement.querySelector('.error-message');
                 if (errorSpan) {
-                    errorSpan.innerHTML = `${errorMessage} <a href="#" class="underline hover:text-red-700" onclick="searchExistingUser('${fieldElement.value}'); return false;">Ver usuario existente</a>`;
+                    errorSpan.innerHTML = `${errorMessage} <a href="#" class="underline hover:text-red-700" onclick="buscarUsuarioExistente('${fieldElement.value}'); return false;">Ver usuario existente</a>`;
                 }
             } else if (field === 'email' && errorMessage.includes('registrado')) {
-                showError(field, errorMessage);
+                mostrarError(field, errorMessage);
                 const errorSpan = fieldElement.parentElement.querySelector('.error-message');
                 if (errorSpan) {
-                    errorSpan.innerHTML = `${errorMessage} <a href="#" class="underline hover:text-red-700" onclick="searchExistingUser('${fieldElement.value}'); return false;">¿Es el mismo usuario?</a>`;
+                    errorSpan.innerHTML = `${errorMessage} <a href="#" class="underline hover:text-red-700" onclick="buscarUsuarioExistente('${fieldElement.value}'); return false;">¿Es el mismo usuario?</a>`;
                 }
             } else {
-                showError(field, errorMessage);
+                mostrarError(field, errorMessage);
             }
         }
     }
@@ -2305,13 +2305,13 @@ function handleValidationErrors(errors) {
     }
 }
 
-function searchExistingUser(searchTerm) {
-    closeModal();
+function buscarUsuarioExistente(searchTerm) {
+    cerrarModal();
     document.getElementById('searchInput').value = searchTerm;
     document.getElementById('searchInput').dispatchEvent(new Event('input'));
 }
 
-function addNewUserToTable(user) {
+function agregarNuevoUsuarioATabla(user) {
     const tbody = document.getElementById('usersTableBody');
 
     // Crear nueva fila
@@ -2369,13 +2369,13 @@ function addNewUserToTable(user) {
         <td class="px-6 py-4">
             <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" class="sr-only peer" ${user.activo ? 'checked' : ''}
-                       onchange="toggleUserStatus(${user.id}, this.checked)">
+                       onchange="alternarEstadoUsuario(${user.id}, this.checked)">
                 <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
             </label>
         </td>
         <td class="px-6 py-4 text-sm font-medium">
             <button onclick="verUsuario(${user.id})" class="text-blue-600 hover:text-blue-900 mr-3">Ver</button>
-            <button onclick="editUser(${user.id})" class="text-indigo-600 hover:text-indigo-900">Editar</button>
+            <button onclick="editarUsuario(${user.id})" class="text-indigo-600 hover:text-indigo-900">Editar</button>
         </td>
     `;
 
@@ -2390,11 +2390,11 @@ function addNewUserToTable(user) {
 // MANEJAR ENVÍO DE FORMULARIO DE EDICIÓN
 // ========================================
 
-async function handleEditFormSubmit(e) {
+async function manejarEnvioFormularioEditar(e) {
     e.preventDefault();
 
     // Validación final
-    if (!validateFinalFormEdit()) {
+    if (!validarFormularioFinalEdit()) {
         return;
     }
 
@@ -2405,17 +2405,17 @@ async function handleEditFormSubmit(e) {
     // Si cambió área o equipo y es coordinador/líder, solicitar confirmación
     if ((areaChanged || equipoChanged) && originalUserData.tipo_usuario === 'interno') {
         if (userMetadata.es_coordinador && areaChanged) {
-            const confirmed = await showCoordinadorConfirmation();
+            const confirmed = await mostrarConfirmacionCoordinador();
             if (!confirmed) return;
         }
 
         if (userMetadata.es_lider && equipoChanged) {
-            const confirmed = await showLiderConfirmation();
+            const confirmed = await mostrarConfirmacionLider();
             if (!confirmed) return;
         }
 
         if (userMetadata.tareas_activas > 0 || areaChanged || equipoChanged) {
-            const motivo = await showMotivoChangeDialog();
+            const motivo = await mostrarDialogoCambioMotivo();
             if (!motivo) return;
 
             // Agregar motivo al formulario
@@ -2480,15 +2480,15 @@ async function handleEditFormSubmit(e) {
 
         if (response.ok) {
             // Éxito
-            showToast('Usuario actualizado exitosamente', 'success');
-            closeModal();
+            mostrarToast('Usuario actualizado exitosamente', 'success');
+            cerrarModal();
 
             // Actualizar fila en la tabla
-            updateUserRow(data.user);
+            actualizarFilaUsuario(data.user);
 
             // Recargar lista después de un momento
             setTimeout(() => {
-                loadUsers();
+                cargarUsuarios();
             }, 500);
 
         } else if (response.status === 422) {
@@ -2496,8 +2496,8 @@ async function handleEditFormSubmit(e) {
             if (data.requires_confirmation) {
                 handleConfirmationRequired(data);
             } else {
-                handleValidationErrors(data.errors);
-                showToast('Por favor corrija los errores en el formulario', 'error');
+                manejarErroresValidacion(data.errors);
+                mostrarToast('Por favor corrija los errores en el formulario', 'error');
             }
 
         } else {
@@ -2506,7 +2506,7 @@ async function handleEditFormSubmit(e) {
 
     } catch (error) {
         console.error('Error:', error);
-        showToast(error.message || 'Error al actualizar usuario', 'error');
+        mostrarToast(error.message || 'Error al actualizar usuario', 'error');
 
     } finally {
         submitButton.disabled = false;
@@ -2515,14 +2515,14 @@ async function handleEditFormSubmit(e) {
     }
 }
 
-function validateFinalFormEdit() {
-    clearAllErrors();
+function validarFormularioFinalEdit() {
+    limpiarTodosLosErrores();
     let isValid = true;
 
     // Validar roles
     const rolesChecked = document.querySelectorAll('input[name="roles[]"]:checked').length;
     if (rolesChecked === 0) {
-        showToast('Debe seleccionar al menos un rol', 'error');
+        mostrarToast('Debe seleccionar al menos un rol', 'error');
         isValid = false;
     }
 
@@ -2532,12 +2532,12 @@ function validateFinalFormEdit() {
 
     if (password || confirmation) {
         if (password.length > 0 && password.length < 8) {
-            showError('password', 'La contraseña debe tener al menos 8 caracteres');
+            mostrarError('password', 'La contraseña debe tener al menos 8 caracteres');
             isValid = false;
         }
 
         if (password !== confirmation) {
-            showError('password_confirmation', 'Las contraseñas no coinciden');
+            mostrarError('password_confirmation', 'Las contraseñas no coinciden');
             isValid = false;
         }
     }
@@ -2545,7 +2545,7 @@ function validateFinalFormEdit() {
     return isValid;
 }
 
-function showCoordinadorConfirmation() {
+function mostrarConfirmacionCoordinador() {
     return new Promise((resolve) => {
         const dialog = document.createElement('div');
         dialog.innerHTML = `
@@ -2589,7 +2589,7 @@ function showCoordinadorConfirmation() {
     });
 }
 
-function showLiderConfirmation() {
+function mostrarConfirmacionLider() {
     return new Promise((resolve) => {
         const dialog = document.createElement('div');
         dialog.innerHTML = `
@@ -2633,7 +2633,7 @@ function showLiderConfirmation() {
     });
 }
 
-function showMotivoChangeDialog() {
+function mostrarDialogoCambioMotivo() {
     return new Promise((resolve) => {
         const dialog = document.createElement('div');
         dialog.innerHTML = `
@@ -2670,7 +2670,7 @@ function showMotivoChangeDialog() {
     });
 }
 
-function updateUserRow(user) {
+function actualizarFilaUsuario(user) {
     // Buscar la fila del usuario en la tabla
     const row = document.querySelector(`tr input.user-checkbox[value="${user.id}"]`)?.closest('tr');
     if (!row) return;
