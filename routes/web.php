@@ -69,6 +69,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('api/equipos', [App\Http\Controllers\Admin\UserController::class, 'getEquipos'])
             ->name('api.equipos');
         Route::get('api/roles', [App\Http\Controllers\Admin\UserController::class, 'getRoles'])
-            ->name('api.roles');
+            ->name('api.roles'); 
+
+
+        // Rutas para historia de usuario dependencias
+        Route::resource('dependencias', App\Http\Controllers\Admin\DependenciasController::class);
     });
 });
