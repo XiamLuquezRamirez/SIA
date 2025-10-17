@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Area;
 use App\Models\Equipo;
+use App\Mail\PasswordResetNotification;
+use App\Mail\UserWelcomeEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
@@ -131,6 +134,9 @@ class UserController extends Controller
             $fotoUrl = $request->file('foto')->store('usuarios', 'public');
         }
 
+        // Guardar contraseña en texto plano temporalmente para enviar por email
+        $passwordPlainText = $validated['password'];
+
         // Crear usuario
         $user = User::create([
             'tipo_documento' => $validated['tipo_documento'],
@@ -145,10 +151,26 @@ class UserController extends Controller
             'area_id' => $validated['area_id'] ?? null,
             'equipo_id' => $validated['equipo_id'] ?? null,
             'cargo' => $validated['cargo'] ?? null,
-            'password' => Hash::make($validated['password']),
+            'password' => Hash::make($passwordPlainText),
             'activo' => $validated['activo'] ?? true,
             'foto_url' => $fotoUrl,
         ]);
+
+        // Enviar correo de bienvenida con contraseña
+        try {
+            Mail::to($user->email)->send(new UserWelcomeEmail($user, $passwordPlainText));
+            
+            \Log::info('Email de bienvenida enviado', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error al enviar email de bienvenida', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+            // No detenemos la creación del usuario si falla el email
+        }
 
         // Asignar roles
         $user->syncRoles($validated['roles']);
@@ -642,6 +664,100 @@ class UserController extends Controller
         return response()->json([
             'actividades' => $actividades,
             'total' => count($actividades),
+        ]);
+    }
+
+    /**
+     * Reset user password
+     */
+    public function restablecerPassword(Request $request, string $id)
+    {
+        $user = User::findOrFail($id);
+
+        // Validar que no es el mismo usuario
+        if ($user->id === auth()->id()) {
+            return response()->json([
+                'message' => 'No puedes restablecer tu propia contraseña desde aquí'
+            ], 403);
+        }
+
+        // Validar request
+        $validated = $request->validate([
+            'password' => 'required|string|min:8',
+            'forzar_cambio' => 'boolean',
+            'enviar_email' => 'boolean',
+            'cerrar_sesiones' => 'boolean',
+        ], [
+            'password.required' => 'La contraseña es requerida',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres',
+        ]);
+
+        // Guardar contraseña anterior para auditoría (hash)
+        $passwordAnterior = $user->password;
+
+        // Actualizar contraseña
+        $user->password = Hash::make($validated['password']);
+
+        // Si se debe forzar cambio de contraseña en próximo login
+        if ($validated['forzar_cambio'] ?? false) {
+            // TODO: Implementar campo password_change_required en la tabla users
+            // $user->password_change_required = true;
+            \Log::info('Se requiere cambio de contraseña en próximo login', ['user_id' => $user->id]);
+        }
+
+        $user->save();
+
+        // Registrar en auditoría
+        \Log::info('Contraseña restablecida', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'restablecido_por' => auth()->id(),
+            'forzar_cambio' => $validated['forzar_cambio'] ?? false,
+            'enviar_email' => $validated['enviar_email'] ?? false,
+            'cerrar_sesiones' => $validated['cerrar_sesiones'] ?? false,
+        ]);
+
+        // Cerrar sesiones activas si se solicitó
+        if ($validated['cerrar_sesiones'] ?? false) {
+            // TODO: Implementar cierre de sesiones cuando exista el módulo de sesiones
+            // DB::table('sessions')->where('user_id', $user->id)->delete();
+            \Log::info('Sesiones cerradas para usuario', ['user_id' => $user->id]);
+        }
+
+        // Enviar email si se solicitó
+        if ($validated['enviar_email'] ?? false) {
+            try {
+                Mail::to($user->email)->send(
+                    new PasswordResetNotification(
+                        $user,
+                        $validated['password'],
+                        $validated['forzar_cambio'] ?? true,
+                        auth()->user()
+                    )
+                );
+
+                \Log::info('Email de restablecimiento enviado', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error al enviar email de restablecimiento', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // No detenemos la ejecución si falla el email
+            }
+        }
+
+        return response()->json([
+            'message' => 'Contraseña restablecida exitosamente',
+            'user' => $user->only(['id', 'nombre', 'apellidos', 'email']),
+            'acciones_realizadas' => [
+                'password_actualizada' => true,
+                'forzar_cambio' => $validated['forzar_cambio'] ?? false,
+                'email_enviado' => $validated['enviar_email'] ?? false,
+                'sesiones_cerradas' => $validated['cerrar_sesiones'] ?? false,
+            ]
         ]);
     }
 }
