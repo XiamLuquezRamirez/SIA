@@ -8,7 +8,7 @@
                 <h1 class="text-2xl font-bold text-gray-800">Gestión de Usuarios</h1>
                 <p class="text-gray-600 text-sm">Administrar usuarios del sistema</p>
             </div>
-            <button onclick="openCreateModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+            <button onclick="abrirModalCrear()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
@@ -19,16 +19,16 @@
         <!-- Tabs -->
         <div class="border-b border-gray-200 mb-4">
             <nav class="-mb-px flex space-x-8">
-                <button onclick="filterByTab('todos')" class="tab-button active border-b-2 border-blue-600 py-2 px-1 text-sm font-medium text-blue-600">
+                <button onclick="filtrarPorTab('todos')" class="tab-button active border-b-2 border-blue-600 py-2 px-1 text-sm font-medium text-blue-600">
                     Todos
                 </button>
-                <button onclick="filterByTab('interno')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                <button onclick="filtrarPorTab('interno')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
                     Funcionarios
                 </button>
-                <button onclick="filterByTab('externo')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                <button onclick="filtrarPorTab('externo')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
                     Ciudadanos
                 </button>
-                <button onclick="filterByTab('inactivos')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                <button onclick="filtrarPorTab('inactivos')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
                     Inactivos
                 </button>
             </nav>
@@ -69,7 +69,7 @@
             <div id="filterBadge" class="mt-2 hidden">
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                     <span id="filterCount">0</span> filtros aplicados
-                    <button onclick="clearFilters()" class="ml-2">
+                    <button onclick="limpiarFiltros()" class="ml-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -147,18 +147,18 @@
             <div class="container mx-auto flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <span id="selectedCount" class="font-medium">0 usuarios seleccionados</span>
-                    <button onclick="clearSelection()" class="text-white hover:text-blue-200">
+                    <button onclick="limpiarSeleccion()" class="text-white hover:text-blue-200">
                         Limpiar selección
                     </button>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="bulkExport()" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-blue-50">
+                    <button onclick="exportarMasivo()" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-blue-50">
                         Exportar
                     </button>
-                    <button onclick="bulkChangeStatus()" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-blue-50">
+                    <button onclick="cambiarEstadoMasivo()" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-blue-50">
                         Cambiar Estado
                     </button>
-                    <button onclick="bulkAssignRole()" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-blue-50">
+                    <button onclick="asignarRolMasivo()" class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-blue-50">
                         Asignar Rol
                     </button>
                 </div>
@@ -173,7 +173,7 @@
             <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700" style="border-top-left-radius: 20px; border-top-right-radius: 20px;">
                 <div class="flex items-center justify-between">
                     <h3 id="modalTitle" class="text-xl font-semibold text-white">Crear Nuevo Usuario</h3>
-                    <button type="button" onclick="closeModalWithConfirmation()" class="text-white hover:text-gray-200 transition">
+                    <button type="button" onclick="cerrarModalConConfirmacion()" class="text-white hover:text-gray-200 transition">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
@@ -231,7 +231,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                             </svg>
                                         </label>
-                                        <input type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/jpg" class="hidden" onchange="handlePhotoUpload(event)">
+                                        <input type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/jpg" class="hidden" onchange="manejarSubidaFoto(event)">
                                     </div>
                                     <p class="text-xs text-gray-500 mt-2">Máx. 2MB - JPG, PNG</p>
                                 </div>
@@ -341,12 +341,12 @@
                                 <div class="flex gap-6">
                                     <label class="flex items-center cursor-pointer">
                                         <input type="radio" name="tipo_usuario" value="interno" checked
-                                            class="w-4 h-4 text-blue-600 focus:ring-blue-500" onchange="toggleTipoUsuario()">
+                                            class="w-4 h-4 text-blue-600 focus:ring-blue-500" onchange="alternarTipoUsuario()">
                                         <span class="ml-2 text-gray-700">Funcionario (Interno)</span>
                                     </label>
                                     <label class="flex items-center cursor-pointer">
                                         <input type="radio" name="tipo_usuario" value="externo"
-                                            class="w-4 h-4 text-blue-600 focus:ring-blue-500" onchange="toggleTipoUsuario()">
+                                            class="w-4 h-4 text-blue-600 focus:ring-blue-500" onchange="alternarTipoUsuario()">
                                         <span class="ml-2 text-gray-700">Ciudadano (Externo)</span>
                                     </label>
                                 </div>
@@ -362,7 +362,7 @@
                                     </label>
                                     <select name="area_id" id="area_id"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        onchange="loadEquiposByArea()">
+                                        onchange="cargarEquiposPorArea()">
                                         <option value="">Seleccione un área...</option>
                                     </select>
                                     <span class="error-message text-red-500 text-xs hidden"></span>
@@ -460,8 +460,8 @@
                                     <input type="password" name="password" id="password" required
                                         class="w-full px-3 py-2 pr-20 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         placeholder="Mínimo 8 caracteres"
-                                        oninput="checkPasswordStrength()">
-                                    <button type="button" onclick="togglePasswordVisibility('password')"
+                                        oninput="verificarFortalezaPassword()">
+                                    <button type="button" onclick="alternarVisibilidadPassword('password')"
                                         class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -492,8 +492,8 @@
                                     <input type="password" name="password_confirmation" id="password_confirmation" required
                                         class="w-full px-3 py-2 pr-20 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         placeholder="Repita la contraseña"
-                                        oninput="checkPasswordMatch()">
-                                    <button type="button" onclick="togglePasswordVisibility('password_confirmation')"
+                                        oninput="verificarCoincidenciaPassword()">
+                                    <button type="button" onclick="alternarVisibilidadPassword('password_confirmation')"
                                         class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -527,17 +527,17 @@
 
                 <!-- Modal Footer -->
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between" style="border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;">
-                    <button type="button" id="prevButton" onclick="prevTab()"
+                    <button type="button" id="prevButton" onclick="anteriorTab()"
                         class="hidden px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                         Anterior
                     </button>
                     <div class="flex-1"></div>
                     <div class="flex gap-2">
-                        <button type="button" onclick="closeModalWithConfirmation()"
+                        <button type="button" onclick="cerrarModalConConfirmacion()"
                             class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                             Cancelar
                         </button>
-                        <button type="button" id="nextButton" onclick="nextTab()"
+                        <button type="button" id="nextButton" onclick="siguienteTab()"
                             class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                             Siguiente
                         </button>
@@ -623,11 +623,11 @@
 
             <!-- Modal Footer -->
             <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3" style="border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;">
-                <button type="button" onclick="closeToggleModal()"
+                <button type="button" onclick="cerrarModalAlternar()"
                     class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                     Cancelar
                 </button>
-                <button type="button" id="confirmToggleButton" onclick="confirmToggleStatus()"
+                <button type="button" id="confirmToggleButton" onclick="confirmarAlternarEstado()"
                     class="px-4 py-2 text-white rounded-lg transition">
                     <!-- Text will be set dynamically -->
                 </button>
