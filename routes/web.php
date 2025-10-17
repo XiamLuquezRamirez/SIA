@@ -74,7 +74,5 @@ Route::middleware(['auth'])->group(function () {
             ->name('api.equipos');
         Route::get('api/roles', [App\Http\Controllers\Admin\UserController::class, 'getRoles'])
             ->name('api.roles');
-        Route::get('api/usuarios/{usuario}', [App\Http\Controllers\Admin\UserController::class, 'show'])
-            ->name('api.usuarios.show');
     });
 });

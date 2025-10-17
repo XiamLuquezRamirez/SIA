@@ -108,6 +108,14 @@
                     </button>
                     <ul x-show="open" x-transition class="pl-10 mt-2 space-y-1">
                         <li>
+                            <a href="{{ route('admin.dependencias.index') }}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-100">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015-2.236V5a5 5 0 00-5-5zM3 15a1 1 0 001 1h12a1 1 0 100-2H4a1 1 0 00-1 1z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="ml-2">Dependencias</span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="{{ route('admin.usuarios.index') }}" class="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-100">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
