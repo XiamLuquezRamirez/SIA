@@ -373,11 +373,59 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
+        // No se puede eliminar a sí mismo
         if ($user->id === auth()->id()) {
             return response()->json(['message' => 'No puedes eliminar tu propio usuario'], 403);
         }
 
+        // Verificar si es coordinador de algún área
+        $esCoordinador = Area::where('coordinador_id', $user->id)->exists();
+        if ($esCoordinador) {
+            $areaCoordinada = Area::where('coordinador_id', $user->id)->first();
+            return response()->json([
+                'message' => 'No se puede eliminar este usuario porque es Coordinador del área: ' . $areaCoordinada->nombre,
+                'tipo_error' => 'es_coordinador',
+                'area' => $areaCoordinada->nombre
+            ], 422);
+        }
+
+        // Verificar si es líder de algún equipo
+        $esLider = Equipo::where('lider_id', $user->id)->exists();
+        if ($esLider) {
+            $equipoLiderado = Equipo::where('lider_id', $user->id)->first();
+            return response()->json([
+                'message' => 'No se puede eliminar este usuario porque es Líder del equipo: ' . $equipoLiderado->nombre,
+                'tipo_error' => 'es_lider',
+                'equipo' => $equipoLiderado->nombre
+            ], 422);
+        }
+
+        // TODO: Verificar si tiene tareas activas cuando se implemente el módulo
+        // $tareasActivas = Task::where('user_id', $user->id)->where('estado', 'activo')->count();
+        // if ($tareasActivas > 0) {
+        //     return response()->json([
+        //         'message' => "No se puede eliminar este usuario porque tiene {$tareasActivas} tareas activas",
+        //         'tipo_error' => 'tiene_tareas',
+        //         'tareas_activas' => $tareasActivas
+        //     ], 422);
+        // }
+
+        // Registrar auditoría antes de eliminar
+        \Log::info('Usuario eliminado', [
+            'user_id' => $user->id,
+            'user_nombre' => $user->nombre . ' ' . $user->apellidos,
+            'user_email' => $user->email,
+            'eliminado_por' => auth()->id(),
+        ]);
+
+        // Eliminar foto si existe
+        if ($user->foto_url) {
+            Storage::disk('public')->delete($user->foto_url);
+        }
+
+        // Eliminar usuario
         $user->delete();
+
         return response()->json(['message' => 'Usuario eliminado exitosamente']);
     }
 

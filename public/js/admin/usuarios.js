@@ -231,6 +231,7 @@ function renderizarUsuarios(users) {
         `;
         return;
     }
+    
 
     // Debug: verificar datos de fotos
     users.forEach(user => {
@@ -1925,9 +1926,91 @@ function formatearFecha(dateString) {
     });
 }
 
-function eliminarUsuario(id) {
-    if (confirm('¿Estás seguro de eliminar este usuario?')) {
-        alert(`Eliminar usuario ${id} - Próximo paso`);
+async function eliminarUsuario(id) {
+    // Obtener datos del usuario para mostrar en la confirmación
+    let userName = 'este usuario';
+    try {
+        const userResponse = await fetch(`/admin/api/usuarios/${id}`);
+        if (userResponse.ok) {
+            const userData = await userResponse.json();
+            userName = `${userData.user.nombre} ${userData.user.apellidos}`;
+        }
+    } catch (error) {
+        console.error('Error al obtener datos del usuario:', error);
+    }
+
+    // Confirmar eliminación con SweetAlert2
+    const result = await Swal.fire({
+        title: '¿Eliminar usuario?',
+        html: `
+            <p style="color: #374151;">¿Estás seguro de eliminar a <strong>${userName}</strong>?</p>
+            <p style="color: #dc2626; font-size: 0.875rem; margin-top: 0.5rem;">Esta acción no se puede deshacer.</p>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        focusCancel: true
+    });
+
+    if (!result.isConfirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/admin/usuarios/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+
+        const responseData = await manejarRespuestaFetch(response);
+
+        if (response.ok) {
+            await Swal.fire({
+                title: '¡Eliminado!',
+                text: 'El usuario ha sido eliminado exitosamente',
+                icon: 'success',
+                confirmButtonColor: '#3b82f6'
+            });
+
+            // Recargar la tabla de usuarios
+            await cargarUsuarios();
+        } else {
+            // Mostrar error específico según el tipo
+            let errorMessage = '';
+            let errorTitle = 'No se puede eliminar';
+
+            if (responseData.tipo_error === 'es_coordinador') {
+                errorMessage = `Este usuario es Coordinador del área "<strong>${responseData.area}</strong>".<br><br>Primero debe asignar otro coordinador o remover esta responsabilidad.`;
+            } else if (responseData.tipo_error === 'es_lider') {
+                errorMessage = `Este usuario es Líder del equipo "<strong>${responseData.equipo}</strong>".<br><br>Primero debe asignar otro líder o remover esta responsabilidad.`;
+            } else if (responseData.tipo_error === 'tiene_tareas') {
+                errorMessage = `Este usuario tiene <strong>${responseData.tareas_activas} tareas activas</strong>.<br><br>Primero debe reasignar o completar estas tareas.`;
+            } else {
+                errorMessage = responseData.message || 'Error al eliminar usuario';
+            }
+
+            await Swal.fire({
+                title: errorTitle,
+                html: errorMessage,
+                icon: 'error',
+                confirmButtonColor: '#3b82f6'
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        await Swal.fire({
+            title: 'Error',
+            text: 'Ocurrió un error al eliminar el usuario',
+            icon: 'error',
+            confirmButtonColor: '#3b82f6'
+        });
     }
 }
 
@@ -1935,8 +2018,353 @@ function gestionarRoles(id) {
     alert(`Gestionar roles usuario ${id} - Próximo paso`);
 }
 
-function restablecerPassword(id) {
-    alert(`Restablecer contraseña usuario ${id} - Próximo paso`);
+// ========================================
+// RESTABLECER CONTRASEÑA
+// ========================================
+
+let resetPasswordUserId = null;
+
+async function restablecerPassword(id) {
+    resetPasswordUserId = id;
+
+    try {
+        const response = await fetch(`/admin/api/usuarios/${id}`);
+        const data = await response.json();
+        const user = data.user;
+
+        // Llenar información del usuario
+        document.getElementById('resetUserName').textContent = `${user.nombre} ${user.apellidos}`;
+        document.getElementById('resetUserEmail').textContent = user.email;
+
+        // Mostrar foto
+        const photoDiv = document.getElementById('resetUserPhoto');
+        if (user.foto_url) {
+            photoDiv.innerHTML = `<img src="/storage/${user.foto_url}" alt="${user.nombre}" class="w-full h-full object-cover">`;
+        } else {
+            photoDiv.innerHTML = `
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+            `;
+        }
+
+        // Resetear el formulario
+        document.querySelector('input[name="metodo_password"][value="automatica"]').checked = true;
+        document.getElementById('passwordGenerada').value = '';
+        document.getElementById('passwordManual').value = '';
+        document.getElementById('passwordManualConfirm').value = '';
+        document.getElementById('forzarCambio').checked = true;
+        document.getElementById('enviarEmail').checked = true;
+        document.getElementById('cerrarSesiones').checked = true;
+
+        // Resetear indicadores de fortaleza
+        resetearIndicadorFortaleza('reset');
+
+        // Alternar vista inicial
+        alternarMetodoPassword();
+
+        // Generar contraseña automática inicial
+        generarPasswordAutomatica();
+
+        // TODO: Verificar si tiene sesiones activas (cuando se implemente el sistema de sesiones)
+        // Por ahora ocultamos la advertencia
+        document.getElementById('warningSessionActiva').classList.add('hidden');
+
+        // Mostrar el modal
+        document.getElementById('resetPasswordModal').classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error al cargar datos del usuario:', error);
+        mostrarToast('Error al cargar datos del usuario', 'error');
+    }
+}
+
+function cerrarModalRestablecerPassword() {
+    document.getElementById('resetPasswordModal').classList.add('hidden');
+    resetPasswordUserId = null;
+}
+
+function alternarMetodoPassword() {
+    const metodo = document.querySelector('input[name="metodo_password"]:checked').value;
+    const automaticaSection = document.getElementById('passwordAutomaticaSection');
+    const manualSection = document.getElementById('passwordManualSection');
+    const labelAutomatica = document.getElementById('labelAutomatica');
+    const labelManual = document.getElementById('labelManual');
+
+    if (metodo === 'automatica') {
+        automaticaSection.classList.remove('hidden');
+        manualSection.classList.add('hidden');
+        labelAutomatica.classList.add('border-blue-500', 'bg-blue-50');
+        labelAutomatica.classList.remove('border-gray-300');
+        labelManual.classList.remove('border-blue-500', 'bg-blue-50');
+        labelManual.classList.add('border-gray-300');
+    } else {
+        automaticaSection.classList.add('hidden');
+        manualSection.classList.remove('hidden');
+        labelManual.classList.add('border-blue-500', 'bg-blue-50');
+        labelManual.classList.remove('border-gray-300');
+        labelAutomatica.classList.remove('border-blue-500', 'bg-blue-50');
+        labelAutomatica.classList.add('border-gray-300');
+    }
+}
+
+function generarPasswordAutomatica() {
+    // Caracteres permitidos (sin ambiguos: 0, O, l, 1, I)
+    const mayusculas = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const minusculas = 'abcdefghijkmnopqrstuvwxyz';
+    const numeros = '23456789';
+    const simbolos = '!@#$%&*+=-_';
+
+    let password = '';
+
+    // Garantizar al menos 3 mayúsculas
+    for (let i = 0; i < 3; i++) {
+        password += mayusculas.charAt(Math.floor(Math.random() * mayusculas.length));
+    }
+
+    // Garantizar al menos 3 minúsculas
+    for (let i = 0; i < 3; i++) {
+        password += minusculas.charAt(Math.floor(Math.random() * minusculas.length));
+    }
+
+    // Garantizar al menos 3 números
+    for (let i = 0; i < 3; i++) {
+        password += numeros.charAt(Math.floor(Math.random() * numeros.length));
+    }
+
+    // Garantizar al menos 3 símbolos
+    for (let i = 0; i < 3; i++) {
+        password += simbolos.charAt(Math.floor(Math.random() * simbolos.length));
+    }
+
+    // Mezclar los caracteres de forma aleatoria
+    password = password.split('').sort(() => Math.random() - 0.5).join('');
+
+    // Mostrar contraseña
+    const input = document.getElementById('passwordGenerada');
+    input.value = password;
+    input.type = 'password'; // Ocultarla por defecto
+
+    // Actualizar indicador de fortaleza
+    actualizarIndicadorFortaleza(password, 'reset');
+}
+
+function toggleVisibilidadPasswordGenerada() {
+    const input = document.getElementById('passwordGenerada');
+    const icono = document.getElementById('iconoOjoGenerada');
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        icono.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+        `;
+    } else {
+        input.type = 'password';
+        icono.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+        `;
+    }
+}
+
+async function copiarPasswordGenerada() {
+    const password = document.getElementById('passwordGenerada').value;
+
+    if (!password) {
+        mostrarToast('Primero genera una contraseña', 'error');
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(password);
+        mostrarToast('Contraseña copiada al portapapeles', 'success');
+    } catch (error) {
+        console.error('Error al copiar:', error);
+        mostrarToast('Error al copiar la contraseña', 'error');
+    }
+}
+
+function verificarFortalezaPasswordReset() {
+    const password = document.getElementById('passwordManual').value;
+    actualizarIndicadorFortaleza(password, 'reset');
+
+    // Limpiar error si existe
+    const errorSpan = document.getElementById('errorPasswordManual');
+    errorSpan.classList.add('hidden');
+    errorSpan.textContent = '';
+}
+
+function verificarCoincidenciaPasswordReset() {
+    const password = document.getElementById('passwordManual').value;
+    const confirmPassword = document.getElementById('passwordManualConfirm').value;
+    const errorSpan = document.getElementById('errorPasswordManualConfirm');
+
+    if (confirmPassword.length > 0) {
+        if (password !== confirmPassword) {
+            errorSpan.textContent = 'Las contraseñas no coinciden';
+            errorSpan.classList.remove('hidden');
+            return false;
+        } else {
+            errorSpan.textContent = 'Las contraseñas coinciden';
+            errorSpan.classList.remove('hidden');
+            errorSpan.classList.remove('text-red-500');
+            errorSpan.classList.add('text-green-500');
+            return true;
+        }
+    } else {
+        errorSpan.classList.add('hidden');
+        return false;
+    }
+}
+
+function actualizarIndicadorFortaleza(password, prefijo = 'reset') {
+    const bars = [
+        document.getElementById(`${prefijo}Strength1`),
+        document.getElementById(`${prefijo}Strength2`),
+        document.getElementById(`${prefijo}Strength3`),
+        document.getElementById(`${prefijo}Strength4`)
+    ];
+    const label = document.getElementById(`${prefijo}StrengthLabel`);
+
+    // Resetear
+    bars.forEach(bar => {
+        bar.className = 'h-1 flex-1 bg-gray-200 rounded';
+    });
+
+    if (!password || password.length === 0) {
+        label.textContent = 'Fortaleza de contraseña';
+        label.className = 'text-xs text-gray-500 mt-1';
+        return 0;
+    }
+
+    let fortaleza = 0;
+
+    // Longitud
+    if (password.length >= 8) fortaleza++;
+    if (password.length >= 12) fortaleza++;
+
+    // Mayúsculas
+    if (/[A-Z]/.test(password)) fortaleza++;
+
+    // Minúsculas
+    if (/[a-z]/.test(password)) fortaleza++;
+
+    // Números
+    if (/[0-9]/.test(password)) fortaleza++;
+
+    // Símbolos
+    if (/[^A-Za-z0-9]/.test(password)) fortaleza++;
+
+    // Ajustar fortaleza a escala 0-4
+    fortaleza = Math.min(Math.floor(fortaleza / 1.5), 4);
+
+    // Actualizar barras y etiqueta
+    const colores = {
+        0: { clase: 'bg-gray-200', texto: 'Muy débil', textoClase: 'text-gray-500' },
+        1: { clase: 'bg-red-500', texto: 'Débil', textoClase: 'text-red-500' },
+        2: { clase: 'bg-yellow-500', texto: 'Media', textoClase: 'text-yellow-600' },
+        3: { clase: 'bg-blue-500', texto: 'Fuerte', textoClase: 'text-blue-600' },
+        4: { clase: 'bg-green-500', texto: 'Muy fuerte', textoClase: 'text-green-600' }
+    };
+
+    for (let i = 0; i < fortaleza; i++) {
+        bars[i].className = `h-1 flex-1 rounded ${colores[fortaleza].clase}`;
+    }
+
+    label.textContent = `Fortaleza: ${colores[fortaleza].texto}`;
+    label.className = `text-xs mt-1 font-medium ${colores[fortaleza].textoClase}`;
+
+    return fortaleza;
+}
+
+function resetearIndicadorFortaleza(prefijo = 'reset') {
+    actualizarIndicadorFortaleza('', prefijo);
+}
+
+async function confirmarRestablecerPassword() {
+    const metodo = document.querySelector('input[name="metodo_password"]:checked').value;
+    let password = '';
+
+    // Validar según el método
+    if (metodo === 'automatica') {
+        password = document.getElementById('passwordGenerada').value;
+
+        if (!password) {
+            mostrarToast('Debe generar una contraseña primero', 'error');
+            return;
+        }
+    } else {
+        password = document.getElementById('passwordManual').value;
+        const passwordConfirm = document.getElementById('passwordManualConfirm').value;
+
+        if (!password || !passwordConfirm) {
+            mostrarToast('Debe completar ambos campos de contraseña', 'error');
+            return;
+        }
+
+        if (password.length < 8) {
+            document.getElementById('errorPasswordManual').textContent = 'La contraseña debe tener al menos 8 caracteres';
+            document.getElementById('errorPasswordManual').classList.remove('hidden');
+            return;
+        }
+
+        if (password !== passwordConfirm) {
+            mostrarToast('Las contraseñas no coinciden', 'error');
+            return;
+        }
+    }
+
+    // Preparar datos
+    const data = {
+        password: password,
+        forzar_cambio: document.getElementById('forzarCambio').checked,
+        enviar_email: document.getElementById('enviarEmail').checked,
+        cerrar_sesiones: document.getElementById('cerrarSesiones').checked
+    };
+
+    // Deshabilitar botón
+    const btn = document.getElementById('btnRestablecerPassword');
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+    try {
+        const response = await fetch(`/admin/api/usuarios/${resetPasswordUserId}/restablecer-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await manejarRespuestaFetch(response);
+
+        if (response.ok) {
+            let mensaje = 'Contraseña restablecida exitosamente';
+
+            if (data.enviar_email) {
+                mensaje += '. Se ha enviado un email al usuario';
+            }
+
+            if (data.cerrar_sesiones) {
+                mensaje += '. Se han cerrado las sesiones activas';
+            }
+
+            mostrarToast(mensaje, 'success');
+            cerrarModalRestablecerPassword();
+
+            // Recargar la tabla de usuarios
+            await cargarUsuarios();
+        } else {
+            mostrarToast(result.message || 'Error al restablecer contraseña', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al restablecer contraseña', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Restablecer Contraseña';
+    }
 }
 
 function verActividad(id) {

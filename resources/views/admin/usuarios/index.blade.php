@@ -899,6 +899,214 @@
         </div>
     </div>
 
+    <!-- Modal Restablecer Contraseña -->
+    <div id="resetPasswordModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-0 border w-11/12 max-w-lg shadow-lg bg-white" style="border-radius: 20px;">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-orange-600 to-orange-700" style="border-top-left-radius: 20px; border-top-right-radius: 20px;">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-white">Restablecer Contraseña</h3>
+                    <button type="button" onclick="cerrarModalRestablecerPassword()" class="text-white hover:text-gray-200 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="px-6 py-4">
+                <!-- User Info -->
+                <div class="flex items-center mb-4 pb-4 border-b border-gray-200">
+                    <div id="resetUserPhoto" class="flex-shrink-0 h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <h4 id="resetUserName" class="text-lg font-semibold text-gray-900"></h4>
+                        <p id="resetUserEmail" class="text-sm text-gray-600"></p>
+                    </div>
+                </div>
+
+                <!-- Método de Contraseña -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">
+                        Método de Contraseña <span class="text-red-500">*</span>
+                    </label>
+                    <div class="space-y-2">
+                        <label class="flex items-start cursor-pointer p-3 border-2 border-gray-300 rounded-lg hover:border-blue-500 transition" id="labelAutomatica">
+                            <input type="radio" name="metodo_password" value="automatica" checked
+                                class="mt-1 w-4 h-4 text-blue-600 focus:ring-blue-500" onchange="alternarMetodoPassword()">
+                            <div class="ml-3">
+                                <span class="font-medium text-gray-900">Generar contraseña temporal automática</span>
+                                <p class="text-xs text-gray-600 mt-1">El sistema generará una contraseña segura de 12 caracteres</p>
+                            </div>
+                        </label>
+                        <label class="flex items-start cursor-pointer p-3 border-2 border-gray-300 rounded-lg hover:border-blue-500 transition" id="labelManual">
+                            <input type="radio" name="metodo_password" value="manual"
+                                class="mt-1 w-4 h-4 text-blue-600 focus:ring-blue-500" onchange="alternarMetodoPassword()">
+                            <div class="ml-3">
+                                <span class="font-medium text-gray-900">Establecer contraseña manualmente</span>
+                                <p class="text-xs text-gray-600 mt-1">Ingrese una contraseña personalizada</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Contraseña Automática -->
+                <div id="passwordAutomaticaSection" class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Contraseña Generada
+                    </label>
+                    <div class="relative">
+                        <input type="text" id="passwordGenerada" readonly
+                            class="w-full px-3 py-2 pr-24 border border-gray-300 rounded-lg bg-gray-50 font-mono text-sm"
+                            placeholder="Click en 'Generar' para crear contraseña">
+                        <button type="button" onclick="copiarPasswordGenerada()"
+                            class="absolute right-12 top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-700" title="Copiar">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </button>
+                        <button type="button" onclick="toggleVisibilidadPasswordGenerada()"
+                            class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700" title="Mostrar/Ocultar">
+                            <svg id="iconoOjoGenerada" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <button type="button" onclick="generarPasswordAutomatica()"
+                        class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Generar Nueva Contraseña
+                    </button>
+                </div>
+
+                <!-- Contraseña Manual -->
+                <div id="passwordManualSection" class="hidden mb-4">
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Nueva Contraseña <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="passwordManual"
+                                    class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Mínimo 8 caracteres"
+                                    oninput="verificarFortalezaPasswordReset()">
+                                <button type="button" onclick="alternarVisibilidadPassword('passwordManual')"
+                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <span id="errorPasswordManual" class="error-message text-red-500 text-xs hidden"></span>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Confirmar Contraseña <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="passwordManualConfirm"
+                                    class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Repita la contraseña"
+                                    oninput="verificarCoincidenciaPasswordReset()">
+                                <button type="button" onclick="alternarVisibilidadPassword('passwordManualConfirm')"
+                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <span id="errorPasswordManualConfirm" class="error-message text-red-500 text-xs hidden"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicador de Fortaleza -->
+                <div class="mb-4">
+                    <div class="flex gap-1">
+                        <div id="resetStrength1" class="h-1 flex-1 bg-gray-200 rounded"></div>
+                        <div id="resetStrength2" class="h-1 flex-1 bg-gray-200 rounded"></div>
+                        <div id="resetStrength3" class="h-1 flex-1 bg-gray-200 rounded"></div>
+                        <div id="resetStrength4" class="h-1 flex-1 bg-gray-200 rounded"></div>
+                    </div>
+                    <p id="resetStrengthLabel" class="text-xs text-gray-500 mt-1">Fortaleza de contraseña</p>
+                </div>
+
+                <!-- Opciones -->
+                <div class="space-y-3 mb-4">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="forzarCambio" checked
+                            class="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded">
+                        <span class="ml-2 text-sm text-gray-700">Forzar cambio de contraseña en próximo login</span>
+                    </label>
+
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="enviarEmail" checked
+                            class="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded">
+                        <span class="ml-2 text-sm text-gray-700">Enviar contraseña por email al usuario</span>
+                    </label>
+
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="cerrarSesiones" checked
+                            class="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded">
+                        <span class="ml-2 text-sm text-gray-700">Cerrar sesiones activas del usuario</span>
+                    </label>
+                </div>
+
+                <!-- Advertencia de Sesión Activa -->
+                <div id="warningSessionActiva" class="hidden mb-4 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                    <div class="flex items-start">
+                        <svg class="w-6 h-6 text-yellow-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <div>
+                            <h4 class="font-semibold text-yellow-800">Este usuario tiene sesiones activas</h4>
+                            <p class="text-sm text-yellow-700 mt-1">
+                                Se recomienda cerrar las sesiones activas para mayor seguridad. La opción está marcada por defecto.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advertencia de Seguridad -->
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                    <div class="flex items-start">
+                        <svg class="w-6 h-6 text-red-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                        <div>
+                            <h4 class="font-semibold text-red-800">Advertencia de Seguridad</h4>
+                            <p class="text-sm text-red-700 mt-1">
+                                Esta acción restablecerá la contraseña del usuario. Si elige enviar por email, asegúrese de que el correo electrónico sea correcto.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3" style="border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;">
+                <button type="button" onclick="cerrarModalRestablecerPassword()"
+                    class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    Cancelar
+                </button>
+                <button type="button" id="btnRestablecerPassword" onclick="confirmarRestablecerPassword()"
+                    class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition">
+                    Restablecer Contraseña
+                </button>
+            </div>
+        </div>
+    </div>
+
     @push('styles')
     <link rel="stylesheet" href="{{ asset('css/admin/usuarios-modal.css') }}">
     @endpush

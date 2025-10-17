@@ -63,6 +63,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('usuarios/{usuario}/actividad', [App\Http\Controllers\Admin\UserController::class, 'getActividad'])
             ->name('usuarios.actividad');
 
+        // Ruta para restablecer contraseña
+        Route::post('api/usuarios/{usuario}/restablecer-password', [App\Http\Controllers\Admin\UserController::class, 'restablecerPassword'])
+            ->name('api.usuarios.restablecer-password');
+
         // API auxiliares
         Route::get('api/areas', [App\Http\Controllers\Admin\UserController::class, 'getAreas'])
             ->name('api.areas');
@@ -70,5 +74,7 @@ Route::middleware(['auth'])->group(function () {
             ->name('api.equipos');
         Route::get('api/roles', [App\Http\Controllers\Admin\UserController::class, 'getRoles'])
             ->name('api.roles');
+        Route::get('api/usuarios/{usuario}', [App\Http\Controllers\Admin\UserController::class, 'show'])
+            ->name('api.usuarios.show');
     });
 });
