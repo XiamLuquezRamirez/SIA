@@ -76,9 +76,12 @@ Route::middleware(['auth'])->group(function () {
             ->name('api.roles');
         Route::get('api/usuarios/{usuario}', [App\Http\Controllers\Admin\UserController::class, 'show'])
             ->name('api.usuarios.show');
+        Route::get('api/usuarios', [App\Http\Controllers\Admin\UserController::class, 'getUsuariosForSelect'])
+            ->name('api.usuarios');
 
 
         // Rutas para historia de usuario dependencias
         Route::resource('dependencias', App\Http\Controllers\Admin\DependenciasController::class);
+        Route::post('guardar-dependencia', [App\Http\Controllers\Admin\DependenciasController::class, 'guardarDependencia'])->name('guardar-dependencia');
     });
 });

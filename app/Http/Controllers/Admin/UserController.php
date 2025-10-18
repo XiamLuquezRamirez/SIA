@@ -808,4 +808,16 @@ class UserController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Get users for select
+     */
+    public function getUsuariosForSelect()
+    {
+        $usuarios = User::where('activo', true)->select('id', 'nombre', 'apellidos')->get();
+        return response()->json([
+            'usuarios' => $usuarios,
+            'total' => $usuarios->count(),
+        ]); 
+    }
 }

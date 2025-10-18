@@ -9,7 +9,7 @@ class Dependencia extends Model
 {
     use HasFactory;
 
-    protected $table = 'dependencias';
+    protected $table = 'areas';
 
     protected $fillable = [
         'nombre',
@@ -24,5 +24,15 @@ class Dependencia extends Model
     public function coordinador()
     {
         return $this->belongsTo(User::class, 'coordinador_id');
+    }
+
+    public function equipos()
+    {
+        return $this->hasMany(Equipo::class, 'area_id');
+    }
+
+    public function funcionarios()
+    {
+        return $this->hasMany(User::class, 'area_id');
     }
 }
