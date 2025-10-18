@@ -30,21 +30,24 @@
     <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200">
         <div class="px-3 py-3 lg:px-5 lg:pl-3">
             <div class="flex items-center justify-between">
-                <div class="flex items-center justify-start">
-                    <!-- Toggle Sidebar (Mobile) -->
+                <!-- Toggle Sidebar (Mobile) - Izquierda -->
+                <div class="flex items-center w-20">
                     <button @click="sidebarOpen = !sidebarOpen" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100">
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
                         </svg>
                     </button>
-                    <!-- Logo -->
-                    <a href="{{ route('dashboard') }}" class="flex ml-2 md:mr-24">
-                        <span class="self-center text-xl font-semibold whitespace-nowrap">SIA OAPM</span>
+                </div>
+
+                <!-- Logo - Centro -->
+                <div class="flex-1 flex items-center justify-center">
+                    <a href="{{ route('dashboard') }}" class="flex items-center justify-center">
+                        <img src="{{ asset('images/logo.png') }}" alt="Logo SIA" class="h-16 w-auto object-contain">
                     </a>
                 </div>
 
-                <!-- Usuario -->
-                <div class="flex items-center" x-data="{ dropdownOpen: false }">
+                <!-- Usuario - Derecha -->
+                <div class="flex items-center justify-end w-20" x-data="{ dropdownOpen: false }">
                     <button @click="dropdownOpen = !dropdownOpen" class="flex items-center text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300">
                         <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-semibold">
                             {{ substr(auth()->user()->nombre, 0, 1) }}{{ substr(auth()->user()->apellidos, 0, 1) }}
@@ -78,7 +81,7 @@
     </nav>
 
     <!-- Sidebar -->
-    <aside class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform bg-white border-r border-gray-200 md:translate-x-0"
+    <aside class="fixed top-0 left-0 z-40 w-64 h-screen pt-24 transition-transform bg-white border-r border-gray-200 md:translate-x-0"
            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
         <div class="h-full px-3 pb-4 overflow-y-auto">
             <ul class="space-y-2 font-medium">
@@ -146,7 +149,7 @@
     </aside>
 
     <!-- Main Content -->
-    <div class="p-4 md:ml-64 mt-14">
+    <div class="p-4 md:ml-64 mt-20">
         <!-- Alertas -->
         @if(session('success'))
             <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50" role="alert">
