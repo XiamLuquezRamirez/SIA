@@ -259,8 +259,8 @@ class UserController extends Controller
         }
 
         // Verificar si cambió el área
-        $cambioArea = $user->area_id != $validated['area_id'];
-        $cambioEquipo = $user->equipo_id != $validated['equipo_id'];
+        $cambioArea = $user->area_id != ($validated['area_id'] ?? null);
+        $cambioEquipo = $user->equipo_id != ($validated['equipo_id'] ?? null);
 
         // Si cambió área o equipo y hay tareas activas, requerir motivo
         if (($cambioArea || $cambioEquipo) && $user->tipo_usuario === 'interno') {
@@ -326,6 +326,13 @@ class UserController extends Controller
                 Storage::disk('public')->delete($user->foto_url);
             }
             $validated['foto_url'] = $request->file('foto')->store('usuarios', 'public');
+        }
+
+        // Si el usuario es externo, asegurar que campos laborales sean null
+        if ($validated['tipo_usuario'] === 'externo') {
+            $validated['area_id'] = null;
+            $validated['equipo_id'] = null;
+            $validated['cargo'] = null;
         }
 
         // Actualizar usuario
