@@ -96,6 +96,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('api.equipos');
         Route::get('api/usuarios/{usuario}', [App\Http\Controllers\Admin\UserController::class, 'show'])
             ->name('api.usuarios.show');
+        Route::get('api/usuarios', [App\Http\Controllers\Admin\UserController::class, 'getUsuariosForSelect'])
+            ->name('api.usuarios');
 
         // Rutas API para gestión de roles
         Route::get('api/roles', [App\Http\Controllers\Admin\RoleController::class, 'index'])
@@ -129,5 +131,9 @@ Route::middleware(['auth'])->group(function () {
             ->name('activity-logs.activities');
         Route::get('activity-logs/stats', [App\Http\Controllers\Admin\ActivityLogController::class, 'getStats'])
             ->name('activity-logs.stats');
+        Route::post('guardar-dependencia', [App\Http\Controllers\Admin\DependenciasController::class, 'guardarDependencia'])->name('guardar-dependencia');
+        Route::get('dependencias/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'show'])->name('dependencias.show');
+        Route::post('editar-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'update'])->name('editar-dependencia');
+        Route::post('alternar-estado-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'alternarEstadoDependencia'])->name('alternar-estado-dependencia');
     });
 });

@@ -1179,4 +1179,16 @@ class UserController extends Controller
             'errores' => $errores,
         ], $fallidos > 0 && $exitosos === 0 ? 422 : 200);
     }
+
+    /**
+     * Get users for select
+     */
+    public function getUsuariosForSelect()
+    {
+        $usuarios = User::where('activo', true)->select('id', 'nombre', 'apellidos')->get();
+        return response()->json([
+            'usuarios' => $usuarios,
+            'total' => $usuarios->count(),
+        ]); 
+    }
 }
