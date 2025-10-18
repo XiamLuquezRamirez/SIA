@@ -2898,8 +2898,13 @@ async function confirmarRestablecerPassword() {
     }
 }
 
+/**
+ * Ver actividad completa del usuario
+ * Redirige al historial de actividades filtrado por el usuario
+ */
 function verActividad(id) {
-    alert(`Ver actividad usuario ${id} - Próximo paso`);
+    // Redirigir al historial de actividades con el filtro del usuario
+    window.location.href = `/admin/activity-logs?user_id=${id}`;
 }
 
 function exportarMasivo() {
