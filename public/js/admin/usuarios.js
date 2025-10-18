@@ -98,6 +98,111 @@ async function manejarRespuestaFetch(response) {
     return response;
 }
 
+// ========================================
+// HELPERS DE SWEETALERT2
+// ========================================
+
+/**
+ * Mostrar alerta de éxito
+ */
+function mostrarExito(mensaje, titulo = '¡Éxito!') {
+    return Swal.fire({
+        icon: 'success',
+        title: titulo,
+        text: mensaje,
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Aceptar'
+    });
+}
+
+/**
+ * Mostrar alerta de error
+ */
+function mostrarErrorAlerta(mensaje, titulo = 'Error') {
+    return Swal.fire({
+        icon: 'error',
+        title: titulo,
+        text: mensaje,
+        confirmButtonColor: '#dc2626',
+        confirmButtonText: 'Aceptar'
+    });
+}
+
+/**
+ * Mostrar alerta de advertencia
+ */
+function mostrarAdvertencia(mensaje, titulo = 'Advertencia') {
+    return Swal.fire({
+        icon: 'warning',
+        title: titulo,
+        text: mensaje,
+        confirmButtonColor: '#f59e0b',
+        confirmButtonText: 'Aceptar'
+    });
+}
+
+/**
+ * Mostrar alerta de información
+ */
+function mostrarInfo(mensaje, titulo = 'Información') {
+    return Swal.fire({
+        icon: 'info',
+        title: titulo,
+        text: mensaje,
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Aceptar'
+    });
+}
+
+/**
+ * Mostrar confirmación
+ */
+async function mostrarConfirmacion(opciones = {}) {
+    const defaultOptions = {
+        title: '¿Está seguro?',
+        text: "Esta acción no se puede deshacer",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Sí, confirmar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+    };
+
+    const result = await Swal.fire({...defaultOptions, ...opciones});
+    return result.isConfirmed;
+}
+
+/**
+ * Reemplazar función mostrarToast para usar SweetAlert2 Toast
+ */
+function mostrarToast(message, type = 'success') {
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+    });
+
+    const icons = {
+        'success': 'success',
+        'error': 'error',
+        'warning': 'warning',
+        'info': 'info'
+    };
+
+    Toast.fire({
+        icon: icons[type] || 'success',
+        title: message
+    });
+}
+
 // Estado global
 let currentPage = 1;
 let currentFilters = {
@@ -560,20 +665,6 @@ function limpiarSeleccion() {
     actualizarBarraAccionesMasivas();
 }
 
-// Mostrar toast
-function mostrarToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white ${
-        type === 'success' ? 'bg-green-500' : 'bg-red-500'
-    } z-50`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
-}
-
 // ========================================
 // MODAL DE CREACIÓN/EDICIÓN DE USUARIOS
 // ========================================
@@ -618,37 +709,23 @@ function abrirModalCrear() {
 }
 
 // Cerrar modal con confirmación
-function cerrarModalConConfirmacion() {
+async function cerrarModalConConfirmacion() {
     if (formChanged) {
-        const confirmDialog = document.createElement('div');
-        confirmDialog.innerHTML = `
-            <div class="confirmation-overlay" id="confirmOverlay"></div>
-            <div class="confirmation-dialog">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">¿Descartar cambios?</h3>
-                <p class="text-gray-600 mb-6">Hay cambios sin guardar. ¿Estás seguro de que deseas salir?</p>
-                <div class="flex gap-3 justify-end">
-                    <button onclick="cancelarCierre()" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                        Continuar Editando
-                    </button>
-                    <button onclick="confirmarCierre()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                        Descartar
-                    </button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(confirmDialog);
+        const confirmado = await mostrarConfirmacion({
+            title: '¿Descartar cambios?',
+            text: 'Hay cambios sin guardar. ¿Estás seguro de que deseas salir?',
+            confirmButtonText: 'Sí, descartar',
+            cancelButtonText: 'Continuar editando',
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#2563eb'
+        });
+
+        if (confirmado) {
+            cerrarModal();
+        }
     } else {
         cerrarModal();
     }
-}
-
-function cancelarCierre() {
-    document.querySelector('.confirmation-overlay').parentElement.remove();
-}
-
-function confirmarCierre() {
-    document.querySelector('.confirmation-overlay').parentElement.remove();
-    cerrarModal();
 }
 
 function cerrarModal() {
@@ -1686,8 +1763,15 @@ function gestionarRolesUsuario() {
     gestionarRoles(idUsuarioVistaActual);
 }
 
-function removerRolUsuario(nombreRol) {
-    if (confirm(`¿Está seguro de remover el rol "${nombreRol}"?`)) {
+async function removerRolUsuario(nombreRol) {
+    const confirmado = await mostrarConfirmacion({
+        title: '¿Remover Rol?',
+        text: `¿Está seguro de remover el rol "${nombreRol}" de este usuario?`,
+        confirmButtonText: 'Sí, remover',
+        confirmButtonColor: '#dc2626'
+    });
+
+    if (confirmado) {
         // TODO: Implementar remoción de rol
         mostrarToast('Funcionalidad próximamente', 'info');
     }
@@ -3875,129 +3959,95 @@ function validarFormularioFinalEdit() {
     return isValid;
 }
 
-function mostrarConfirmacionCoordinador() {
-    return new Promise((resolve) => {
-        const dialog = document.createElement('div');
-        dialog.innerHTML = `
-            <div class="confirmation-overlay"></div>
-            <div class="confirmation-dialog">
-                <div class="flex items-start mb-4">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-lg font-semibold text-gray-900">Usuario es Coordinador</h3>
-                        <p class="text-sm text-gray-600 mt-2">
-                            Este usuario es Coordinador del área <strong>${userMetadata.area_coordinada.nombre}</strong>.
-                            Al cambiar el área, será removido automáticamente como coordinador.
-                        </p>
-                        <p class="text-sm text-gray-600 mt-2 font-semibold">
-                            ¿Desea continuar con el cambio?
-                        </p>
-                    </div>
-                </div>
-                <div class="flex gap-3 justify-end">
-                    <button onclick="this.closest('div').parentElement.remove(); window.confirmResult(false)"
-                            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                        Cancelar Cambio
-                    </button>
-                    <button onclick="this.closest('div').parentElement.remove(); window.confirmResult(true)"
-                            class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700">
-                        Remover y Continuar
-                    </button>
-                </div>
+async function mostrarConfirmacionCoordinador() {
+    const result = await Swal.fire({
+        title: 'Usuario es Coordinador',
+        html: `
+            <div class="text-left">
+                <p class="text-gray-600 mb-3">
+                    Este usuario es Coordinador del área <strong>${userMetadata.area_coordinada.nombre}</strong>.
+                </p>
+                <p class="text-gray-600">
+                    Al cambiar el área, será removido automáticamente como coordinador.
+                </p>
+                <p class="text-gray-900 font-semibold mt-3">
+                    ¿Desea continuar con el cambio?
+                </p>
             </div>
-        `;
-        document.body.appendChild(dialog);
-
-        window.confirmResult = (result) => {
-            resolve(result);
-            delete window.confirmResult;
-        };
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#f59e0b',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Remover y Continuar',
+        cancelButtonText: 'Cancelar Cambio',
+        reverseButtons: true
     });
+
+    return result.isConfirmed;
 }
 
-function mostrarConfirmacionLider() {
-    return new Promise((resolve) => {
-        const dialog = document.createElement('div');
-        dialog.innerHTML = `
-            <div class="confirmation-overlay"></div>
-            <div class="confirmation-dialog">
-                <div class="flex items-start mb-4">
-                    <div class="flex-shrink-0">
-                        <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-lg font-semibold text-gray-900">Usuario es Líder</h3>
-                        <p class="text-sm text-gray-600 mt-2">
-                            Este usuario es Líder del equipo <strong>${userMetadata.equipo_liderado.nombre}</strong>.
-                            Al cambiar el equipo, será removido automáticamente como líder.
-                        </p>
-                        <p class="text-sm text-gray-600 mt-2 font-semibold">
-                            ¿Desea continuar con el cambio?
-                        </p>
-                    </div>
-                </div>
-                <div class="flex gap-3 justify-end">
-                    <button onclick="this.closest('div').parentElement.remove(); window.confirmLiderResult(false)"
-                            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                        Cancelar Cambio
-                    </button>
-                    <button onclick="this.closest('div').parentElement.remove(); window.confirmLiderResult(true)"
-                            class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700">
-                        Remover y Continuar
-                    </button>
-                </div>
+async function mostrarConfirmacionLider() {
+    const result = await Swal.fire({
+        title: 'Usuario es Líder',
+        html: `
+            <div class="text-left">
+                <p class="text-gray-600 mb-3">
+                    Este usuario es Líder del equipo <strong>${userMetadata.equipo_liderado.nombre}</strong>.
+                </p>
+                <p class="text-gray-600">
+                    Al cambiar el equipo, será removido automáticamente como líder.
+                </p>
+                <p class="text-gray-900 font-semibold mt-3">
+                    ¿Desea continuar con el cambio?
+                </p>
             </div>
-        `;
-        document.body.appendChild(dialog);
-
-        window.confirmLiderResult = (result) => {
-            resolve(result);
-            delete window.confirmLiderResult;
-        };
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#f59e0b',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Remover y Continuar',
+        cancelButtonText: 'Cancelar Cambio',
+        reverseButtons: true
     });
+
+    return result.isConfirmed;
 }
 
-function mostrarDialogoCambioMotivo() {
-    return new Promise((resolve) => {
-        const dialog = document.createElement('div');
-        dialog.innerHTML = `
-            <div class="confirmation-overlay"></div>
-            <div class="confirmation-dialog">
-                <div class="mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Motivo del Cambio</h3>
-                    <p class="text-sm text-gray-600 mb-4">
-                        Por favor, indique el motivo del cambio de área/equipo:
-                    </p>
-                    <textarea id="motivoCambio" rows="4"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder="Ej: Reestructuración organizacional, cambio de funciones, etc."></textarea>
-                    <p class="text-xs text-gray-500 mt-1">Este motivo quedará registrado en el historial de cambios</p>
-                </div>
-                <div class="flex gap-3 justify-end">
-                    <button onclick="this.closest('div').parentElement.remove(); window.motivoResult(null)"
-                            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                        Cancelar
-                    </button>
-                    <button onclick="const motivo = document.getElementById('motivoCambio').value.trim(); if(!motivo) { alert('Debe ingresar un motivo'); return; } this.closest('div').parentElement.remove(); window.motivoResult(motivo)"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        Continuar
-                    </button>
-                </div>
+async function mostrarDialogoCambioMotivo() {
+    const result = await Swal.fire({
+        title: 'Motivo del Cambio',
+        html: `
+            <div class="text-left mb-4">
+                <p class="text-gray-600 mb-4">
+                    Por favor, indique el motivo del cambio de área/equipo:
+                </p>
+                <p class="text-xs text-gray-500">
+                    Este motivo quedará registrado en el historial de cambios
+                </p>
             </div>
-        `;
-        document.body.appendChild(dialog);
-
-        window.motivoResult = (result) => {
-            resolve(result);
-            delete window.motivoResult;
-        };
+        `,
+        input: 'textarea',
+        inputPlaceholder: 'Ej: Reestructuración organizacional, cambio de funciones, etc.',
+        inputAttributes: {
+            rows: 4,
+            'aria-label': 'Motivo del cambio'
+        },
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Continuar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        inputValidator: (value) => {
+            if (!value || !value.trim()) {
+                return 'Debe ingresar un motivo para el cambio';
+            }
+        }
     });
+
+    return result.isConfirmed ? result.value : null;
 }
 
 function actualizarFilaUsuario(user) {
