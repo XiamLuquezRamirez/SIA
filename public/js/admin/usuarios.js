@@ -402,8 +402,19 @@ function mostrarCargadorEsqueleto() {
 // Cargar áreas
 async function cargarAreas() {
     try {
-        const response = await fetch('/admin/api/areas');
-        const areas = await response.json();
+        const response = await fetch('/admin/api/areas', {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error al cargar áreas: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const areas = data.areas || [];
 
         const select = document.getElementById('filterArea');
         select.innerHTML = '<option value="">Todas las áreas</option>' +
@@ -430,8 +441,19 @@ async function cargarEquipos(areaId) {
 // Cargar roles
 async function cargarRoles() {
     try {
-        const response = await fetch('/admin/api/roles');
-        const roles = await response.json();
+        const response = await fetch('/admin/api/roles', {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error al cargar roles: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const roles = data.roles || [];
 
         const select = document.getElementById('filterRol');
         select.innerHTML = '<option value="">Todos los roles</option>' +
@@ -814,8 +836,19 @@ function alternarTipoUsuario() {
 // Cargar áreas para el modal
 async function cargarAreasForModal() {
     try {
-        const response = await fetch('/admin/api/areas');
-        const areas = await response.json();
+        const response = await fetch('/admin/api/areas', {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error al cargar áreas: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const areas = data.areas || [];
         availableAreas = areas;
 
         const select = document.getElementById('area_id');
@@ -1427,12 +1460,12 @@ function cambiarTabVista(nombreTab) {
 
 async function cargarActividadUsuario() {
     const contenedor = document.getElementById('viewActividadList');
-    
+
     if (!contenedor) {
         console.warn('Contenedor viewActividadList no encontrado');
         return;
     }
-    
+
     // Mostrar loader
     contenedor.innerHTML = `
         <div class="animate-pulse space-y-4">
@@ -1447,40 +1480,102 @@ async function cargarActividadUsuario() {
             `).join('')}
         </div>
     `;
-    
+
     try {
-        const response = await fetch(`/admin/usuarios/${idUsuarioVistaActual}/actividad`);
-        
+        const response = await fetch(`/admin/usuarios/${idUsuarioVistaActual}/actividad?limit=20`);
+
         // Manejar sesión expirada
         await manejarRespuestaFetch(response);
-        
+
         if (!response.ok) throw new Error('Error al cargar actividad');
-        
+
         const data = await response.json();
-        
+
         if (data.actividades && data.actividades.length > 0) {
             contenedor.innerHTML = `
-                <div class="relative border-l-2 border-gray-200 ml-4">
-                    ${data.actividades.map((actividad, indice) => `
+                <div class="mb-4 flex items-center justify-between">
+                    <p class="text-sm text-gray-600">
+                        Mostrando ${data.actividades.length} de ${data.total} actividades
+                    </p>
+                    <div class="flex gap-2">
+                        <select id="filterActivityType" class="text-xs border-gray-300 rounded px-2 py-1" onchange="filtrarActividades()">
+                            <option value="">Todos los tipos</option>
+                            <option value="auth">Autenticación</option>
+                            <option value="user_management">Gestión de Usuarios</option>
+                            <option value="role_management">Gestión de Roles</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="relative border-l-2 border-gray-200 ml-4 max-h-96 overflow-y-auto">
+                    ${data.actividades.map((actividad, indice) => {
+                        const colorClasses = obtenerColorSeveridad(actividad.severity);
+                        const badgeImportante = actividad.is_important ?
+                            '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 ml-2">Importante</span>' : '';
+
+                        return `
                         <div class="mb-6 ml-6">
-                            <div class="absolute w-8 h-8 bg-blue-100 rounded-full -left-4 flex items-center justify-center">
-                                ${obtenerIconoActividad(actividad.tipo)}
+                            <div class="absolute w-8 h-8 ${colorClasses.bg} rounded-full -left-4 flex items-center justify-center">
+                                ${obtenerIconoActividad(actividad.tipo || actividad.event)}
                             </div>
-                            <div class="bg-white border border-gray-200 rounded-lg p-4">
-                                <div class="flex items-center justify-between mb-1">
-                                    <h5 class="font-semibold text-gray-900">${actividad.descripcion}</h5>
-                                    <span class="text-xs text-gray-500">${formatearFechaActividad(actividad.fecha)}</span>
+                            <div class="bg-white border ${colorClasses.border} rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div class="flex items-start justify-between mb-2">
+                                    <div class="flex-1">
+                                        <div class="flex items-center">
+                                            <h5 class="font-semibold text-gray-900">${escapeHtml(actividad.descripcion)}</h5>
+                                            ${badgeImportante}
+                                        </div>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorClasses.badge} mt-1">
+                                            ${escapeHtml(actividad.log_name || 'general')}
+                                        </span>
+                                    </div>
+                                    <span class="text-xs text-gray-500 whitespace-nowrap ml-2">${escapeHtml(actividad.fecha_relativa || formatearFechaActividad(actividad.fecha))}</span>
                                 </div>
-                                <p class="text-sm text-gray-600">IP: ${actividad.ip}</p>
+                                <div class="text-sm text-gray-600 space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <span>${escapeHtml(actividad.fecha)}</span>
+                                    </div>
+                                    ${actividad.ip_address || actividad.ip ? `
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                                        </svg>
+                                        <span>IP: ${escapeHtml(actividad.ip_address || actividad.ip)}</span>
+                                    </div>
+                                    ` : ''}
+                                    ${actividad.method && actividad.url ? `
+                                    <div class="flex items-center gap-2 text-xs">
+                                        <span class="px-2 py-0.5 bg-gray-100 rounded font-mono">${escapeHtml(actividad.method)}</span>
+                                        <span class="text-gray-500 truncate">${escapeHtml(actividad.url)}</span>
+                                    </div>
+                                    ` : ''}
+                                    ${actividad.changes && actividad.changes.length > 0 ? `
+                                    <div class="mt-2 pt-2 border-t border-gray-200">
+                                        <p class="text-xs font-semibold text-gray-700 mb-1">Cambios realizados:</p>
+                                        <div class="space-y-1">
+                                            ${actividad.changes.map(change => `
+                                                <div class="text-xs bg-gray-50 rounded px-2 py-1">
+                                                    <span class="font-medium">${escapeHtml(String(change.field))}:</span>
+                                                    <span class="text-red-600">${escapeHtml(String(change.old || 'null'))}</span>
+                                                    →
+                                                    <span class="text-green-600">${escapeHtml(String(change.new || 'null'))}</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                    ` : ''}
+                                </div>
                             </div>
                         </div>
-                    `).join('')}
+                    `}).join('')}
                 </div>
             `;
         } else {
             contenedor.innerHTML = '<p class="text-gray-500 text-center py-8">No hay actividad registrada</p>';
         }
-        
+
     } catch (error) {
         console.error('Error al cargar actividad:', error);
         if (error.message !== 'Sesión expirada' && error.message !== 'No encontrado - Redirigiendo') {
@@ -1493,12 +1588,43 @@ async function cargarActividadUsuario() {
 
 function obtenerIconoActividad(tipo) {
     const iconos = {
-        'login': '<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>',
-        'logout': '<svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>',
-        'update': '<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>',
-        'create': '<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>',
+        'logged_in': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>',
+        'logged_out': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>',
+        'updated': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>',
+        'created': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>',
+        'deleted': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>',
+        'login': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>',
+        'logout': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>',
+        'update': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>',
+        'create': '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>',
     };
     return iconos[tipo] || iconos['update'];
+}
+
+function obtenerColorSeveridad(severity) {
+    const colores = {
+        'info': {
+            bg: 'bg-blue-100',
+            border: 'border-blue-200',
+            badge: 'bg-blue-100 text-blue-800'
+        },
+        'warning': {
+            bg: 'bg-yellow-100',
+            border: 'border-yellow-200',
+            badge: 'bg-yellow-100 text-yellow-800'
+        },
+        'error': {
+            bg: 'bg-red-100',
+            border: 'border-red-200',
+            badge: 'bg-red-100 text-red-800'
+        },
+        'critical': {
+            bg: 'bg-red-200',
+            border: 'border-red-300',
+            badge: 'bg-red-200 text-red-900'
+        }
+    };
+    return colores[severity] || colores['info'];
 }
 
 function formatearFechaActividad(cadenaFecha) {
@@ -1528,6 +1654,14 @@ function cerrarModalVerUsuario() {
     idUsuarioVistaActual = null;
     tabVistaActual = 'personal';
     datosDetalleUsuario = null;
+}
+
+// Función para escapar HTML y prevenir XSS
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
 }
 
 // Funciones auxiliares del modal
@@ -1560,8 +1694,13 @@ function removerRolUsuario(nombreRol) {
 }
 
 function verActividadCompleta() {
-    // TODO: Implementar vista completa de actividad
-    mostrarToast('Vista completa de actividad próximamente', 'info');
+    if (!idUsuarioVistaActual) {
+        console.warn('No hay usuario seleccionado');
+        return;
+    }
+
+    // Redirigir al historial de actividades con el filtro del usuario
+    window.location.href = `/admin/activity-logs?user_id=${idUsuarioVistaActual}`;
 }
 
 // ========================================
@@ -2014,8 +2153,400 @@ async function eliminarUsuario(id) {
     }
 }
 
-function gestionarRoles(id) {
-    alert(`Gestionar roles usuario ${id} - Próximo paso`);
+// ========================================
+// GESTIONAR ROLES
+// ========================================
+
+let manageRolesUserId = null;
+let rolesOriginales = [];
+let rolesTemporales = [];
+let todosLosRoles = [];
+let todosLosPermisos = {};
+
+async function gestionarRoles(id) {
+    manageRolesUserId = id;
+    rolesTemporales = [];
+
+    try {
+        // Obtener datos del usuario
+        const userResponse = await fetch(`/admin/api/usuarios/${id}`);
+        if (!userResponse.ok) throw new Error('Error al cargar usuario');
+        const userData = await userResponse.json();
+        const user = userData.user;
+
+        // Mostrar datos del usuario en el modal
+        document.getElementById('manageRolesTitle').textContent = `Gestionar Roles de ${user.nombre} ${user.apellidos}`;
+        document.getElementById('manageRolesUserName').textContent = `${user.nombre} ${user.apellidos}`;
+        document.getElementById('manageRolesUserEmail').textContent = user.email;
+
+        // Foto de perfil
+        const photoContainer = document.getElementById('manageRolesUserPhoto');
+        if (user.foto) {
+            photoContainer.innerHTML = `<img src="/storage/${user.foto}" alt="${user.nombre}" class="w-full h-full object-cover">`;
+        } else {
+            const iniciales = user.nombre.charAt(0) + user.apellidos.charAt(0);
+            photoContainer.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-purple-600 text-white text-xl font-semibold">${iniciales}</div>`;
+        }
+
+        // Cargar todos los roles disponibles
+        const rolesResponse = await fetch('/admin/api/roles', {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        });
+        if (!rolesResponse.ok) throw new Error('Error al cargar roles');
+        const rolesData = await rolesResponse.json();
+        todosLosRoles = rolesData.roles;
+
+        // Guardar roles originales
+        rolesOriginales = user.roles ? user.roles.map(r => ({
+            id: r.id,
+            name: r.name,
+            permissions: r.permissions || []
+        })) : [];
+
+        // Inicializar roles temporales con los originales
+        rolesTemporales = [...rolesOriginales];
+
+        // Renderizar roles actuales
+        renderizarRolesActuales();
+
+        // Cargar roles disponibles en el select
+        cargarRolesDisponibles();
+
+        // Actualizar vista previa de permisos
+        actualizarVistaPreviaPermisos();
+
+        // Verificar si tiene sesión activa (simulado por ahora)
+        // En producción, esto vendría del backend
+        const tieneSesionActiva = user.ultimo_acceso !== null;
+        if (tieneSesionActiva) {
+            document.getElementById('warningSessionActivaRoles').classList.remove('hidden');
+        } else {
+            document.getElementById('warningSessionActivaRoles').classList.add('hidden');
+        }
+
+        // Mostrar modal
+        document.getElementById('manageRolesModal').classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error:', error);
+        await Swal.fire({
+            title: 'Error',
+            text: 'No se pudo cargar la información del usuario',
+            icon: 'error',
+            confirmButtonColor: '#3b82f6'
+        });
+    }
+}
+
+function renderizarRolesActuales() {
+    const container = document.getElementById('rolesActualesContainer');
+
+    if (rolesTemporales.length === 0) {
+        container.innerHTML = '<p style="color: #6b7280; font-size: 0.875rem;">Sin roles asignados</p>';
+        return;
+    }
+
+    container.innerHTML = '<div style="display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>';
+    const badgesContainer = container.querySelector('div');
+
+    rolesTemporales.forEach(rol => {
+        const badge = document.createElement('span');
+        badge.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium';
+        badge.style.backgroundColor = obtenerColorRol(rol.name).bg;
+        badge.style.color = obtenerColorRol(rol.name).text;
+
+        badge.innerHTML = `
+            ${rol.name}
+            <button type="button" onclick="removerRolTemporal(${rol.id})" style="color: inherit; opacity: 0.7; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
+                <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        `;
+
+        badgesContainer.appendChild(badge);
+    });
+}
+
+function cargarRolesDisponibles() {
+    const select = document.getElementById('selectRolesDisponibles');
+    select.innerHTML = '<option value="">Seleccione un rol...</option>';
+
+    // Filtrar roles que ya están asignados
+    const rolesAsignadosIds = rolesTemporales.map(r => r.id);
+    const rolesDisponibles = todosLosRoles.filter(r => !rolesAsignadosIds.includes(r.id));
+
+    rolesDisponibles.forEach(rol => {
+        const option = document.createElement('option');
+        option.value = rol.id;
+        option.textContent = rol.name;
+        option.dataset.permissions = JSON.stringify(rol.permissions || []);
+        select.appendChild(option);
+    });
+
+    // Mostrar/ocultar vista previa cuando cambie la selección
+    select.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const vistaPreviaDiv = document.getElementById('vistaPreviaRolSeleccionado');
+        const permisosDiv = document.getElementById('permisosRolSeleccionado');
+
+        if (this.value) {
+            const permisos = JSON.parse(selectedOption.dataset.permissions);
+            if (permisos.length > 0) {
+                permisosDiv.innerHTML = permisos.map(p => `<div style="padding: 0.25rem 0;">• ${p.name}</div>`).join('');
+                vistaPreviaDiv.classList.remove('hidden');
+            } else {
+                permisosDiv.innerHTML = '<p style="color: #6b7280;">Sin permisos asignados a este rol</p>';
+                vistaPreviaDiv.classList.remove('hidden');
+            }
+        } else {
+            vistaPreviaDiv.classList.add('hidden');
+        }
+    });
+}
+
+function agregarRolTemporal() {
+    const select = document.getElementById('selectRolesDisponibles');
+    const rolId = parseInt(select.value);
+
+    if (!rolId) return;
+
+    // Buscar el rol en todos los roles
+    const rol = todosLosRoles.find(r => r.id === rolId);
+    if (!rol) return;
+
+    // Agregar a roles temporales
+    rolesTemporales.push({
+        id: rol.id,
+        name: rol.name,
+        permissions: rol.permissions || []
+    });
+
+    // Actualizar UI
+    renderizarRolesActuales();
+    cargarRolesDisponibles();
+    actualizarVistaPreviaPermisos();
+
+    // Limpiar selección
+    select.value = '';
+    document.getElementById('vistaPreviaRolSeleccionado').classList.add('hidden');
+}
+
+async function removerRolTemporal(rolId) {
+    // Validar que tenga al menos un rol
+    if (rolesTemporales.length === 1) {
+        await Swal.fire({
+            title: 'No se puede remover',
+            text: 'El usuario debe tener al menos un rol',
+            icon: 'error',
+            confirmButtonColor: '#3b82f6'
+        });
+        return;
+    }
+
+    const rol = rolesTemporales.find(r => r.id === rolId);
+    if (!rol) return;
+
+    // Verificar si tiene permisos críticos o es coordinador
+    let advertencias = [];
+
+    // Verificar si es un rol crítico (Super Administrador, Director, Coordinador)
+    const rolesCriticos = ['Super Administrador', 'Director OAPM', 'Coordinador de Área'];
+    if (rolesCriticos.includes(rol.name)) {
+        advertencias.push(`Este rol (${rol.name}) tiene permisos administrativos críticos.`);
+    }
+
+    // Si hay advertencias, mostrar confirmación
+    if (advertencias.length > 0) {
+        const result = await Swal.fire({
+            title: '¿Remover rol crítico?',
+            html: `
+                <p style="color: #374151; margin-bottom: 0.5rem;">Está a punto de remover el rol: <strong>${rol.name}</strong></p>
+                <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 0.75rem; margin-top: 1rem; border-radius: 0.375rem;">
+                    <p style="color: #92400e; font-size: 0.875rem; margin: 0;">${advertencias.join(' ')}</p>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Sí, remover',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
+        });
+
+        if (!result.isConfirmed) return;
+    }
+
+    // Remover el rol
+    rolesTemporales = rolesTemporales.filter(r => r.id !== rolId);
+
+    // Actualizar UI
+    renderizarRolesActuales();
+    cargarRolesDisponibles();
+    actualizarVistaPreviaPermisos();
+}
+
+function actualizarVistaPreviaPermisos() {
+    const container = document.getElementById('vistaPreviaPermisos');
+
+    // Recopilar todos los permisos únicos
+    const permisosMap = new Map();
+
+    rolesTemporales.forEach(rol => {
+        if (rol.permissions) {
+            rol.permissions.forEach(permiso => {
+                if (!permisosMap.has(permiso.id)) {
+                    permisosMap.set(permiso.id, {
+                        id: permiso.id,
+                        name: permiso.name,
+                        modulo: extraerModulo(permiso.name),
+                        esNuevo: !existeEnRolesOriginales(permiso.id)
+                    });
+                }
+            });
+        }
+    });
+
+    // Agrupar por módulo
+    const permisosPorModulo = {};
+    permisosMap.forEach(permiso => {
+        if (!permisosPorModulo[permiso.modulo]) {
+            permisosPorModulo[permiso.modulo] = [];
+        }
+        permisosPorModulo[permiso.modulo].push(permiso);
+    });
+
+    // Renderizar
+    if (Object.keys(permisosPorModulo).length === 0) {
+        container.innerHTML = '<p style="color: #6b7280; font-size: 0.875rem;">Sin permisos asignados</p>';
+        return;
+    }
+
+    let html = '';
+    Object.keys(permisosPorModulo).sort().forEach(modulo => {
+        html += `
+            <div>
+                <h5 style="font-weight: 600; color: #1f2937; font-size: 0.875rem; margin-bottom: 0.5rem;">${modulo}</h5>
+                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                    ${permisosPorModulo[modulo].map(p => `
+                        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: #4b5563;">
+                            <svg style="width: 0.875rem; height: 0.875rem; color: ${p.esNuevo ? '#10b981' : '#6b7280'};" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span>${p.name}</span>
+                            ${p.esNuevo ? '<span style="color: #10b981; font-weight: 500; font-size: 0.625rem;">(Nuevo)</span>' : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function existeEnRolesOriginales(permisoId) {
+    return rolesOriginales.some(rol =>
+        rol.permissions && rol.permissions.some(p => p.id === permisoId)
+    );
+}
+
+function extraerModulo(permisoName) {
+    // Extraer el nombre del módulo del permiso (ej: "usuarios.ver" -> "Usuarios")
+    const partes = permisoName.split('.');
+    if (partes.length > 0) {
+        return partes[0].charAt(0).toUpperCase() + partes[0].slice(1);
+    }
+    return 'General';
+}
+
+function obtenerColorRol(rolName) {
+    const colores = {
+        'Super Administrador': { bg: '#7c3aed', text: '#ffffff' },
+        'Director OAPM': { bg: '#2563eb', text: '#ffffff' },
+        'Coordinador de Área': { bg: '#0891b2', text: '#ffffff' },
+        'Líder de Equipo': { bg: '#059669', text: '#ffffff' },
+        'Funcionario': { bg: '#d97706', text: '#ffffff' },
+        'Ciudadano': { bg: '#6b7280', text: '#ffffff' }
+    };
+    return colores[rolName] || { bg: '#6b7280', text: '#ffffff' };
+}
+
+async function confirmarGuardarRoles() {
+    // Validar que tenga al menos un rol
+    if (rolesTemporales.length === 0) {
+        await Swal.fire({
+            title: 'Error de validación',
+            text: 'El usuario debe tener al menos un rol asignado',
+            icon: 'error',
+            confirmButtonColor: '#3b82f6'
+        });
+        return;
+    }
+
+    // Preparar datos
+    const rolesIds = rolesTemporales.map(r => r.id);
+    const notificar = document.getElementById('notificarCambioRoles').checked;
+    const cerrarSesion = document.getElementById('cerrarSesionUsuario')?.checked || false;
+
+    try {
+        const response = await fetch(`/admin/api/usuarios/${manageRolesUserId}/actualizar-roles`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                roles: rolesIds,
+                notificar: notificar,
+                cerrar_sesion: cerrarSesion
+            })
+        });
+
+        const responseData = await manejarRespuestaFetch(response);
+
+        if (response.ok) {
+            await Swal.fire({
+                title: '¡Roles actualizados!',
+                text: responseData.message || 'Los roles han sido actualizados exitosamente',
+                icon: 'success',
+                confirmButtonColor: '#3b82f6'
+            });
+
+            // Cerrar modal
+            cerrarModalGestionarRoles();
+
+            // Recargar tabla de usuarios para reflejar los cambios
+            await cargarUsuarios();
+        } else {
+            await Swal.fire({
+                title: 'Error',
+                text: responseData.message || 'Error al actualizar roles',
+                icon: 'error',
+                confirmButtonColor: '#3b82f6'
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        await Swal.fire({
+            title: 'Error',
+            text: 'Ocurrió un error al actualizar los roles',
+            icon: 'error',
+            confirmButtonColor: '#3b82f6'
+        });
+    }
+}
+
+function cerrarModalGestionarRoles() {
+    document.getElementById('manageRolesModal').classList.add('hidden');
+    manageRolesUserId = null;
+    rolesTemporales = [];
+    rolesOriginales = [];
+    todosLosRoles = [];
 }
 
 // ========================================
@@ -2395,15 +2926,15 @@ async function cargarRolesForModal() {
         container.innerHTML = '<p class="text-gray-500 text-sm">Cargando roles...</p>';
 
         const response = await fetch(`/admin/api/roles?tipo_usuario=${tipoUsuario}`);
-        const roles = await response.json();
-        availableRoles = roles;
+        const data = await response.json();
+        availableRoles = data.roles || [];
 
-        if (roles.length === 0) {
+        if (!availableRoles || availableRoles.length === 0) {
             container.innerHTML = '<p class="text-gray-500 text-sm">No hay roles disponibles</p>';
             return;
         }
 
-        container.innerHTML = roles.map(role => `
+        container.innerHTML = availableRoles.map(role => `
             <div class="role-checkbox-item">
                 <input type="checkbox"
                        name="roles[]"
@@ -3174,4 +3705,877 @@ function actualizarFilaUsuario(user) {
 
     // Scroll a la fila actualizada
     row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ============================================================================
+// GESTIÓN DE ROLES DEL SISTEMA
+// ============================================================================
+
+// Variables globales para gestión de roles
+let todosLosRolesSistema = [];
+let todasLasAreasParaRoles = [];
+let todosLosPermisosDelSistema = [];
+let rolActualEdicion = null;
+let rolActualPermisos = null;
+let permisosSeleccionados = [];
+
+/**
+ * Cambiar entre vista de usuarios y vista de roles
+ */
+function cambiarVistaUsuariosRoles(vista) {
+    const vistaUsuarios = document.getElementById('vistaUsuarios');
+    const vistaRoles = document.getElementById('vistaRoles');
+    const tabUsuarios = document.getElementById('tabUsuarios');
+    const tabRoles = document.getElementById('tabRoles');
+
+    if (vista === 'usuarios') {
+        vistaUsuarios.classList.remove('hidden');
+        vistaRoles.classList.add('hidden');
+        tabUsuarios.classList.add('active', 'border-blue-600', 'text-blue-600');
+        tabUsuarios.classList.remove('border-transparent', 'text-gray-500');
+        tabRoles.classList.remove('active', 'border-blue-600', 'text-blue-600');
+        tabRoles.classList.add('border-transparent', 'text-gray-500');
+    } else {
+        vistaUsuarios.classList.add('hidden');
+        vistaRoles.classList.remove('hidden');
+        tabRoles.classList.add('active', 'border-blue-600', 'text-blue-600');
+        tabRoles.classList.remove('border-transparent', 'text-gray-500');
+        tabUsuarios.classList.remove('active', 'border-blue-600', 'text-blue-600');
+        tabUsuarios.classList.add('border-transparent', 'text-gray-500');
+
+        // Cargar roles al cambiar a la vista
+        cargarRolesDelSistema();
+    }
+}
+
+/**
+ * Cargar todos los roles del sistema
+ */
+async function cargarRolesDelSistema() {
+    try {
+        const response = await fetch('/admin/api/roles', {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al cargar roles');
+        }
+
+        const data = await response.json();
+        todosLosRolesSistema = data.roles || [];
+
+        // Cargar áreas también
+        await cargarAreasParaRoles();
+
+        // Renderizar los roles
+        renderizarRolesGrid();
+    } catch (error) {
+        console.error('Error al cargar roles:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudieron cargar los roles del sistema'
+        });
+    }
+}
+
+/**
+ * Cargar áreas para los filtros de roles
+ */
+async function cargarAreasParaRoles() {
+    try {
+        const response = await fetch('/admin/api/areas', {
+            method: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`Error al cargar áreas: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Áreas cargadas:', data);
+        todasLasAreasParaRoles = data.areas || [];
+
+        // Poblar select de filtro de área (solo si existe)
+        const filterRolArea = document.getElementById('filterRolArea');
+        if (filterRolArea) {
+            // Limpiar opciones excepto las primeras 2 (placeholder y "Sin área")
+            while (filterRolArea.options.length > 2) {
+                filterRolArea.remove(2);
+            }
+
+            todasLasAreasParaRoles.forEach(area => {
+                const option = document.createElement('option');
+                option.value = area.id;
+                option.textContent = area.nombre;
+                filterRolArea.appendChild(option);
+            });
+        }
+
+        // También poblar los selects de área en los modales
+        const rolAreaId = document.getElementById('rolAreaId');
+        const clonarAreaId = document.getElementById('clonarAreaId');
+
+        [rolAreaId, clonarAreaId].forEach(select => {
+            if (select) {
+                // Limpiar opciones excepto la primera (placeholder "Sin área específica")
+                while (select.options.length > 1) {
+                    select.remove(1);
+                }
+
+                todasLasAreasParaRoles.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.id;
+                    option.textContent = area.nombre;
+                    select.appendChild(option);
+                });
+            }
+        });
+    } catch (error) {
+        console.error('Error al cargar áreas:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudieron cargar las áreas. Por favor, recarga la página.',
+            footer: error.message
+        });
+    }
+}
+
+/**
+ * Renderizar grid de roles
+ */
+function renderizarRolesGrid() {
+    const rolesGrid = document.getElementById('rolesGrid');
+    const noRolesMessage = document.getElementById('noRolesMessage');
+    const skeletons = rolesGrid.querySelectorAll('.role-card-skeleton');
+
+    // Eliminar skeletons
+    skeletons.forEach(skeleton => skeleton.remove());
+
+    // Obtener filtros
+    const searchTerm = document.getElementById('searchRoles').value.toLowerCase();
+    const areaFiltro = document.getElementById('filterRolArea').value;
+    const estadoFiltro = document.getElementById('filterRolEstado').value;
+
+    // Filtrar roles
+    let rolesFiltrados = todosLosRolesSistema.filter(rol => {
+        const matchSearch = !searchTerm ||
+            rol.name.toLowerCase().includes(searchTerm) ||
+            (rol.description && rol.description.toLowerCase().includes(searchTerm));
+
+        const matchArea = !areaFiltro ||
+            (areaFiltro === 'null' && !rol.area_id) ||
+            (rol.area_id && rol.area_id.toString() === areaFiltro);
+
+        const matchEstado = !estadoFiltro ||
+            (estadoFiltro === 'activo' && rol.activo) ||
+            (estadoFiltro === 'inactivo' && !rol.activo);
+
+        return matchSearch && matchArea && matchEstado;
+    });
+
+    if (rolesFiltrados.length === 0) {
+        rolesGrid.classList.add('hidden');
+        noRolesMessage.classList.remove('hidden');
+        return;
+    }
+
+    rolesGrid.classList.remove('hidden');
+    noRolesMessage.classList.add('hidden');
+    rolesGrid.innerHTML = '';
+
+    // Renderizar cada rol como card
+    rolesFiltrados.forEach(rol => {
+        const card = crearCardRol(rol);
+        rolesGrid.appendChild(card);
+    });
+}
+
+/**
+ * Crear card HTML para un rol
+ */
+function crearCardRol(rol) {
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-lg shadow-sm hover:shadow-md transition p-6 border border-gray-200';
+
+    const area = rol.area_id ? todasLasAreasParaRoles.find(a => a.id === rol.area_id) : null;
+    const numPermisos = rol.permissions ? rol.permissions.length : 0;
+    const numUsuarios = rol.users_count || 0;
+
+    // Determinar si es rol del sistema (no editable)
+    const esRolSistema = ['Super Administrador', 'Director OAPM', 'Coordinador de Área',
+                          'Líder de Equipo', 'Funcionario', 'Ciudadano'].includes(rol.name);
+
+    const colorBadge = obtenerColorRol(rol.name);
+
+    card.innerHTML = `
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">${rol.name}</h3>
+                ${esRolSistema ? '<span class="inline-block px-2 py-1 text-xs font-medium rounded-full" style="background-color: #e0e7ff; color: #4338ca;">Sistema</span>' : ''}
+            </div>
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                    </svg>
+                </button>
+                <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                    <div class="py-1">
+                        <button onclick="editarRol(${rol.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            Editar Rol
+                        </button>
+                        <button onclick="gestionarPermisosRol(${rol.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                            </svg>
+                            Gestionar Permisos
+                        </button>
+                        <button onclick="clonarRol(${rol.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            Clonar Rol
+                        </button>
+                        <button onclick="verUsuariosConRol(${rol.id})" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                            Ver Usuarios (${numUsuarios})
+                        </button>
+                        ${!esRolSistema && numUsuarios === 0 ? `
+                        <hr class="my-1">
+                        <button onclick="eliminarRol(${rol.id})" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            Eliminar Rol
+                        </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="text-sm text-gray-600 mb-4 line-clamp-2">${rol.description || 'Sin descripción'}</p>
+
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            ${area ? `
+            <div class="flex items-center text-sm">
+                <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+                <span class="text-gray-700">${area.nombre}</span>
+            </div>
+            ` : '<div></div>'}
+            <div class="flex items-center text-sm">
+                <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <span class="text-gray-700">${numUsuarios} usuario${numUsuarios !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="flex items-center text-sm col-span-2">
+                <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                <span class="text-gray-700">${numPermisos} permiso${numPermisos !== 1 ? 's' : ''}</span>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+            <span class="inline-block px-3 py-1 text-xs font-medium rounded-full" style="background-color: ${rol.activo ? '#d1fae5' : '#fee2e2'}; color: ${rol.activo ? '#065f46' : '#991b1b'};">
+                ${rol.activo ? 'Activo' : 'Inactivo'}
+            </span>
+            <button onclick="gestionarPermisosRol(${rol.id})" class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+                Ver Permisos →
+            </button>
+        </div>
+    `;
+
+    return card;
+}
+
+/**
+ * Filtrar roles según criterios de búsqueda
+ */
+function filtrarRoles() {
+    renderizarRolesGrid();
+}
+
+/**
+ * Abrir modal para crear nuevo rol
+ */
+async function abrirModalCrearRol() {
+    // Asegurar que las áreas estén cargadas
+    if (todasLasAreasParaRoles.length === 0) {
+        await cargarAreasParaRoles();
+    }
+
+    rolActualEdicion = null;
+    document.getElementById('roleModalTitle').textContent = 'Crear Nuevo Rol';
+    document.getElementById('roleForm').reset();
+    document.getElementById('rolActivo').checked = true;
+    document.getElementById('warningRolSistema').classList.add('hidden');
+    document.getElementById('rolNombre').disabled = false;
+    document.getElementById('roleModal').classList.remove('hidden');
+}
+
+/**
+ * Editar rol existente
+ */
+async function editarRol(idRol) {
+    try {
+        // Asegurar que las áreas estén cargadas
+        if (todasLasAreasParaRoles.length === 0) {
+            await cargarAreasParaRoles();
+        }
+
+        const response = await fetch(`/admin/api/roles/${idRol}`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al cargar el rol');
+        }
+
+        const data = await response.json();
+        const rol = data.role;
+        rolActualEdicion = rol;
+
+        // Verificar si es rol del sistema
+        const esRolSistema = ['Super Administrador', 'Director OAPM', 'Coordinador de Área',
+                              'Líder de Equipo', 'Funcionario', 'Ciudadano'].includes(rol.name);
+
+        document.getElementById('roleModalTitle').textContent = 'Editar Rol';
+        document.getElementById('rolNombre').value = rol.name;
+        document.getElementById('rolDescripcion').value = rol.description || '';
+        document.getElementById('rolAreaId').value = rol.area_id || '';
+        document.getElementById('rolActivo').checked = rol.activo;
+
+        if (esRolSistema) {
+            document.getElementById('warningRolSistema').classList.remove('hidden');
+            document.getElementById('rolNombre').disabled = true;
+            document.getElementById('rolAreaId').disabled = true;
+        } else {
+            document.getElementById('warningRolSistema').classList.add('hidden');
+            document.getElementById('rolNombre').disabled = false;
+            document.getElementById('rolAreaId').disabled = false;
+        }
+
+        document.getElementById('roleModal').classList.remove('hidden');
+    } catch (error) {
+        console.error('Error al cargar rol:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo cargar el rol'
+        });
+    }
+}
+
+/**
+ * Cerrar modal de rol
+ */
+function cerrarModalRol() {
+    document.getElementById('roleModal').classList.add('hidden');
+    rolActualEdicion = null;
+}
+
+/**
+ * Manejar submit del formulario de rol
+ */
+document.getElementById('roleForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const formData = {
+        name: document.getElementById('rolNombre').value,
+        description: document.getElementById('rolDescripcion').value,
+        area_id: document.getElementById('rolAreaId').value || null,
+        activo: document.getElementById('rolActivo').checked
+    };
+
+    try {
+        const url = rolActualEdicion
+            ? `/admin/api/roles/${rolActualEdicion.id}`
+            : '/admin/api/roles';
+
+        const method = rolActualEdicion ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al guardar el rol');
+        }
+
+        const data = await response.json();
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: data.message || 'Rol guardado correctamente',
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+        cerrarModalRol();
+        cargarRolesDelSistema();
+    } catch (error) {
+        console.error('Error al guardar rol:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'No se pudo guardar el rol'
+        });
+    }
+});
+
+/**
+ * Gestionar permisos de un rol
+ */
+async function gestionarPermisosRol(idRol) {
+    try {
+        // Cargar rol y permisos
+        const [rolResponse, permisosResponse] = await Promise.all([
+            fetch(`/admin/api/roles/${idRol}`, {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            }),
+            fetch('/admin/api/permisos', {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+        ]);
+
+        if (!rolResponse.ok || !permisosResponse.ok) {
+            throw new Error('Error al cargar datos');
+        }
+
+        const rolData = await rolResponse.json();
+        const permisosData = await permisosResponse.json();
+
+        rolActualPermisos = rolData.role;
+        todosLosPermisosDelSistema = permisosData.permissions || [];
+        permisosSeleccionados = rolActualPermisos.permissions.map(p => p.id);
+
+        // Configurar modal
+        document.getElementById('permisosRolNombre').textContent = rolActualPermisos.name;
+        document.getElementById('permisosRolDescripcion').textContent = rolActualPermisos.description || 'Sin descripción';
+
+        // Renderizar permisos agrupados
+        renderizarPermisosAgrupados();
+        actualizarContadorPermisos();
+
+        document.getElementById('permisosModal').classList.remove('hidden');
+    } catch (error) {
+        console.error('Error al cargar permisos:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudieron cargar los permisos'
+        });
+    }
+}
+
+/**
+ * Renderizar permisos agrupados por módulo
+ */
+function renderizarPermisosAgrupados() {
+    const container = document.getElementById('permisosContainer');
+
+    // Agrupar permisos por módulo
+    const permisosPorModulo = {};
+    todosLosPermisosDelSistema.forEach(permiso => {
+        const modulo = permiso.module || 'General';
+        if (!permisosPorModulo[modulo]) {
+            permisosPorModulo[modulo] = [];
+        }
+        permisosPorModulo[modulo].push(permiso);
+    });
+
+    container.innerHTML = '';
+
+    Object.keys(permisosPorModulo).sort().forEach(modulo => {
+        const permisos = permisosPorModulo[modulo];
+
+        const moduloDiv = document.createElement('div');
+        moduloDiv.className = 'border border-gray-200 rounded-lg p-4 bg-white';
+        moduloDiv.dataset.modulo = modulo;
+
+        moduloDiv.innerHTML = `
+            <div class="flex items-center justify-between mb-3">
+                <h5 class="font-semibold text-gray-900">${modulo}</h5>
+                <button type="button" onclick="toggleModuloPermisos('${modulo}')"
+                    class="text-sm text-indigo-600 hover:text-indigo-800">
+                    Seleccionar todos
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                ${permisos.map(permiso => `
+                    <label class="flex items-center cursor-pointer p-2 hover:bg-gray-50 rounded">
+                        <input type="checkbox" value="${permiso.id}"
+                            ${permisosSeleccionados.includes(permiso.id) ? 'checked' : ''}
+                            onchange="togglePermiso(${permiso.id})"
+                            class="w-4 h-4 text-indigo-600 focus:ring-indigo-500 rounded">
+                        <span class="ml-2 text-sm text-gray-700">${permiso.display_name || permiso.name}</span>
+                    </label>
+                `).join('')}
+            </div>
+        `;
+
+        container.appendChild(moduloDiv);
+    });
+}
+
+/**
+ * Toggle permiso individual
+ */
+function togglePermiso(idPermiso) {
+    const index = permisosSeleccionados.indexOf(idPermiso);
+    if (index > -1) {
+        permisosSeleccionados.splice(index, 1);
+    } else {
+        permisosSeleccionados.push(idPermiso);
+    }
+    actualizarContadorPermisos();
+}
+
+/**
+ * Toggle todos los permisos de un módulo
+ */
+function toggleModuloPermisos(modulo) {
+    const moduloDiv = document.querySelector(`[data-modulo="${modulo}"]`);
+    const checkboxes = moduloDiv.querySelectorAll('input[type="checkbox"]');
+
+    const todosSeleccionados = Array.from(checkboxes).every(cb => cb.checked);
+
+    checkboxes.forEach(cb => {
+        const idPermiso = parseInt(cb.value);
+        if (todosSeleccionados) {
+            // Deseleccionar todos
+            cb.checked = false;
+            const index = permisosSeleccionados.indexOf(idPermiso);
+            if (index > -1) {
+                permisosSeleccionados.splice(index, 1);
+            }
+        } else {
+            // Seleccionar todos
+            cb.checked = true;
+            if (!permisosSeleccionados.includes(idPermiso)) {
+                permisosSeleccionados.push(idPermiso);
+            }
+        }
+    });
+
+    actualizarContadorPermisos();
+}
+
+/**
+ * Seleccionar todos los permisos
+ */
+function seleccionarTodosPermisos() {
+    permisosSeleccionados = todosLosPermisosDelSistema.map(p => p.id);
+    document.querySelectorAll('#permisosContainer input[type="checkbox"]').forEach(cb => {
+        cb.checked = true;
+    });
+    actualizarContadorPermisos();
+}
+
+/**
+ * Deseleccionar todos los permisos
+ */
+function deseleccionarTodosPermisos() {
+    permisosSeleccionados = [];
+    document.querySelectorAll('#permisosContainer input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+    });
+    actualizarContadorPermisos();
+}
+
+/**
+ * Actualizar contador de permisos seleccionados
+ */
+function actualizarContadorPermisos() {
+    const contador = document.getElementById('contadorPermisos');
+    const num = permisosSeleccionados.length;
+    contador.textContent = `${num} permiso${num !== 1 ? 's' : ''} seleccionado${num !== 1 ? 's' : ''}`;
+}
+
+/**
+ * Filtrar permisos por búsqueda
+ */
+function filtrarPermisos() {
+    const searchTerm = document.getElementById('searchPermisos').value.toLowerCase();
+    const moduloDivs = document.querySelectorAll('#permisosContainer > div');
+
+    moduloDivs.forEach(div => {
+        const labels = div.querySelectorAll('label');
+        let algunoVisible = false;
+
+        labels.forEach(label => {
+            const texto = label.textContent.toLowerCase();
+            if (texto.includes(searchTerm)) {
+                label.style.display = 'flex';
+                algunoVisible = true;
+            } else {
+                label.style.display = 'none';
+            }
+        });
+
+        div.style.display = algunoVisible ? 'block' : 'none';
+    });
+}
+
+/**
+ * Guardar permisos del rol
+ */
+async function guardarPermisosRol() {
+    try {
+        const response = await fetch(`/admin/api/roles/${rolActualPermisos.id}/permisos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                permissions: permisosSeleccionados
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al guardar permisos');
+        }
+
+        const data = await response.json();
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: data.message || 'Permisos actualizados correctamente',
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+        cerrarModalPermisos();
+        cargarRolesDelSistema();
+    } catch (error) {
+        console.error('Error al guardar permisos:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudieron guardar los permisos'
+        });
+    }
+}
+
+/**
+ * Cerrar modal de permisos
+ */
+function cerrarModalPermisos() {
+    document.getElementById('permisosModal').classList.add('hidden');
+    rolActualPermisos = null;
+    permisosSeleccionados = [];
+}
+
+/**
+ * Clonar un rol
+ */
+async function clonarRol(idRol) {
+    try {
+        // Asegurar que las áreas estén cargadas
+        if (todasLasAreasParaRoles.length === 0) {
+            await cargarAreasParaRoles();
+        }
+
+        const response = await fetch(`/admin/api/roles/${idRol}`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al cargar el rol');
+        }
+
+        const data = await response.json();
+        const rol = data.role;
+
+        document.getElementById('clonarRolOrigen').textContent = rol.name;
+        document.getElementById('clonarRolOrigenDesc').textContent = rol.description || 'Sin descripción';
+        document.getElementById('clonarRolPermisos').textContent = `${rol.permissions.length} permiso${rol.permissions.length !== 1 ? 's' : ''}`;
+
+        document.getElementById('clonarNombre').value = `${rol.name} (Copia)`;
+        document.getElementById('clonarDescripcion').value = rol.description || '';
+        document.getElementById('clonarAreaId').value = rol.area_id || '';
+        document.getElementById('clonarPermisos').checked = true;
+        document.getElementById('clonarActivo').checked = true;
+
+        // Guardar el rol original para la clonación
+        document.getElementById('clonarRolForm').dataset.rolId = idRol;
+
+        document.getElementById('clonarRolModal').classList.remove('hidden');
+    } catch (error) {
+        console.error('Error al preparar clonación:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo preparar la clonación del rol'
+        });
+    }
+}
+
+/**
+ * Cerrar modal de clonar rol
+ */
+function cerrarModalClonarRol() {
+    document.getElementById('clonarRolModal').classList.add('hidden');
+}
+
+/**
+ * Manejar submit del formulario de clonar rol
+ */
+document.getElementById('clonarRolForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const idRolOriginal = this.dataset.rolId;
+    const formData = {
+        name: document.getElementById('clonarNombre').value,
+        description: document.getElementById('clonarDescripcion').value,
+        area_id: document.getElementById('clonarAreaId').value || null,
+        clonar_permisos: document.getElementById('clonarPermisos').checked,
+        activo: document.getElementById('clonarActivo').checked
+    };
+
+    try {
+        const response = await fetch(`/admin/api/roles/${idRolOriginal}/clonar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al clonar el rol');
+        }
+
+        const data = await response.json();
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: data.message || 'Rol clonado correctamente',
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+        cerrarModalClonarRol();
+        cargarRolesDelSistema();
+    } catch (error) {
+        console.error('Error al clonar rol:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'No se pudo clonar el rol'
+        });
+    }
+});
+
+/**
+ * Ver usuarios que tienen un rol específico
+ */
+async function verUsuariosConRol(idRol) {
+    // Por ahora, filtrar la vista de usuarios por ese rol
+    cambiarVistaUsuariosRoles('usuarios');
+
+    // Esperar a que se cargue la vista
+    setTimeout(() => {
+        document.getElementById('filterRol').value = idRol;
+        aplicarFiltros();
+    }, 300);
+}
+
+/**
+ * Eliminar un rol
+ */
+async function eliminarRol(idRol) {
+    const rol = todosLosRolesSistema.find(r => r.id === idRol);
+
+    if (!rol) return;
+
+    const result = await Swal.fire({
+        title: '¿Eliminar Rol?',
+        html: `
+            <p class="text-gray-700 mb-3">¿Está seguro que desea eliminar el rol <strong>${rol.name}</strong>?</p>
+            <div class="bg-red-50 border-l-4 border-red-500 p-3 rounded">
+                <p class="text-sm text-red-700">Esta acción no se puede deshacer.</p>
+            </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        const response = await fetch(`/admin/api/roles/${idRol}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al eliminar el rol');
+        }
+
+        const data = await response.json();
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'Eliminado',
+            text: data.message || 'Rol eliminado correctamente',
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+        cargarRolesDelSistema();
+    } catch (error) {
+        console.error('Error al eliminar rol:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'No se pudo eliminar el rol'
+        });
+    }
 }
