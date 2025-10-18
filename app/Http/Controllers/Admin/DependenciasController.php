@@ -74,4 +74,102 @@ class DependenciasController extends Controller
             'dependencia' => $dependencia
         ], 201);
     }
+
+    public function show(string $id){
+        $dependencia = Dependencia::with(['coordinador', 'equipos', 'funcionarios'])->findOrFail($id);
+
+
+        return response()->json([
+            'dependencia' => $dependencia
+        ]);
+    }
+
+    public function update(Request $request, string $id)
+    {
+        $dependencia = Dependencia::findOrFail($id);
+
+        // Guardar datos originales para auditoría
+        $datosOriginales = [
+            'nombre' => $dependencia->nombre,
+            'descripcion' => $dependencia->descripcion,
+            'coordinador_id' => $dependencia->coordinador_id,
+            'activo' => $dependencia->activo,
+        ];
+
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'descripcion' => 'required|string|max:500',
+            'coordinador_id' => 'required|exists:users,id',
+            'activo' => 'required|boolean',
+        ], [
+            'nombre.required' => 'El nombre es obligatorio',
+            'nombre.max' => 'El nombre debe tener menos de 255 caracteres',
+            'descripcion.required' => 'La descripción es obligatoria',
+            'descripcion.max' => 'La descripción debe tener menos de 500 caracteres',
+            'coordinador_id.required' => 'El coordinador es obligatorio',
+            'coordinador_id.exists' => 'El coordinador no existe',
+        ]);
+
+        $validated['coordinador_id'] = (int) $request->coordinador_id;
+        $validated['activo'] = $request->activo == '1' ? true : false;
+
+
+       $dependencia->update($validated);
+
+        // Registrar cambios en log para auditoría
+        $cambios = [];
+        if ($datosOriginales['nombre'] !== $dependencia->nombre) {
+            $cambios['nombre'] = ['anterior' => $datosOriginales['nombre'], 'nuevo' => $dependencia->nombre];
+        }
+        if ($datosOriginales['descripcion'] !== $dependencia->descripcion) {
+            $cambios['descripcion'] = ['anterior' => $datosOriginales['descripcion'], 'nuevo' => $dependencia->descripcion];
+        }
+        if ($datosOriginales['coordinador_id'] !== $dependencia->coordinador_id) {
+            $cambios['coordinador'] = ['anterior' => $datosOriginales['coordinador_id'], 'nuevo' => $dependencia->coordinador_id];
+        }
+        if ($datosOriginales['activo'] !== $dependencia->activo) {
+            $cambios['activo'] = ['anterior' => $datosOriginales['activo'], 'nuevo' => $dependencia->activo];
+        }
+
+
+        if (!empty($cambios)) {
+            \Log::info('Dependencia actualizada exitosamente, cambios realizados: ', [
+                'dependencia_id' => $dependencia->id,
+                'usuario_que_actualiza' => auth()->id(),
+                'cambios' => $cambios,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Dependencia actualizada exitosamente',
+            'dependencia' => $dependencia->load(['coordinador']),
+            'cambios_realizados' => $cambios,
+        ]);
+    }
+
+    public function alternarEstadoDependencia(Request $request, string $id)
+    {
+        $id = (int) $id;
+        $dependencia = Dependencia::findOrFail($id);
+        $datosOriginales = [
+            'activo' => $dependencia->activo,
+        ];
+
+        $dependencia->activo = $request->activo == '1' ? true : false;
+        $dependencia->save();
+
+        // Registrar cambios en log para auditoría
+
+        \Log::info('Dependencia actualizada exitosamente, cambios realizados: ', [
+            'dependencia_id' => $dependencia->id,
+            'usuario_que_actualiza' => auth()->id(),
+            'cambios' => [
+                'activo' => ['anterior' => $datosOriginales['activo'], 'nuevo' => $dependencia->activo],
+            ],
+        ]);
+
+        return response()->json([
+            'message' => 'Estado de la dependencia cambiado exitosamente',
+        ]);
+    }
 }

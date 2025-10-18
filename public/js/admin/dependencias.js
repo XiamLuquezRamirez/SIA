@@ -262,7 +262,7 @@ function renderizarDependencias(dependencias) {
             </td>
             <td class="px-6 py-4">
                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" class="sr-only peer" ${dependencia.activo ? 'checked' : ''} onchange="alternarEstadoDependencia(${dependencia.id}, this.checked)">
+                    <input id="check_dependencia_${dependencia.id}" type="checkbox" class="sr-only peer" ${dependencia.activo ? 'checked' : ''} onchange="alternarEstadoDependencia(${dependencia.id}, this.checked)">
                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                 </label>
             </td>
@@ -277,8 +277,6 @@ function renderizarDependencias(dependencias) {
                         <div class="py-1">
                             <a href="#" onclick="verDependencia(${dependencia.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ver Detalle</a>
                             <a href="#" onclick="editarDependencia(${dependencia.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
-                            <a href="#" onclick="asignarCoordinador(${dependencia.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Asignar Coordinador</a>
-                            <a href="#" onclick="verEquipos(${dependencia.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ver Equipos</a>
                              <a href="#" onclick="eliminarDependencia(${dependencia.id}); return false;" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</a>
                         </div>
                     </div>
@@ -403,6 +401,14 @@ function abrirModalCrearDependencia() {
     document.getElementById('submitButton').classList.remove('hidden');
     formChanged = false;
 
+    //cambiar el evento del formulario a POST
+    const form = document.getElementById('dependenciaForm');
+    form.removeEventListener('submit', manejarEnvioFormularioEditarDependencia);
+    form.addEventListener('submit', manejarEnvioFormulario);
+
+    //cambiar el texto del botón
+    document.getElementById('submitButton').textContent = 'Guardar Dependencia';
+
     // Cargar datos necesarios
     cargarCoordinadores();
 
@@ -414,7 +420,6 @@ function abrirModalCrearDependencia() {
         formChanged = true;
     });
 }
-
 
 async function cargarCoordinadores() {
     try {
@@ -489,7 +494,6 @@ async function manejarEnvioFormulario(e) {
         });
 
         const data = await response.json();
-        debugger;
 
         if (response.ok) {
             // Éxito
@@ -508,11 +512,10 @@ async function manejarEnvioFormulario(e) {
 
         } else {
             // Error del servidor
-            throw new Error(data.message || 'Error al crear dependencia');
+            mostrarToast(data.message || 'Error al crear dependencia', 'error');
         }
 
     } catch (error) {
-        console.error('Error:', error);
         mostrarToast(error.message || 'Error al guardar dependencia', 'error');
 
     } finally {
@@ -570,4 +573,290 @@ function mostrarToast(message, type = 'success') {
         timer: 2000,
         showConfirmButton: false
     });
+}
+
+
+// ========================================
+// EDITAR DEPENDENCIA
+// ========================================
+let editingDependenciaId = null;
+let originalDependenciaData = null;
+
+async function editarDependencia(dependenciaId) {
+    editingDependenciaId = dependenciaId;
+    document.getElementById('modalTitle').textContent = 'Editar Dependencia';
+    document.getElementById('dependenciaModal').classList.remove('hidden');
+    document.getElementById('submitButton').classList.remove('hidden');
+    currentTab = 1;
+    formChanged = false;
+
+    // Mostrar Swal de cargando
+    mostrarSwalCargando('Cargando datos de la dependencia, por favor espere...');
+
+    // Cargar datos de la dependencia
+    try {
+        const response = await fetch(`/admin/dependencias/${dependenciaId}`);
+        if (!response.ok) throw new Error('Error al cargar dependencia');
+
+        const data = await response.json();
+        originalDependenciaData = JSON.parse(JSON.stringify(data.dependencia)); // Deep clone
+
+        // Actualizar título con nombre de la dependencia
+        document.getElementById('modalTitle').textContent = `Editar Dependencia: ${data.dependencia.nombre}`;
+
+        // Llenar formulario con datos
+        await llenarFormularioConDatosDependencia(data.dependencia);
+
+        // Cambiar el evento del formulario a PUT
+        const form = document.getElementById('dependenciaForm');
+        form.removeEventListener('submit', manejarEnvioFormulario);
+        form.addEventListener('submit', manejarEnvioFormularioEditarDependencia);
+
+        // Cambiar texto del botón
+        document.getElementById('submitButton').textContent = 'Guardar Cambios';
+        limpiarTodosLosErrores();
+
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al cargar datos de la dependencia', 'error');
+        cerrarModalDependencia();
+    }
+}
+
+async function llenarFormularioConDatosDependencia(dependencia) {
+    Swal.close();
+    // Información de la Dependencia
+    document.getElementById('nombre').value = dependencia.nombre || '';
+    document.getElementById('descripcion').value = dependencia.descripcion || '';
+    document.getElementById('activo').checked = dependencia.activo ? true : false;
+    // Cargar coordinadores
+    await cargarCoordinadores();
+    if (dependencia.coordinador_id) {
+        document.getElementById('coordinador_id').value = dependencia.coordinador_id;
+    }
+}
+
+function mostrarSwalCargando(mensaje) {
+    Swal.fire({
+        title: mensaje,
+        icon: 'info',
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        allowClose: false,
+        allowEscapeKey: false,
+        progressBar: true,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+}
+
+// ========================================
+// MANEJAR ENVÍO DE FORMULARIO DE EDICIÓN
+// ========================================
+
+async function manejarEnvioFormularioEditarDependencia(e) {
+    e.preventDefault();
+
+    // Validación final
+    if (!validarFormularioFinalDependenciaEdit()) {
+        return;
+    }
+
+    const submitButton = document.getElementById('submitButton');
+    const originalText = submitButton.innerHTML;
+
+    try {
+        submitButton.disabled = true;
+        submitButton.classList.add('loading');
+        submitButton.innerHTML = '<span class="opacity-0">Guardando...</span>';
+        mostrarSwalCargando('Guardando cambios, por favor espere...');
+
+        // Preparar FormData
+        const formData = new FormData(document.getElementById('dependenciaForm'));
+
+    
+        // Agregar activo
+        const activo = document.getElementById('activo').checked;
+        formData.append('activo', activo ? '1' : '0');
+
+        // Enviar petición
+        const response = await fetch(`/admin/editar-dependencia/${editingDependenciaId}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        Swal.close();
+        if (response.ok) {
+            // Éxito
+            mostrarToast('Dependencia actualizada exitosamente', 'success');
+            cerrarModalDependencia();
+
+            // Recargar lista después de un momento
+            setTimeout(() => {
+                cargarDependencias();
+            }, 500);
+
+        } else if (response.status === 422) {
+            // Errores de validación o confirmaciones requeridas
+            if (data.requires_confirmation) {
+                handleConfirmationRequired(data);
+            } else {
+                mostrarToast('Por favor corrija los errores en el formulario', 'error');
+            }
+
+        } else {
+            mostrarToast(data.message || 'Error al actualizar dependencia', 'error');
+        }
+
+    } catch (error) {
+        mostrarToast(error.message || 'Error al actualizar dependencia', 'error');
+
+    } finally {
+        submitButton.disabled = false;
+        submitButton.classList.remove('loading');
+        submitButton.innerHTML = originalText;
+    }
+}
+
+function validarFormularioFinalDependenciaEdit() {
+    limpiarTodosLosErrores();
+    let isValid = true;
+
+    // Validar nombre
+    const nombre = document.getElementById('nombre').value;
+    if (!nombre) {
+        mostrarError('nombre', 'El nombre es obligatorio');
+        isValid = false;
+    }
+
+    // Validar descripción
+    const descripcion = document.getElementById('descripcion').value;
+    if (!descripcion) {
+        mostrarError('descripcion', 'La descripción es obligatoria');
+        isValid = false;
+    }
+
+    // Validar coordinador
+    const coordinador = document.getElementById('coordinador_id').value;
+    if (!coordinador) {
+        mostrarError('coordinador_id', 'El coordinador es obligatorio');
+        isValid = false;
+    }
+
+    return isValid;
+}
+
+
+// ========================================
+// DESHABILITAR DEPENDENCIA
+// ========================================
+
+let currentToggleDependencia = null;
+let currentToggleDependenciaId = null;
+async function alternarEstadoDependencia(dependenciaId, checked) {
+    currentToggleDependenciaId = dependenciaId;
+    // Cargar datos de la dependencia primero
+    try {
+        const response = await fetch(`/admin/dependencias/${dependenciaId}`);
+        if (!response.ok) throw new Error('Error al cargar dependencia');
+
+        const data = await response.json();
+        currentToggleDependencia = data.dependencia;
+
+        // Abrir modal de confirmación
+        if (checked) {
+            abrirModalActivar();
+        } else {
+            abrirModalDesactivar();
+        }
+
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al cargar información de la dependencia', 'error');
+
+        // Revertir el toggle si hubo error
+        const toggle = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`);
+        if (toggle) {
+            checked = toggle.checked;
+            toggle.checked = !checked;
+        }
+    }
+}
+
+function abrirModalActivar() {
+    Swal.fire({
+        title: '¿Estás seguro de querer activar la dependencia?',
+        icon: 'warning',
+        showConfirmButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'Activar',
+        denyButtonText: 'Cancelar',
+        showDenyButton: true,
+        showCancelButton: false,
+        confirmButtonColor: '#28a745',
+        denyButtonColor: '#dc3545',
+        allowOutsideClick: false,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            var toggle = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`);
+            var checked = toggle.checked;
+            cambiarEstadoDependencia(currentToggleDependenciaId, checked);
+        }else if (result.isDenied) {
+            const toggle = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`);
+            if (toggle) {
+                checked = toggle.checked;
+                toggle.checked = !checked;
+            }
+        }
+    });
+}
+
+
+async function cambiarEstadoDependencia(dependenciaId, checked) {
+    mostrarSwalCargando('Cambiando estado de la dependencia, por favor espere...');
+    try {
+        const formData = new FormData();
+        formData.append('activo', checked ? '1' : '0');
+        const response = await fetch(`/admin/alternar-estado-dependencia/${dependenciaId}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        Swal.close();
+        if (response.ok) {
+            // Éxito
+            mostrarToast('Estado de la dependencia cambiado exitosamente', 'success');
+            setTimeout(() => {
+                cargarDependencias();
+            }, 500);
+        } else {
+            const toggle = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`);
+            if (toggle) {
+                checked = toggle.checked;
+                toggle.checked = !checked;
+            }
+            mostrarToast(data.message || 'Error al cambiar estado de la dependencia', 'error');
+        }
+    } catch (error) {
+        const toggle = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`);
+        if (toggle) {
+            checked = toggle.checked;
+            toggle.checked = !checked;
+        }
+        console.error('Error:', error);
+        mostrarToast('Error al cambiar estado de la dependencia', 'error');
+       
+    }
 }

@@ -14,11 +14,8 @@ class Dependencia extends Model
     protected $fillable = [
         'nombre',
         'descripcion',
-        'coordinador_id'     
-    ];
-
-    protected $casts = [
-        'activo' => 'boolean',
+        'coordinador_id',
+        'activo',
     ];
 
     public function coordinador()
