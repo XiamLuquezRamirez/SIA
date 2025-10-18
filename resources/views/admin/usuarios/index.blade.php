@@ -16,23 +16,37 @@
             </button>
         </div>
 
-        <!-- Tabs -->
+        <!-- Main Tabs -->
         <div class="border-b border-gray-200 mb-4">
             <nav class="-mb-px flex space-x-8">
-                <button onclick="filtrarPorTab('todos')" class="tab-button active border-b-2 border-blue-600 py-2 px-1 text-sm font-medium text-blue-600">
-                    Todos
+                <button onclick="cambiarVistaUsuariosRoles('usuarios')" id="tabUsuarios" class="main-tab-button active border-b-2 border-blue-600 py-2 px-1 text-sm font-medium text-blue-600">
+                    Usuarios
                 </button>
-                <button onclick="filtrarPorTab('interno')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                    Funcionarios
-                </button>
-                <button onclick="filtrarPorTab('externo')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                    Ciudadanos
-                </button>
-                <button onclick="filtrarPorTab('inactivos')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                    Inactivos
+                <button onclick="cambiarVistaUsuariosRoles('roles')" id="tabRoles" class="main-tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    Gestión de Roles
                 </button>
             </nav>
         </div>
+
+        <!-- Vista de Usuarios -->
+        <div id="vistaUsuarios">
+            <!-- Sub-tabs para usuarios -->
+            <div class="border-b border-gray-200 mb-4">
+                <nav class="-mb-px flex space-x-8">
+                    <button onclick="filtrarPorTab('todos')" class="tab-button active border-b-2 border-blue-600 py-2 px-1 text-sm font-medium text-blue-600">
+                        Todos
+                    </button>
+                    <button onclick="filtrarPorTab('interno')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Funcionarios
+                    </button>
+                    <button onclick="filtrarPorTab('externo')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Ciudadanos
+                    </button>
+                    <button onclick="filtrarPorTab('inactivos')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Inactivos
+                    </button>
+                </nav>
+            </div>
 
         <!-- Filtros y Búsqueda -->
         <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
@@ -164,6 +178,86 @@
                 </div>
             </div>
         </div>
+        </div>
+        <!-- Fin Vista de Usuarios -->
+
+        <!-- Vista de Gestión de Roles -->
+        <div id="vistaRoles" class="hidden">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Roles del Sistema</h2>
+                    <p class="text-gray-600 text-sm">Gestionar roles y permisos</p>
+                </div>
+                <button onclick="abrirModalCrearRol()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Nuevo Rol
+                </button>
+            </div>
+
+            <!-- Filtros -->
+            <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Búsqueda -->
+                    <div>
+                        <input type="text" id="searchRoles" placeholder="Buscar roles..."
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            oninput="filtrarRoles()">
+                    </div>
+
+                    <!-- Filtro por Área -->
+                    <div>
+                        <select id="filterRolArea" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            onchange="filtrarRoles()">
+                            <option value="">Todas las áreas</option>
+                            <option value="null">Sin área específica</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro por Estado -->
+                    <div>
+                        <select id="filterRolEstado" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            onchange="filtrarRoles()">
+                            <option value="">Todos los estados</option>
+                            <option value="activo">Activos</option>
+                            <option value="inactivo">Inactivos</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid de Cards de Roles -->
+            <div id="rolesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Loading skeleton -->
+                <div class="role-card-skeleton bg-white rounded-lg shadow-sm p-6 animate-pulse">
+                    <div class="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+                    <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                    <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                </div>
+                <div class="role-card-skeleton bg-white rounded-lg shadow-sm p-6 animate-pulse">
+                    <div class="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+                    <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                    <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                </div>
+                <div class="role-card-skeleton bg-white rounded-lg shadow-sm p-6 animate-pulse">
+                    <div class="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+                    <div class="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                    <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                </div>
+            </div>
+
+            <!-- Mensaje sin resultados -->
+            <div id="noRolesMessage" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">No se encontraron roles</h3>
+                <p class="text-gray-500">Intenta con otros criterios de búsqueda</p>
+            </div>
+        </div>
+        <!-- Fin Vista de Gestión de Roles -->
     </div>
 
     <!-- Modal Crear/Editar Usuario -->
@@ -1104,6 +1198,388 @@
                     Restablecer Contraseña
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal Gestionar Roles -->
+    <div id="manageRolesModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto mb-10 p-0 border w-11/12 max-w-4xl shadow-lg bg-white" style="border-radius: 20px;">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-600 to-purple-700" style="border-top-left-radius: 20px; border-top-right-radius: 20px;">
+                <div class="flex items-center justify-between">
+                    <h3 id="manageRolesTitle" class="text-xl font-semibold text-white">Gestionar Roles de Usuario</h3>
+                    <button type="button" onclick="cerrarModalGestionarRoles()" class="text-white hover:text-gray-200 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="px-6 py-4 max-h-[70vh] overflow-y-auto">
+                <!-- User Info -->
+                <div class="flex items-center mb-6 pb-4 border-b border-gray-200">
+                    <div id="manageRolesUserPhoto" class="flex-shrink-0 h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <h4 id="manageRolesUserName" class="text-lg font-semibold text-gray-900"></h4>
+                        <p id="manageRolesUserEmail" class="text-sm text-gray-600"></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Columna Izquierda: Roles Actuales y Agregar -->
+                    <div>
+                        <!-- Roles Actuales -->
+                        <div class="mb-6">
+                            <h4 class="text-sm font-semibold text-gray-700 mb-3">Roles Actuales</h4>
+                            <div id="rolesActualesContainer" class="border border-gray-300 rounded-lg p-4 min-h-[120px] bg-gray-50">
+                                <p class="text-gray-500 text-sm">Cargando roles...</p>
+                            </div>
+                        </div>
+
+                        <!-- Agregar Roles -->
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-700 mb-3">Agregar Roles</h4>
+                            <div class="mb-3">
+                                <select id="selectRolesDisponibles"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    onchange="agregarRolTemporal()">
+                                    <option value="">Seleccione un rol...</option>
+                                </select>
+                            </div>
+
+                            <!-- Vista previa del rol seleccionado -->
+                            <div id="vistaPreviaRolSeleccionado" class="hidden bg-purple-50 border border-purple-200 rounded-lg p-3">
+                                <h5 class="text-xs font-semibold text-purple-800 mb-2">Vista Previa del Rol</h5>
+                                <div id="permisosRolSeleccionado" class="text-xs text-gray-700 max-h-32 overflow-y-auto">
+                                    <!-- Permisos se cargarán aquí -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna Derecha: Vista Previa de Permisos -->
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Vista Previa de Permisos</h4>
+                        <div class="border border-gray-300 rounded-lg p-4 bg-blue-50 max-h-[400px] overflow-y-auto">
+                            <p class="text-xs text-gray-600 mb-3">Permisos que tendrá el usuario después de guardar:</p>
+                            <div id="vistaPreviaPermisos" class="space-y-3">
+                                <!-- Permisos agrupados por módulo se cargarán aquí -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notificar al usuario -->
+                <div class="mt-6">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="notificarCambioRoles" checked
+                            class="w-4 h-4 text-purple-600 focus:ring-purple-500 rounded">
+                        <span class="ml-2 text-sm text-gray-700">Notificar al usuario del cambio de roles por email</span>
+                    </label>
+                </div>
+
+                <!-- Advertencias dinámicas -->
+                <div id="advertenciasGestionRoles" class="mt-4 space-y-3">
+                    <!-- Las advertencias se mostrarán aquí dinámicamente -->
+                </div>
+
+                <!-- Advertencia sesión activa -->
+                <div id="warningSessionActivaRoles" class="hidden mt-4 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                    <div class="flex items-start">
+                        <svg class="w-6 h-6 text-yellow-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-yellow-800">Usuario tiene sesión activa</h4>
+                            <p class="text-sm text-yellow-700 mt-1">
+                                Los cambios aplicarán en su próximo inicio de sesión.
+                            </p>
+                            <label class="flex items-center mt-2 cursor-pointer">
+                                <input type="checkbox" id="cerrarSesionUsuario"
+                                    class="w-4 h-4 text-yellow-600 focus:ring-yellow-500 rounded">
+                                <span class="ml-2 text-sm text-yellow-800 font-medium">Cerrar sesión del usuario ahora</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3" style="border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;">
+                <button type="button" onclick="cerrarModalGestionarRoles()"
+                    class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    Cancelar
+                </button>
+                <button type="button" id="btnGuardarRoles" onclick="confirmarGuardarRoles()"
+                    class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition">
+                    Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Crear/Editar Rol -->
+    <div id="roleModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto mb-10 p-0 border w-11/12 max-w-3xl shadow-lg bg-white" style="border-radius: 20px;">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-600 to-purple-700" style="border-top-left-radius: 20px; border-top-right-radius: 20px;">
+                <div class="flex items-center justify-between">
+                    <h3 id="roleModalTitle" class="text-xl font-semibold text-white">Crear Nuevo Rol</h3>
+                    <button type="button" onclick="cerrarModalRol()" class="text-white hover:text-gray-200 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <form id="roleForm" class="bg-white" style="border-radius: 20px;">
+                <div class="px-6 py-4">
+                    <div class="grid grid-cols-1 gap-4">
+                        <!-- Nombre del Rol -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Nombre del Rol <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="nombre" id="rolNombre" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="Ej: Analista de Proyectos">
+                            <span class="error-message text-red-500 text-xs hidden"></span>
+                        </div>
+
+                        <!-- Descripción -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Descripción
+                            </label>
+                            <textarea name="descripcion" id="rolDescripcion" rows="3"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="Breve descripción del rol y sus responsabilidades"></textarea>
+                        </div>
+
+                        <!-- Área (opcional) -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Área Específica (Opcional)
+                            </label>
+                            <select name="area_id" id="rolAreaId"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                <option value="">Sin área específica (Global)</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Si se selecciona un área, solo usuarios de esa área pueden tener este rol</p>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700">Rol Activo</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="activo" id="rolActivo" checked class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                            </label>
+                        </div>
+
+                        <!-- Advertencia para roles del sistema -->
+                        <div id="warningRolSistema" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                            <div class="flex items-start">
+                                <svg class="w-6 h-6 text-yellow-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                </svg>
+                                <div>
+                                    <h4 class="font-semibold text-yellow-800">Rol del Sistema</h4>
+                                    <p class="text-sm text-yellow-700 mt-1">
+                                        Este es un rol del sistema. Solo puede modificar la descripción y el estado.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3" style="border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;">
+                    <button type="button" onclick="cerrarModalRol()"
+                        class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btnGuardarRol"
+                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition">
+                        Guardar Rol
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Gestionar Permisos -->
+    <div id="permisosModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto mb-10 p-0 border w-11/12 max-w-5xl shadow-lg bg-white" style="border-radius: 20px;">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-600 to-indigo-700" style="border-top-left-radius: 20px; border-top-right-radius: 20px;">
+                <div class="flex items-center justify-between">
+                    <h3 id="permisosModalTitle" class="text-xl font-semibold text-white">Gestionar Permisos del Rol</h3>
+                    <button type="button" onclick="cerrarModalPermisos()" class="text-white hover:text-gray-200 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="px-6 py-4 max-h-[70vh] overflow-y-auto">
+                <!-- Info del Rol -->
+                <div class="mb-6 pb-4 border-b border-gray-200">
+                    <h4 id="permisosRolNombre" class="text-lg font-semibold text-gray-900"></h4>
+                    <p id="permisosRolDescripcion" class="text-sm text-gray-600"></p>
+                </div>
+
+                <!-- Búsqueda y acciones rápidas -->
+                <div class="mb-4 flex gap-3">
+                    <input type="text" id="searchPermisos" placeholder="Buscar permisos..."
+                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        oninput="filtrarPermisos()">
+                    <button type="button" onclick="seleccionarTodosPermisos()"
+                        class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition text-sm">
+                        Seleccionar Todos
+                    </button>
+                    <button type="button" onclick="deseleccionarTodosPermisos()"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm">
+                        Deseleccionar Todos
+                    </button>
+                </div>
+
+                <!-- Permisos agrupados por módulo -->
+                <div id="permisosContainer" class="space-y-4">
+                    <!-- Los permisos se cargarán aquí agrupados por módulo -->
+                    <div class="text-center text-gray-500 py-8">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-gray-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p>Cargando permisos...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center" style="border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;">
+                <div class="text-sm text-gray-600">
+                    <span id="contadorPermisos">0 permisos seleccionados</span>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="cerrarModalPermisos()"
+                        class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Cancelar
+                    </button>
+                    <button type="button" id="btnGuardarPermisos" onclick="guardarPermisosRol()"
+                        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition">
+                        Guardar Permisos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Clonar Rol -->
+    <div id="clonarRolModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-0 border w-11/12 max-w-2xl shadow-lg bg-white" style="border-radius: 20px;">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-600 to-green-700" style="border-top-left-radius: 20px; border-top-right-radius: 20px;">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-white">Clonar Rol</h3>
+                    <button type="button" onclick="cerrarModalClonarRol()" class="text-white hover:text-gray-200 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <form id="clonarRolForm" class="bg-white">
+                <div class="px-6 py-4">
+                    <!-- Rol origen -->
+                    <div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-blue-800 mb-2">Rol Original</h4>
+                        <p id="clonarRolOrigen" class="text-lg font-semibold text-gray-900"></p>
+                        <p id="clonarRolOrigenDesc" class="text-sm text-gray-600 mt-1"></p>
+                        <div class="mt-2 text-sm text-gray-700">
+                            <span class="font-medium">Permisos:</span>
+                            <span id="clonarRolPermisos" class="ml-1"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4">
+                        <!-- Nombre del nuevo rol -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Nombre del Nuevo Rol <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="nombre" id="clonarNombre" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="Ej: Analista Senior">
+                            <span class="error-message text-red-500 text-xs hidden"></span>
+                        </div>
+
+                        <!-- Descripción -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Descripción
+                            </label>
+                            <textarea name="descripcion" id="clonarDescripcion" rows="3"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="Descripción del nuevo rol"></textarea>
+                        </div>
+
+                        <!-- Área -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Área Específica
+                            </label>
+                            <select name="area_id" id="clonarAreaId"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                <option value="">Sin área específica (Global)</option>
+                            </select>
+                        </div>
+
+                        <!-- Opciones de clonación -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h5 class="font-semibold text-gray-700 mb-3">Opciones de Clonación</h5>
+                            <div class="space-y-2">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" id="clonarPermisos" checked
+                                        class="w-4 h-4 text-green-600 focus:ring-green-500 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Copiar permisos del rol original</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" id="clonarActivo" checked
+                                        class="w-4 h-4 text-green-600 focus:ring-green-500 rounded">
+                                    <span class="ml-2 text-sm text-gray-700">Activar rol automáticamente</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3" style="border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;">
+                    <button type="button" onclick="cerrarModalClonarRol()"
+                        class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btnClonarRol"
+                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition">
+                        Clonar Rol
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

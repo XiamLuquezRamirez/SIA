@@ -77,4 +77,19 @@ class User extends Authenticatable
     {
         return $this->tipo_usuario === 'externo';
     }
+
+    // Relación con logs de actividad
+    public function activityLogs()
+    {
+        return $this->hasMany(ActivityLog::class, 'user_id');
+    }
+
+    // Obtener logs de actividad recientes
+    public function recentActivityLogs($limit = 20)
+    {
+        return $this->activityLogs()
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
+    }
 }

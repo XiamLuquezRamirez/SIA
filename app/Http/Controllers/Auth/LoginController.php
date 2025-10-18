@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -40,10 +41,26 @@ class LoginController extends Controller
             // Verificar que el usuario esté activo
             if (!$user->activo) {
                 Auth::logout();
+
+                // Registrar intento de login de cuenta inactiva
+                ActivityLog::log([
+                    'user_id' => $user->id,
+                    'user_name' => $user->nombre . ' ' . $user->apellidos,
+                    'user_email' => $user->email,
+                    'log_name' => 'auth',
+                    'description' => 'Intento de inicio de sesión en cuenta inactiva',
+                    'event' => 'login_failed',
+                    'severity' => 'warning',
+                    'is_important' => true,
+                ]);
+
                 throw ValidationException::withMessages([
                     'email' => 'Tu cuenta está inactiva. Contacta al administrador.',
                 ]);
             }
+
+            // Registrar login exitoso
+            ActivityLog::logLogin($user);
 
             // Redirigir según rol
             if ($user->hasRole(['Super Administrador', 'Director OAPM'])) {
@@ -63,6 +80,13 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
+        $user = Auth::user();
+
+        // Registrar logout antes de cerrar la sesión
+        if ($user) {
+            ActivityLog::logLogout($user);
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

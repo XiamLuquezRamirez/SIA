@@ -2,13 +2,7 @@
     <div class="w-full max-w-md">
         <!-- Logo y Título -->
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-600 rounded-full mb-4">
-                <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                </svg>
-            </div>
-            <h1 class="text-3xl font-bold text-gray-900">SIA OAPM</h1>
-            <p class="text-gray-600 mt-2">Sistema de Información Administrativa</p>
+            <img src="{{ asset('images/logo.png') }}" alt="Logo" >
             <p class="text-sm text-gray-500">Alcaldía de Valledupar</p>
         </div>
 

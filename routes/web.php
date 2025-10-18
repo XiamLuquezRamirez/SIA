@@ -67,18 +67,49 @@ Route::middleware(['auth'])->group(function () {
         Route::post('api/usuarios/{usuario}/restablecer-password', [App\Http\Controllers\Admin\UserController::class, 'restablecerPassword'])
             ->name('api.usuarios.restablecer-password');
 
+        // Ruta para actualizar roles
+        Route::post('api/usuarios/{usuario}/actualizar-roles', [App\Http\Controllers\Admin\UserController::class, 'actualizarRoles'])
+            ->name('api.usuarios.actualizar-roles');
+
         // API auxiliares
         Route::get('api/areas', [App\Http\Controllers\Admin\UserController::class, 'getAreas'])
             ->name('api.areas');
         Route::get('api/equipos', [App\Http\Controllers\Admin\UserController::class, 'getEquipos'])
             ->name('api.equipos');
-        Route::get('api/roles', [App\Http\Controllers\Admin\UserController::class, 'getRoles'])
-            ->name('api.roles');
         Route::get('api/usuarios/{usuario}', [App\Http\Controllers\Admin\UserController::class, 'show'])
             ->name('api.usuarios.show');
 
+        // Rutas API para gestión de roles
+        Route::get('api/roles', [App\Http\Controllers\Admin\RoleController::class, 'index'])
+            ->name('api.roles.index');
+        Route::get('api/roles/{role}', [App\Http\Controllers\Admin\RoleController::class, 'show'])
+            ->name('api.roles.show');
+        Route::post('api/roles', [App\Http\Controllers\Admin\RoleController::class, 'store'])
+            ->name('api.roles.store');
+        Route::put('api/roles/{role}', [App\Http\Controllers\Admin\RoleController::class, 'update'])
+            ->name('api.roles.update');
+        Route::delete('api/roles/{role}', [App\Http\Controllers\Admin\RoleController::class, 'destroy'])
+            ->name('api.roles.destroy');
+
+        // Rutas para gestión de permisos de roles
+        Route::get('api/permisos', [App\Http\Controllers\Admin\RoleController::class, 'getPermisos'])
+            ->name('api.permisos');
+        Route::post('api/roles/{role}/permisos', [App\Http\Controllers\Admin\RoleController::class, 'updatePermisos'])
+            ->name('api.roles.permisos');
+
+        // Ruta para clonar rol
+        Route::post('api/roles/{role}/clonar', [App\Http\Controllers\Admin\RoleController::class, 'clonar'])
+            ->name('api.roles.clonar');
 
         // Rutas para historia de usuario dependencias
         Route::resource('dependencias', App\Http\Controllers\Admin\DependenciasController::class);
+
+        // Rutas para historial de actividades del sistema
+        Route::get('activity-logs', [App\Http\Controllers\Admin\ActivityLogController::class, 'index'])
+            ->name('activity-logs.index');
+        Route::get('activity-logs/activities', [App\Http\Controllers\Admin\ActivityLogController::class, 'getActivities'])
+            ->name('activity-logs.activities');
+        Route::get('activity-logs/stats', [App\Http\Controllers\Admin\ActivityLogController::class, 'getStats'])
+            ->name('activity-logs.stats');
     });
 });

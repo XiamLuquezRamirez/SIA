@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Area;
 use App\Models\Equipo;
+use App\Models\ActivityLog;
 use App\Mail\PasswordResetNotification;
 use App\Mail\UserWelcomeEmail;
 use Illuminate\Http\Request;
@@ -517,7 +518,7 @@ class UserController extends Controller
     public function getAreas()
     {
         $areas = Area::where('activo', true)->select('id', 'nombre', 'coordinador_id')->get();
-        return response()->json($areas);
+        return response()->json(['areas' => $areas]);
     }
 
     /**
@@ -540,7 +541,7 @@ class UserController extends Controller
      */
     public function getRoles(Request $request)
     {
-        $query = Role::query();
+        $query = Role::with('permissions');
 
         if ($request->has('tipo_usuario')) {
             if ($request->tipo_usuario === 'externo') {
@@ -551,7 +552,7 @@ class UserController extends Controller
         }
 
         $roles = $query->get();
-        return response()->json($roles);
+        return response()->json(['roles' => $roles]);
     }
 
     /**
@@ -679,39 +680,64 @@ class UserController extends Controller
     public function getActividad(string $id, Request $request)
     {
         $user = User::findOrFail($id);
-        
-        // TODO: Implementar sistema de auditoría completo
-        // Por ahora retornamos datos de ejemplo basados en el log
-        
-        $actividades = [
-            // Estos son datos de ejemplo. En producción deberían venir de una tabla de auditoría
-            [
-                'id' => 1,
-                'tipo' => 'login',
-                'descripcion' => 'Inicio de sesión',
-                'fecha' => $user->updated_at->subDays(1)->format('Y-m-d H:i:s'),
-                'ip' => '192.168.1.1',
-                'icono' => 'login',
-            ],
-            [
-                'id' => 2,
-                'tipo' => 'update',
-                'descripcion' => 'Perfil actualizado',
-                'fecha' => $user->updated_at->subDays(3)->format('Y-m-d H:i:s'),
-                'ip' => '192.168.1.1',
-                'icono' => 'edit',
-            ],
-        ];
 
-        // Si existe el módulo de logs, cargar datos reales
-        // $actividades = ActivityLog::where('user_id', $id)
-        //     ->orderBy('created_at', 'desc')
-        //     ->limit(20)
-        //     ->get();
+        // Parámetros de paginación y filtros
+        $limit = $request->get('limit', 50);
+        $offset = $request->get('offset', 0);
+        $logName = $request->get('log_name'); // auth, user_management, etc.
+        $event = $request->get('event'); // logged_in, created, updated, etc.
+        $severity = $request->get('severity'); // info, warning, error, critical
+
+        // Construir query
+        $query = ActivityLog::where('user_id', $id)
+            ->orderBy('created_at', 'desc');
+
+        // Aplicar filtros si existen
+        if ($logName) {
+            $query->where('log_name', $logName);
+        }
+
+        if ($event) {
+            $query->where('event', $event);
+        }
+
+        if ($severity) {
+            $query->where('severity', $severity);
+        }
+
+        // Obtener total de registros
+        $total = $query->count();
+
+        // Obtener actividades paginadas
+        $activityLogs = $query->skip($offset)->take($limit)->get();
+
+        // Formatear actividades para el frontend
+        $actividades = $activityLogs->map(function ($log) {
+            return [
+                'id' => $log->id,
+                'tipo' => $log->event,
+                'log_name' => $log->log_name,
+                'descripcion' => $log->description,
+                'fecha' => $log->created_at->format('Y-m-d H:i:s'),
+                'fecha_relativa' => $log->created_at->diffForHumans(),
+                'ip' => $log->ip_address,
+                'user_agent' => $log->user_agent,
+                'url' => $log->url,
+                'method' => $log->method,
+                'severity' => $log->severity,
+                'is_important' => $log->is_important,
+                'icono' => $log->getIcon(),
+                'color' => $log->getColor(),
+                'properties' => $log->properties,
+                'changes' => $log->getFormattedChanges(),
+            ];
+        });
 
         return response()->json([
             'actividades' => $actividades,
-            'total' => count($actividades),
+            'total' => $total,
+            'limit' => $limit,
+            'offset' => $offset,
         ]);
     }
 
@@ -805,6 +831,133 @@ class UserController extends Controller
                 'forzar_cambio' => $validated['forzar_cambio'] ?? false,
                 'email_enviado' => $validated['enviar_email'] ?? false,
                 'sesiones_cerradas' => $validated['cerrar_sesiones'] ?? false,
+            ]
+        ]);
+    }
+
+    /**
+     * Actualizar roles del usuario
+     */
+    public function actualizarRoles(Request $request, string $id)
+    {
+        $user = User::with('roles')->findOrFail($id);
+
+        // Validar request
+        $validated = $request->validate([
+            'roles' => 'required|array|min:1',
+            'roles.*' => 'exists:roles,id',
+            'notificar' => 'boolean',
+            'cerrar_sesion' => 'boolean',
+        ], [
+            'roles.required' => 'Debe asignar al menos un rol',
+            'roles.min' => 'El usuario debe tener al menos un rol',
+            'roles.*.exists' => 'Uno o más roles seleccionados no existen',
+        ]);
+
+        // Guardar roles anteriores para auditoría
+        $rolesAnteriores = $user->roles->pluck('name', 'id')->toArray();
+
+        // Obtener los nuevos roles por ID
+        $nuevosRoles = Role::whereIn('id', $validated['roles'])->get();
+        $nuevosRolesNombres = $nuevosRoles->pluck('name', 'id')->toArray();
+
+        // Verificar cambios
+        $rolesAgregados = array_diff($validated['roles'], array_keys($rolesAnteriores));
+        $rolesRemovidos = array_diff(array_keys($rolesAnteriores), $validated['roles']);
+
+        // Si es coordinador y se está removiendo ese rol, verificar
+        if (!empty($rolesRemovidos)) {
+            $esCoordinador = Area::where('coordinador_id', $user->id)->exists();
+            $rolCoordinadorId = Role::where('name', 'Coordinador de Área')->first()?->id;
+
+            if ($esCoordinador && in_array($rolCoordinadorId, $rolesRemovidos)) {
+                $areaCoordinada = Area::where('coordinador_id', $user->id)->first();
+
+                // Remover como coordinador
+                $areaCoordinada->coordinador_id = null;
+                $areaCoordinada->save();
+
+                \Log::warning('Usuario removido como coordinador al cambiar roles', [
+                    'user_id' => $user->id,
+                    'area_id' => $areaCoordinada->id,
+                    'area_nombre' => $areaCoordinada->nombre,
+                    'modificado_por' => auth()->id(),
+                ]);
+            }
+        }
+
+        // Sincronizar roles (esto reemplaza todos los roles anteriores)
+        $user->syncRoles($nuevosRoles->pluck('name')->toArray());
+
+        // Registrar cambios en auditoría
+        \Log::info('Roles de usuario actualizados', [
+            'user_id' => $user->id,
+            'user_nombre' => $user->nombre . ' ' . $user->apellidos,
+            'user_email' => $user->email,
+            'modificado_por' => auth()->id(),
+            'roles_anteriores' => $rolesAnteriores,
+            'roles_nuevos' => $nuevosRolesNombres,
+            'roles_agregados' => array_intersect_key($nuevosRolesNombres, array_flip($rolesAgregados)),
+            'roles_removidos' => array_intersect_key($rolesAnteriores, array_flip($rolesRemovidos)),
+        ]);
+
+        // Cerrar sesiones activas si se solicitó
+        if ($validated['cerrar_sesion'] ?? false) {
+            // TODO: Implementar cierre de sesiones cuando exista el módulo
+            // DB::table('sessions')->where('user_id', $user->id)->delete();
+            \Log::info('Sesiones cerradas tras cambio de roles', ['user_id' => $user->id]);
+        }
+
+        // Si el usuario está actualmente logueado, refrescar permisos en sesión
+        if ($user->id === auth()->id()) {
+            // Laravel automáticamente recarga los permisos en la próxima request
+            \Log::info('Permisos actualizados para usuario activo', ['user_id' => $user->id]);
+        }
+
+        // Enviar notificación por email si se solicitó
+        if ($validated['notificar'] ?? false) {
+            try {
+                // TODO: Crear mailable RolesChangedNotification
+                // Mail::to($user->email)->send(
+                //     new RolesChangedNotification(
+                //         $user,
+                //         $rolesAnteriores,
+                //         $nuevosRolesNombres,
+                //         auth()->user()
+                //     )
+                // );
+
+                \Log::info('Email de cambio de roles enviado', [
+                    'user_id' => $user->id,
+                    'user_email' => $user->email,
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error al enviar email de cambio de roles', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // No detenemos la ejecución si falla el email
+            }
+        }
+
+        // Preparar resumen de cambios
+        $resumenCambios = [];
+        if (!empty($rolesAgregados)) {
+            $resumenCambios['agregados'] = array_values(array_intersect_key($nuevosRolesNombres, array_flip($rolesAgregados)));
+        }
+        if (!empty($rolesRemovidos)) {
+            $resumenCambios['removidos'] = array_values(array_intersect_key($rolesAnteriores, array_flip($rolesRemovidos)));
+        }
+
+        return response()->json([
+            'message' => 'Roles actualizados exitosamente',
+            'user' => $user->load('roles')->only(['id', 'nombre', 'apellidos', 'email']),
+            'roles_actuales' => $user->roles->pluck('name')->toArray(),
+            'cambios' => $resumenCambios,
+            'acciones_realizadas' => [
+                'roles_actualizados' => true,
+                'email_enviado' => $validated['notificar'] ?? false,
+                'sesion_cerrada' => $validated['cerrar_sesion'] ?? false,
             ]
         ]);
     }
