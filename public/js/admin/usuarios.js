@@ -2907,16 +2907,382 @@ function verActividad(id) {
     window.location.href = `/admin/activity-logs?user_id=${id}`;
 }
 
+/**
+ * Exportar usuarios seleccionados
+ */
 function exportarMasivo() {
-    alert('Exportar seleccionados - Próximo paso');
+    if (selectedUsers.length === 0) {
+        mostrarToast('Seleccione al menos un usuario para exportar', 'error');
+        return;
+    }
+
+    // Crear formulario para enviar IDs por POST
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/admin/usuarios/exportar';
+    form.target = '_blank';
+
+    // Agregar CSRF token
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = '_token';
+    csrfInput.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    form.appendChild(csrfInput);
+
+    // Agregar IDs de usuarios seleccionados
+    selectedUsers.forEach(userId => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'usuarios[]';
+        input.value = userId;
+        form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+
+    mostrarToast(`Exportando ${selectedUsers.length} usuario(s)...`, 'success');
 }
 
+/**
+ * Cambiar estado de múltiples usuarios
+ */
 function cambiarEstadoMasivo() {
-    alert('Cambiar estado en lote - Próximo paso');
+    if (selectedUsers.length === 0) {
+        mostrarToast('Seleccione al menos un usuario para cambiar estado', 'error');
+        return;
+    }
+
+    // Crear modal de confirmación
+    const modal = document.createElement('div');
+    modal.id = 'modalCambioEstadoMasivo';
+    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+    modal.innerHTML = `
+        <div class="relative top-20 mx-auto p-0 border w-11/12 max-w-md shadow-lg bg-white rounded-2xl">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-white">Cambiar Estado Masivo</h3>
+                    <button type="button" onclick="cerrarModalCambioEstadoMasivo()" class="text-white hover:text-gray-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="px-6 py-4">
+                <p class="mb-4 text-gray-700">
+                    <strong>${selectedUsers.length}</strong> usuario(s) seleccionado(s)
+                </p>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Acción</label>
+                    <select id="accionEstadoMasivo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="activar">Activar usuarios</option>
+                        <option value="desactivar">Desactivar usuarios</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Motivo</label>
+                    <textarea id="motivoCambioMasivo" rows="3" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        placeholder="Ingrese el motivo del cambio..."></textarea>
+                </div>
+
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                    <div class="flex">
+                        <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <p class="text-sm text-yellow-700">
+                            Esta acción afectará a todos los usuarios seleccionados.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 rounded-b-2xl">
+                <button type="button" onclick="cerrarModalCambioEstadoMasivo()"
+                    class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="button" onclick="confirmarCambioEstadoMasivo()"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                    Aplicar Cambios
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
 }
 
+/**
+ * Asignar rol a múltiples usuarios
+ */
 function asignarRolMasivo() {
-    alert('Asignar rol en lote - Próximo paso');
+    if (selectedUsers.length === 0) {
+        mostrarToast('Seleccione al menos un usuario para asignar rol', 'error');
+        return;
+    }
+
+    // Crear modal de asignación de rol
+    const modal = document.createElement('div');
+    modal.id = 'modalAsignarRolMasivo';
+    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+    modal.innerHTML = `
+        <div class="relative top-20 mx-auto p-0 border w-11/12 max-w-md shadow-lg bg-white rounded-2xl">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-600 to-purple-700 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-white">Asignar Rol Masivo</h3>
+                    <button type="button" onclick="cerrarModalAsignarRolMasivo()" class="text-white hover:text-gray-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="px-6 py-4">
+                <p class="mb-4 text-gray-700">
+                    <strong>${selectedUsers.length}</strong> usuario(s) seleccionado(s)
+                </p>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Acción</label>
+                    <select id="accionRolMasivo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <option value="agregar">Agregar rol (mantiene roles existentes)</option>
+                        <option value="reemplazar">Reemplazar roles (elimina roles actuales)</option>
+                        <option value="remover">Remover rol específico</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Rol <span class="text-red-500">*</span>
+                    </label>
+                    <select id="rolMasivo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <option value="">Seleccione un rol...</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Cargando roles disponibles...</p>
+                </div>
+
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <div class="flex">
+                        <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-sm text-blue-700">
+                            Los cambios se aplicarán a todos los usuarios seleccionados y se registrarán en el log de actividades.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 rounded-b-2xl">
+                <button type="button" onclick="cerrarModalAsignarRolMasivo()"
+                    class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="button" onclick="confirmarAsignarRolMasivo()"
+                    class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg">
+                    Asignar Rol
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Cargar roles disponibles
+    cargarRolesParaAsignacionMasiva();
+}
+
+// ========================================
+// FUNCIONES AUXILIARES DE ACCIONES MASIVAS
+// ========================================
+
+/**
+ * Cerrar modal de cambio de estado masivo
+ */
+function cerrarModalCambioEstadoMasivo() {
+    const modal = document.getElementById('modalCambioEstadoMasivo');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+/**
+ * Confirmar cambio de estado masivo
+ */
+async function confirmarCambioEstadoMasivo() {
+    const accion = document.getElementById('accionEstadoMasivo').value;
+    const motivo = document.getElementById('motivoCambioMasivo').value.trim();
+
+    if (!motivo) {
+        mostrarToast('Debe ingresar un motivo para el cambio', 'error');
+        return;
+    }
+
+    const btn = document.querySelector('#modalCambioEstadoMasivo button[onclick="confirmarCambioEstadoMasivo()"]');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+    try {
+        const response = await fetch('/admin/api/usuarios/cambiar-estado-masivo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                usuarios: selectedUsers,
+                accion: accion,
+                motivo: motivo
+            })
+        });
+
+        const result = await manejarRespuestaFetch(response);
+
+        if (response.ok) {
+            const exitosos = result.exitosos || 0;
+            const fallidos = result.fallidos || 0;
+
+            if (fallidos > 0) {
+                mostrarToast(`${exitosos} usuario(s) actualizado(s), ${fallidos} fallido(s)`, 'success');
+            } else {
+                mostrarToast(`${exitosos} usuario(s) ${accion === 'activar' ? 'activado(s)' : 'desactivado(s)'} exitosamente`, 'success');
+            }
+
+            cerrarModalCambioEstadoMasivo();
+            limpiarSeleccion();
+            await cargarUsuarios();
+        } else {
+            mostrarToast(result.message || 'Error al cambiar estado', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al cambiar estado masivo', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+}
+
+/**
+ * Cerrar modal de asignar rol masivo
+ */
+function cerrarModalAsignarRolMasivo() {
+    const modal = document.getElementById('modalAsignarRolMasivo');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+/**
+ * Confirmar asignación de rol masivo
+ */
+async function confirmarAsignarRolMasivo() {
+    const accion = document.getElementById('accionRolMasivo').value;
+    const rol = document.getElementById('rolMasivo').value;
+
+    if (!rol) {
+        mostrarToast('Debe seleccionar un rol', 'error');
+        return;
+    }
+
+    const btn = document.querySelector('#modalAsignarRolMasivo button[onclick="confirmarAsignarRolMasivo()"]');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+    try {
+        const response = await fetch('/admin/api/usuarios/asignar-rol-masivo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                usuarios: selectedUsers,
+                accion: accion,
+                rol: rol
+            })
+        });
+
+        const result = await manejarRespuestaFetch(response);
+
+        if (response.ok) {
+            const exitosos = result.exitosos || 0;
+            const fallidos = result.fallidos || 0;
+
+            let mensaje = '';
+            if (accion === 'agregar') {
+                mensaje = `Rol agregado a ${exitosos} usuario(s)`;
+            } else if (accion === 'reemplazar') {
+                mensaje = `Roles reemplazados en ${exitosos} usuario(s)`;
+            } else {
+                mensaje = `Rol removido de ${exitosos} usuario(s)`;
+            }
+
+            if (fallidos > 0) {
+                mensaje += `, ${fallidos} fallido(s)`;
+            }
+
+            mostrarToast(mensaje, 'success');
+            cerrarModalAsignarRolMasivo();
+            limpiarSeleccion();
+            await cargarUsuarios();
+        } else {
+            mostrarToast(result.message || 'Error al asignar rol', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al asignar rol masivo', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+}
+
+/**
+ * Cargar roles disponibles para asignación masiva
+ */
+async function cargarRolesParaAsignacionMasiva() {
+    const select = document.getElementById('rolMasivo');
+    const helpText = select.parentElement.querySelector('.text-xs');
+
+    try {
+        const response = await fetch('/admin/api/roles');
+        const data = await response.json();
+        const roles = data.roles || [];
+
+        select.innerHTML = '<option value="">Seleccione un rol...</option>';
+        
+        roles.forEach(role => {
+            const option = document.createElement('option');
+            option.value = role.name;
+            option.textContent = `${role.name} (${role.users_count || 0} usuarios)`;
+            select.appendChild(option);
+        });
+
+        helpText.textContent = `${roles.length} rol(es) disponible(s)`;
+        helpText.classList.remove('text-red-500');
+        helpText.classList.add('text-gray-500');
+    } catch (error) {
+        console.error('Error al cargar roles:', error);
+        helpText.textContent = 'Error al cargar roles';
+        helpText.classList.add('text-red-500');
+    }
 }
 
 // ========================================

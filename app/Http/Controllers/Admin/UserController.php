@@ -961,4 +961,215 @@ class UserController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Exportar usuarios seleccionados a Excel
+     */
+    public function exportarMasivo(Request $request)
+    {
+        $validated = $request->validate([
+            'usuarios' => 'required|array|min:1',
+            'usuarios.*' => 'exists:users,id',
+        ]);
+
+        $usuarios = User::with(['area', 'equipo', 'roles'])
+            ->whereIn('id', $validated['usuarios'])
+            ->get();
+
+        // Registrar exportación
+        \Log::info('Exportación masiva de usuarios', [
+            'total_usuarios' => count($validated['usuarios']),
+            'exportado_por' => auth()->id(),
+            'fecha' => now(),
+        ]);
+
+        // Crear CSV
+        $filename = 'usuarios_' . date('Y-m-d_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function() use ($usuarios) {
+            $file = fopen('php://output', 'w');
+            
+            // BOM para UTF-8
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Headers
+            fputcsv($file, [
+                'ID',
+                'Tipo Documento',
+                'Cédula',
+                'Nombre',
+                'Apellidos',
+                'Email',
+                'Teléfono',
+                'Celular',
+                'Tipo Usuario',
+                'Área',
+                'Equipo',
+                'Cargo',
+                'Roles',
+                'Estado',
+                'Fecha Creación',
+            ], ';');
+
+            // Datos
+            foreach ($usuarios as $user) {
+                fputcsv($file, [
+                    $user->id,
+                    $user->tipo_documento ?? '',
+                    $user->cedula ?? '',
+                    $user->nombre,
+                    $user->apellidos,
+                    $user->email,
+                    $user->telefono ?? '',
+                    $user->celular ?? '',
+                    $user->tipo_usuario === 'interno' ? 'Funcionario' : 'Ciudadano',
+                    $user->area->nombre ?? '',
+                    $user->equipo->nombre ?? '',
+                    $user->cargo ?? '',
+                    $user->roles->pluck('name')->implode(', '),
+                    $user->activo ? 'Activo' : 'Inactivo',
+                    $user->created_at->format('Y-m-d H:i:s'),
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Cambiar estado de múltiples usuarios
+     */
+    public function cambiarEstadoMasivo(Request $request)
+    {
+        $validated = $request->validate([
+            'usuarios' => 'required|array|min:1',
+            'usuarios.*' => 'exists:users,id',
+            'accion' => 'required|in:activar,desactivar',
+            'motivo' => 'required|string|max:500',
+        ]);
+
+        $exitosos = 0;
+        $fallidos = 0;
+        $errores = [];
+        $nuevoEstado = $validated['accion'] === 'activar';
+
+        foreach ($validated['usuarios'] as $userId) {
+            try {
+                $user = User::findOrFail($userId);
+
+                // No permitir cambiar el estado del usuario autenticado
+                if ($user->id === auth()->id()) {
+                    $fallidos++;
+                    $errores[] = "No puedes cambiar tu propio estado";
+                    continue;
+                }
+
+                $user->activo = $nuevoEstado;
+                $user->save();
+
+                // Registrar en log
+                \Log::info('Estado de usuario cambiado (masivo)', [
+                    'user_id' => $user->id,
+                    'nuevo_estado' => $nuevoEstado ? 'activo' : 'inactivo',
+                    'motivo' => $validated['motivo'],
+                    'cambiado_por' => auth()->id(),
+                ]);
+
+                $exitosos++;
+            } catch (\Exception $e) {
+                $fallidos++;
+                $errores[] = "Usuario {$userId}: " . $e->getMessage();
+                \Log::error('Error en cambio de estado masivo', [
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return response()->json([
+            'message' => $fallidos > 0
+                ? "Operación completada con algunos errores"
+                : "Estado actualizado exitosamente",
+            'exitosos' => $exitosos,
+            'fallidos' => $fallidos,
+            'errores' => $errores,
+        ], $fallidos > 0 && $exitosos === 0 ? 422 : 200);
+    }
+
+    /**
+     * Asignar rol a múltiples usuarios
+     */
+    public function asignarRolMasivo(Request $request)
+    {
+        $validated = $request->validate([
+            'usuarios' => 'required|array|min:1',
+            'usuarios.*' => 'exists:users,id',
+            'accion' => 'required|in:agregar,reemplazar,remover',
+            'rol' => 'required|string|exists:roles,name',
+        ]);
+
+        $exitosos = 0;
+        $fallidos = 0;
+        $errores = [];
+
+        foreach ($validated['usuarios'] as $userId) {
+            try {
+                $user = User::findOrFail($userId);
+                $rolName = $validated['rol'];
+
+                switch ($validated['accion']) {
+                    case 'agregar':
+                        // Agregar rol sin eliminar los existentes
+                        if (!$user->hasRole($rolName)) {
+                            $user->assignRole($rolName);
+                        }
+                        break;
+
+                    case 'reemplazar':
+                        // Eliminar todos los roles y asignar solo el nuevo
+                        $user->syncRoles([$rolName]);
+                        break;
+
+                    case 'remover':
+                        // Remover rol específico
+                        if ($user->hasRole($rolName)) {
+                            $user->removeRole($rolName);
+                        }
+                        break;
+                }
+
+                // Registrar en log
+                \Log::info('Rol asignado masivamente', [
+                    'user_id' => $user->id,
+                    'accion' => $validated['accion'],
+                    'rol' => $rolName,
+                    'asignado_por' => auth()->id(),
+                ]);
+
+                $exitosos++;
+            } catch (\Exception $e) {
+                $fallidos++;
+                $errores[] = "Usuario {$userId}: " . $e->getMessage();
+                \Log::error('Error en asignación masiva de rol', [
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return response()->json([
+            'message' => $fallidos > 0
+                ? "Operación completada con algunos errores"
+                : "Rol asignado exitosamente",
+            'exitosos' => $exitosos,
+            'fallidos' => $fallidos,
+            'errores' => $errores,
+        ], $fallidos > 0 && $exitosos === 0 ? 422 : 200);
+    }
 }

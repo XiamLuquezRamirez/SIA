@@ -71,6 +71,14 @@ Route::middleware(['auth'])->group(function () {
         Route::post('api/usuarios/{usuario}/actualizar-roles', [App\Http\Controllers\Admin\UserController::class, 'actualizarRoles'])
             ->name('api.usuarios.actualizar-roles');
 
+        // Rutas de acciones masivas
+        Route::post('usuarios/exportar', [App\Http\Controllers\Admin\UserController::class, 'exportarMasivo'])
+            ->name('usuarios.exportar');
+        Route::post('api/usuarios/cambiar-estado-masivo', [App\Http\Controllers\Admin\UserController::class, 'cambiarEstadoMasivo'])
+            ->name('api.usuarios.cambiar-estado-masivo');
+        Route::post('api/usuarios/asignar-rol-masivo', [App\Http\Controllers\Admin\UserController::class, 'asignarRolMasivo'])
+            ->name('api.usuarios.asignar-rol-masivo');
+
         // API auxiliares
         Route::get('api/areas', [App\Http\Controllers\Admin\UserController::class, 'getAreas'])
             ->name('api.areas');
