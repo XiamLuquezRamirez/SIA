@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Login' }} - SIA OAPM</title>
+    <title>{{ $title ?? 'Login' }} - SIA</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Tailwind CSS CDN -->
@@ -23,7 +23,7 @@
     {{ $slot }}
 
     <footer class="fixed bottom-0 w-full bg-white/80 backdrop-blur-sm py-4 text-center text-sm text-gray-600">
-        <p>&copy; {{ date('Y') }} Alcald\u00eda de Valledupar - OAPM</p>
+        <p>&copy; {{ date('Y') }} Alcaldía de Valledupar</p>
     </footer>
 
 </body>

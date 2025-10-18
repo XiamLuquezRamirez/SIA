@@ -1728,7 +1728,7 @@ function formatearFechaActividad(cadenaFecha) {
 
 function cerrarModalVerUsuario() {
     document.getElementById('viewUserModal').classList.add('hidden');
-    idUsuarioVistaActual = null;
+    //idUsuarioVistaActual = null;
     tabVistaActual = 'personal';
     datosDetalleUsuario = null;
 }
@@ -1744,6 +1744,7 @@ function escapeHtml(text) {
 // Funciones auxiliares del modal
 
 function editarUsuarioDesdeVista() {
+
     cerrarModalVerUsuario();
     editarUsuario(idUsuarioVistaActual);
 }

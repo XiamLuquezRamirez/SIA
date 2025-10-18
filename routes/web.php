@@ -43,6 +43,16 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard principal
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Rutas de perfil de usuario
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ProfileController::class, 'show'])->name('show');
+        Route::get('/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('edit');
+        Route::put('/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('update');
+        Route::post('/photo', [App\Http\Controllers\ProfileController::class, 'updatePhoto'])->name('photo.update');
+        Route::delete('/photo', [App\Http\Controllers\ProfileController::class, 'deletePhoto'])->name('photo.delete');
+        Route::put('/password', [App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('password.update');
+    });
+
     // Dashboard administrativo (para Super Admin y Director)
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])
         ->middleware('role:Super Administrador|Director OAPM')
