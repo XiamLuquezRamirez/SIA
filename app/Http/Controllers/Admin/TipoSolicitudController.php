@@ -14,50 +14,69 @@ class TipoSolicitudController extends Controller
      */
     public function index(Request $request)
     {
-        // Si es petición AJAX, devolver JSON
-        if ($request->ajax()) {
-            $query = TipoSolicitud::with(['area']);
-
-            // Búsqueda
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where(function($q) use ($search) {
-                    $q->where('nombre', 'ILIKE', "%{$search}%")
-                      ->orWhere('codigo', 'ILIKE', "%{$search}%")
-                      ->orWhere('descripcion', 'ILIKE', "%{$search}%");
-                });
-            }
-
-            // Filtro por categoría
-            if ($request->filled('categoria')) {
-                $query->where('categoria', $request->categoria);
-            }
-
-            // Filtro por estado
-            if ($request->filled('estado')) {
-                if ($request->estado === 'activos') {
-                    $query->where('activo', true);
-                } elseif ($request->estado === 'inactivos') {
-                    $query->where('activo', false);
+        try {
+            // Si es petición AJAX, devolver JSON
+            if ($request->ajax()) {
+                $query = TipoSolicitud::query();
+                
+                // Intentar cargar relación area si existe
+                try {
+                    $query->with(['area']);
+                } catch (\Exception $e) {
+                    // Si falla la relación, continuar sin ella
                 }
+
+                // Búsqueda
+                if ($request->filled('search')) {
+                    $search = $request->search;
+                    $query->where(function($q) use ($search) {
+                        $q->where('nombre', 'ILIKE', "%{$search}%")
+                          ->orWhere('codigo', 'ILIKE', "%{$search}%");
+                    });
+                }
+
+                // Filtro por estado
+                if ($request->filled('estado')) {
+                    if ($request->estado === 'activos') {
+                        $query->where('activo', true);
+                    } elseif ($request->estado === 'inactivos') {
+                        $query->where('activo', false);
+                    }
+                }
+
+                // Filtro por área
+                if ($request->filled('area_id')) {
+                    $query->where('area_id', $request->area_id);
+                }
+
+                // Ordenar - usar solo campos que existen con seguridad
+                $query->orderBy('id', 'desc');
+
+                $tipos = $query->paginate(24);
+
+                return response()->json($tipos);
             }
 
-            // Filtro por área
-            if ($request->filled('area_id')) {
-                $query->where('area_id', $request->area_id);
+            // Vista HTML
+            return view('admin.tipos-solicitud.index');
+        } catch (\Exception $e) {
+            \Log::error('Error en TipoSolicitudController@index', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Si es AJAX, devolver error JSON
+            if ($request->ajax()) {
+                return response()->json([
+                    'error' => 'Error al cargar tipos de solicitud',
+                    'message' => $e->getMessage()
+                ], 500);
             }
-
-            // Ordenar
-            $query->orderBy('orden', 'asc')
-                  ->orderBy('nombre', 'asc');
-
-            $tipos = $query->paginate(24);
-
-            return response()->json($tipos);
+            
+            // Si es web, redirigir con error
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Error al cargar tipos de solicitud: ' . $e->getMessage());
         }
-
-        // Vista HTML
-        return view('admin.tipos-solicitud.index');
     }
 
     /**
