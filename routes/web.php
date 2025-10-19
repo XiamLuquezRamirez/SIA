@@ -131,10 +131,19 @@ Route::middleware(['auth'])->group(function () {
             ->name('activity-logs.activities');
         Route::get('activity-logs/stats', [App\Http\Controllers\Admin\ActivityLogController::class, 'getStats'])
             ->name('activity-logs.stats');
+
+
+        // Rutas para gestion de dependencias
         Route::post('guardar-dependencia', [App\Http\Controllers\Admin\DependenciasController::class, 'guardarDependencia'])->name('guardar-dependencia');
         Route::get('dependencias/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'show'])->name('dependencias.show');
         Route::post('editar-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'update'])->name('editar-dependencia');
         Route::post('alternar-estado-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'alternarEstadoDependencia'])->name('alternar-estado-dependencia');
         Route::delete('eliminar-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'eliminarDependencia'])->name('eliminar-dependencia');
+        Route::get('dependencias-select', [App\Http\Controllers\Admin\DependenciasController::class, 'getDependenciasSelect'])->name('dependencias.select');
+       
+        // Rutas para gestion de equipos
+        Route::resource('equipos', App\Http\Controllers\Admin\EquiposController::class);
+        Route::get('usuarios-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getUsuariosAreaSelect'])->name('usuarios-area.select');
+        Route::post('guardar-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'guardarEquipo'])->name('guardar-equipo');
     });
 });

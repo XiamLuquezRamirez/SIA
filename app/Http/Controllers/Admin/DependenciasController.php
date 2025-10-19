@@ -211,4 +211,10 @@ class DependenciasController extends Controller
             ]);
         }
     }
+
+    public function getDependenciasSelect()
+    {
+        $dependencias = Dependencia::select('id', 'nombre')->where('activo', true)->orderBy('nombre', 'asc')->get();
+        return response()->json($dependencias);
+    }
 }

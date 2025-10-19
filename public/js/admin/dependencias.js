@@ -512,7 +512,6 @@ async function manejarEnvioFormulario(e) {
 
         } else if (response.status === 422) {
             // Errores de validación
-            manejarErroresValidacion(data.errors);
             mostrarToast('Por favor corrija los errores en el formulario', 'error');
 
         } else {
@@ -1056,7 +1055,13 @@ function llenarModalDetalleDependencia() {
                 }
             </td>
             <td class="px-6 py-4">${funcionario.nombre} ${funcionario.apellidos}</td>
-            <td class="px-6 py-4">${funcionario.cargo}</td>
+            <td class="px-6 py-4">
+                ${funcionario.cargo ? `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <span class="text-xs">${funcionario.cargo}</span>
+                </span>` : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                    <span class="text-xs">Sin cargo</span>
+                </div>`}
+            </td>
             <td class="px-6 py-4">${funcionario.email}</td>
             <td class="px-6 py-4">
                 ${funcionario.celular
