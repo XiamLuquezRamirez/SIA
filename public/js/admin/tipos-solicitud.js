@@ -1,4 +1,35 @@
 // ========================================
+// MANEJO DE RESPUESTAS
+// ========================================
+
+async function manejarRespuestaFetch(response) {
+    const contentType = response.headers.get('content-type');
+    const esHTML = contentType && contentType.includes('text/html');
+    
+    if (esHTML && (response.status === 200 || response.status === 302)) {
+        const texto = await response.text();
+        
+        if (texto.includes('login') || texto.includes('csrf')) {
+            mostrarToast('Su sesión ha expirado. Redirigiendo al login...', 'error');
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 2000);
+            throw new Error('Sesión expirada');
+        }
+    }
+    
+    if (response.status === 401 || response.status === 419) {
+        mostrarToast('Su sesión ha expirado. Redirigiendo al login...', 'error');
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 2000);
+        throw new Error('Sesión expirada');
+    }
+    
+    return response;
+}
+
+// ========================================
 // ESTADO GLOBAL
 // ========================================
 
@@ -74,31 +105,46 @@ async function cargarTiposSolicitud() {
         });
 
         const response = await fetch(`/admin/api/tipos-solicitud?${params}`);
+        await manejarRespuestaFetch(response);
+        
+        if (!response.ok) {
+            throw new Error('Error en la respuesta del servidor');
+        }
+
         const data = await response.json();
 
-        if (data.data.length === 0) {
+        if (data.data && data.data.length === 0) {
             mostrarEstadoVacio();
-        } else {
+        } else if (data.data) {
             renderizarTipos(data.data);
+        } else {
+            mostrarEstadoVacio();
         }
     } catch (error) {
         console.error('Error al cargar tipos:', error);
         mostrarToast('Error al cargar tipos de solicitud', 'error');
+        mostrarEstadoVacio();
     }
 }
 
 async function cargarCategorias() {
     try {
         const response = await fetch('/admin/api/tipos-solicitud/categorias/lista');
-        const data = await response.json();
+        await manejarRespuestaFetch(response);
         
-        const select = document.getElementById('filterCategoria');
-        data.categorias.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat;
-            option.textContent = cat;
-            select.appendChild(option);
-        });
+        if (response.ok) {
+            const data = await response.json();
+            
+            const select = document.getElementById('filterCategoria');
+            if (data.categorias) {
+                data.categorias.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    select.appendChild(option);
+                });
+            }
+        }
     } catch (error) {
         console.error('Error al cargar categorías:', error);
     }
@@ -107,15 +153,21 @@ async function cargarCategorias() {
 async function cargarAreas() {
     try {
         const response = await fetch('/admin/api/areas');
-        const areas = await response.json();
+        await manejarRespuestaFetch(response);
         
-        const select = document.getElementById('filterArea');
-        areas.forEach(area => {
-            const option = document.createElement('option');
-            option.value = area.id;
-            option.textContent = area.nombre;
-            select.appendChild(option);
-        });
+        if (response.ok) {
+            const areas = await response.json();
+            
+            const select = document.getElementById('filterArea');
+            if (Array.isArray(areas)) {
+                areas.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.id;
+                    option.textContent = area.nombre;
+                    select.appendChild(option);
+                });
+            }
+        }
     } catch (error) {
         console.error('Error al cargar áreas:', error);
     }
@@ -349,8 +401,11 @@ async function eliminarTipo(id, codigo) {
                 }
             });
 
+            await manejarRespuestaFetch(response);
+
             if (response.ok) {
-                mostrarToast('Tipo de solicitud eliminado', 'success');
+                const data = await response.json();
+                mostrarToast(data.message || 'Tipo de solicitud eliminado', 'success');
                 cargarTiposSolicitud();
             } else {
                 const data = await response.json();
@@ -372,6 +427,8 @@ async function alternarEstadoTipo(id, nuevoEstado) {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             }
         });
+
+        await manejarRespuestaFetch(response);
 
         if (response.ok) {
             const data = await response.json();
