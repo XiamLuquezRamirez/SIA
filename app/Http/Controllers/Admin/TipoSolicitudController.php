@@ -211,10 +211,16 @@ class TipoSolicitudController extends Controller
      */
     public function getCategorias()
     {
-        $categorias = TipoSolicitud::select('categoria')
-            ->distinct()
-            ->orderBy('categoria')
-            ->pluck('categoria');
+        // Por ahora devolver categorías predefinidas
+        // TODO: Crear modelo CategoriaSolicitud cuando exista la tabla
+        $categorias = [
+            'Certificados',
+            'Permisos',
+            'Licencias',
+            'Consultas',
+            'Trámites',
+            'Otros'
+        ];
 
         return response()->json([
             'categorias' => $categorias

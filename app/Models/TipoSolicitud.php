@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Schema;
 
 class TipoSolicitud extends Model
 {
@@ -105,6 +106,10 @@ class TipoSolicitud extends Model
      */
     public function scopeCategoria($query, $categoria)
     {
+        // Adaptable: usar categoria_id o categoria según estructura de BD
+        if (Schema::hasColumn('tipos_solicitud', 'categoria_id')) {
+            return $query->where('categoria_id', $categoria);
+        }
         return $query->where('categoria', $categoria);
     }
 
