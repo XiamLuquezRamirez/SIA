@@ -11,7 +11,7 @@ class DependenciasController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Dependencia::with(['coordinador', 'equipos', 'funcionarios']);
+            $query = Dependencia::with(['coordinador', 'equipos', 'funcionarios'])->orderBy('id', 'desc');
 
             // Búsqueda
             if ($request->has('search') && $request->search) {
@@ -158,6 +158,20 @@ class DependenciasController extends Controller
         $dependencia->activo = $request->activo == '1' ? true : false;
         $dependencia->save();
 
+        // Notificar al coordinador
+        if ($request->notificar == '1') {}
+
+        // Desactivar los equipos de la dependencia
+        $equipos_desactivados = [];
+        if ($request->desactivar_equipos == '1') {
+            $equipos = $dependencia->equipos;
+            foreach ($equipos as $equipo) {
+                $equipo->activo = false;
+                $equipo->save();
+                $equipos_desactivados[] = "$equipo->id - $equipo->nombre";
+            }
+        }
+
         // Registrar cambios en log para auditoría
 
         \Log::info('Dependencia actualizada exitosamente, cambios realizados: ', [
@@ -166,10 +180,35 @@ class DependenciasController extends Controller
             'cambios' => [
                 'activo' => ['anterior' => $datosOriginales['activo'], 'nuevo' => $dependencia->activo],
             ],
+            'equipos_desactivados' => $equipos_desactivados,
         ]);
 
         return response()->json([
             'message' => 'Estado de la dependencia cambiado exitosamente',
         ]);
+    }
+
+    public function eliminarDependencia(Request $request, string $id)
+    {
+        $dependencia = Dependencia::findOrFail($id);
+
+        if ($dependencia) {
+            $dependencia->delete();
+
+            \Log::info('Dependencia eliminada exitosamente: ', [
+                'dependencia_id' => $dependencia->id,
+                'usuario_que_elimina' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'message' => 'Dependencia eliminada exitosamente',
+                'icon' => 'success',
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Dependencia no encontrada',
+                'icon' => 'error',
+            ]);
+        }
     }
 }
