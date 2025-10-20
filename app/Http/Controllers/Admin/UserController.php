@@ -228,6 +228,7 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'tipo_documento' => 'required|in:CC,CE,Pasaporte',
+            'cedula' => ['required', 'string', Rule::unique('users')->ignore($user->id)],
             'nombre' => 'required|string|max:255',
             'apellidos' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
@@ -245,6 +246,7 @@ class UserController extends Controller
             'motivo_cambio_area' => 'nullable|string|max:500',
             'remover_como_coordinador' => 'nullable|boolean',
         ], [
+            'cedula.unique' => 'Ya existe un usuario con este documento',
             'email.unique' => 'El email ya está registrado',
             'roles.required' => 'Debe asignar al menos un rol',
         ]);
