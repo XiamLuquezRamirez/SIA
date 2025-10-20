@@ -1,0 +1,481 @@
+/* ========================================
+   TIPOS DE SOLICITUD - ESTILOS GENERALES
+   ======================================== */
+
+/* Contenedor principal */
+#tiposContainer {
+    min-height: 400px;
+}
+
+/* Cards de tipos */
+.tipo-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.tipo-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    border-color: #3B82F6;
+}
+
+/* Badge de estado */
+.badge-activo {
+    background-color: #10B981;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-inactivo {
+    background-color: #EF4444;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* ========================================
+   WIZARD MODAL - ESTRUCTURA
+   ======================================== */
+
+/* Modal overlay */
+#wizardModal {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal content */
+#wizardModal > div {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ========================================
+   PROGRESS BAR DEL WIZARD
+   ======================================== */
+
+/* Círculos de pasos */
+#wizardModal .wizard-step-circle {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+#wizardModal .wizard-step-circle:hover {
+    transform: scale(1.05);
+}
+
+/* Círculo del paso actual - Animación del anillo */
+@keyframes pulse-ring {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.05);
+    }
+}
+
+#wizardModal .ring-4 {
+    animation: pulse-ring 2s ease-in-out infinite;
+}
+
+/* Líneas conectoras entre pasos */
+#wizardModal .flex-1.h-1 {
+    transition: background-color 0.5s ease;
+}
+
+/* Checkmark en pasos completados */
+#wizardModal .bg-green-500 {
+    animation: checkmarkAppear 0.4s ease;
+}
+
+@keyframes checkmarkAppear {
+    0% {
+        transform: scale(0) rotate(-45deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(10deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+/* ========================================
+   CONTENIDO DEL WIZARD - PASO 1
+   ======================================== */
+
+/* Campos del formulario */
+#wizardModal input[type="text"],
+#wizardModal input[type="number"],
+#wizardModal input[type="color"],
+#wizardModal select,
+#wizardModal textarea {
+    transition: all 0.2s ease;
+}
+
+#wizardModal input:focus,
+#wizardModal select:focus,
+#wizardModal textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Campos con error */
+#wizardModal .border-red-500 {
+    animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(5px);
+    }
+}
+
+/* Mensajes de error */
+#wizardModal [id^="error_"] {
+    animation: slideInError 0.3s ease;
+}
+
+@keyframes slideInError {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Contador de caracteres */
+#contador_descripcion {
+    font-weight: 600;
+    color: #3B82F6;
+}
+
+/* Checkbox personalizado */
+#wizardModal input[type="checkbox"] {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#wizardModal input[type="checkbox"]:checked {
+    background-color: #3B82F6;
+    border-color: #3B82F6;
+}
+
+/* Color picker */
+#wizardModal input[type="color"] {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+#wizardModal input[type="color"]:hover {
+    transform: scale(1.1);
+}
+
+/* ========================================
+   BOTONES DEL WIZARD
+   ======================================== */
+
+/* Botón Siguiente/Finalizar */
+#btnSiguiente {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+#btnSiguiente:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+#btnSiguiente::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+#btnSiguiente:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+/* Botón Anterior */
+#btnAnterior {
+    transition: all 0.3s ease;
+}
+
+#btnAnterior:hover {
+    transform: translateX(-5px);
+    background-color: #F3F4F6;
+}
+
+/* ========================================
+   PASO 2, 3, 4 - PLACEHOLDERS
+   ======================================== */
+
+/* Emoji grande en placeholders */
+#wizardModal .text-6xl {
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* ========================================
+   RESUMEN DEL PASO 4
+   ======================================== */
+
+/* Cards del resumen */
+#resumenTipo > div {
+    animation: fadeInUp 0.5s ease;
+    animation-fill-mode: both;
+}
+
+#resumenTipo > div:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+#resumenTipo > div:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+#resumenTipo > div:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+#resumenTipo > div:nth-child(4) {
+    animation-delay: 0.4s;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Badges de opciones activas */
+#resumenTipo .px-3.py-1 {
+    animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+/* ========================================
+   SKELETON LOADERS
+   ======================================== */
+
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        #f0f0f0 25%,
+        #e0e0e0 50%,
+        #f0f0f0 75%
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ========================================
+   ESTADO VACÍO (EMPTY STATE)
+   ======================================== */
+
+#emptyState {
+    animation: fadeIn 0.5s ease;
+}
+
+#emptyState svg {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* ========================================
+   FILTROS Y BÚSQUEDA
+   ======================================== */
+
+/* Input de búsqueda */
+input[placeholder*="Buscar"] {
+    transition: all 0.3s ease;
+}
+
+input[placeholder*="Buscar"]:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Tabs de filtro */
+.tab-button {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.tab-button::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background-color: #3B82F6;
+    transition: width 0.3s ease;
+}
+
+.tab-button.active::after {
+    width: 100%;
+}
+
+/* ========================================
+   PAGINACIÓN
+   ======================================== */
+
+.pagination-button {
+    transition: all 0.2s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+    background-color: #3B82F6;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ========================================
+   RESPONSIVE - MOBILE
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Modal más pequeño en móvil */
+    #wizardModal > div {
+        width: 95% !important;
+        max-width: 95% !important;
+    }
+    
+    /* Progress bar vertical en móvil */
+    #wizardModal .flex.items-center.justify-between {
+        flex-direction: column;
+    }
+    
+    #wizardModal [id^="step"] {
+        width: 100% !important;
+        margin: 0.5rem 0;
+    }
+    
+    /* Ocultar líneas horizontales, mostrar verticales */
+    #wizardModal .flex-1.h-1 {
+        display: none;
+    }
+}
+
+/* ========================================
+   UTILIDADES
+   ======================================== */
+
+/* Smooth scroll */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Evitar selección de texto en botones */
+button {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
+
+/* Scroll personalizado */
+#wizardContent::-webkit-scrollbar {
+    width: 8px;
+}
+
+#wizardContent::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#wizardContent::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+#wizardContent::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+

@@ -124,20 +124,28 @@ Route::middleware(['auth'])->group(function () {
         // Rutas para tipos de solicitud
         Route::get('tipos-solicitud', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'index'])
             ->name('configurarSolicitudes.index');
+        
+        // IMPORTANTE: Rutas específicas ANTES de rutas con parámetros {tipo}
+        Route::get('api/tipos-solicitud/categorias', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'getCategorias'])
+            ->name('api.tipos-solicitud.categorias');
+        
         Route::get('api/tipos-solicitud', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'index'])
             ->name('api.tipos-solicitud.index');
         Route::post('api/tipos-solicitud', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'store'])
             ->name('api.tipos-solicitud.store');
+        Route::patch('api/tipos-solicitud/{tipo}/toggle', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'toggleEstado'])
+            ->name('api.tipos-solicitud.toggle');
         Route::get('api/tipos-solicitud/{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'show'])
             ->name('api.tipos-solicitud.show');
         Route::put('api/tipos-solicitud/{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'update'])
             ->name('api.tipos-solicitud.update');
         Route::delete('api/tipos-solicitud/{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'destroy'])
             ->name('api.tipos-solicitud.destroy');
-        Route::patch('api/tipos-solicitud/{tipo}/toggle', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'toggleEstado'])
-            ->name('api.tipos-solicitud.toggle');
-        Route::get('api/tipos-solicitud/categorias/lista', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'getCategorias'])
-            ->name('api.tipos-solicitud.categorias');
+
+        // Ruta para obtener lista de áreas (usado en wizards)
+        Route::get('areas', function() {
+            return response()->json(App\Models\Area::orderBy('nombre')->get(['id', 'nombre']));
+        })->name('api.areas');
 
         // Rutas para historia de usuario dependencias
         Route::resource('dependencias', App\Http\Controllers\Admin\DependenciasController::class);

@@ -1,6 +1,10 @@
 <x-app-layout>
     <x-slot name="title">Tipos de Solicitud</x-slot>
 
+    @push('styles')
+    <link rel="stylesheet" href="{{ asset('css/admin/tipos-solicitud.css') }}">
+    @endpush
+
     <div class="container mx-auto">
         <!-- Header -->
         <div class="mb-6">
@@ -151,9 +155,6 @@
             <p class="mt-1 text-sm text-gray-500">Comienza creando un nuevo tipo de solicitud.</p>
             <div class="mt-6">
                 <button onclick="abrirModalNuevoTipo()" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
                     Crear Primer Tipo
                 </button>
             </div>

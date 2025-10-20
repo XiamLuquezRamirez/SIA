@@ -1,0 +1,269 @@
+/* ========================================
+   ESTILOS DEL HEADER DE USUARIO
+   ======================================== */
+
+/* Animaciones para los iconos de notificación y mensaje */
+.header-notification-icon,
+.header-message-icon {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.header-notification-icon:hover,
+.header-message-icon:hover {
+    transform: scale(1.1);
+}
+
+/* Animación de pulso para los badges */
+.header-badge {
+    animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Estilo para el avatar del usuario */
+.user-avatar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Estilo para el dropdown del usuario */
+.user-dropdown {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(229, 231, 235, 0.8);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Animación de entrada del dropdown */
+.user-dropdown-enter {
+    animation: dropdown-enter 0.2s ease-out;
+}
+
+@keyframes dropdown-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Estilo para las opciones del menú */
+.user-menu-item {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    margin: 2px 8px;
+}
+
+.user-menu-item:hover {
+    background-color: #f8fafc;
+    transform: translateX(4px);
+}
+
+.user-menu-item svg {
+    transition: all 0.2s ease;
+}
+
+.user-menu-item:hover svg {
+    color: #3b82f6;
+    transform: scale(1.1);
+}
+
+/* Estilo especial para cerrar sesión */
+.user-logout {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    margin: 2px 8px;
+}
+
+.user-logout:hover {
+    background-color: #fef2f2;
+    transform: translateX(4px);
+}
+
+.user-logout:hover svg {
+    color: #dc2626;
+    transform: scale(1.1);
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .user-info {
+        display: none;
+    }
+    
+    .user-dropdown {
+        right: 1rem;
+        left: 1rem;
+        width: auto;
+    }
+}
+
+/* Estilo para el nombre del usuario en el header */
+.user-name {
+    font-weight: 600;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Estilo para el rol del usuario */
+.user-role {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Efecto de hover para el contenedor del usuario */
+.user-container:hover .user-name {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Animación de la flecha del dropdown */
+.dropdown-arrow {
+    transition: transform 0.3s ease;
+}
+
+.dropdown-arrow.rotated {
+    transform: rotate(180deg);
+}
+
+/* Estilo para el separador del dropdown */
+.dropdown-separator {
+    background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+    height: 1px;
+}
+
+/* Efecto de glassmorphism para el dropdown */
+.user-dropdown {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Animación de entrada suave para los elementos del menú */
+.user-menu-item {
+    animation: slideInFromLeft 0.3s ease-out;
+    animation-fill-mode: both;
+}
+
+.user-menu-item:nth-child(1) { animation-delay: 0.1s; }
+.user-menu-item:nth-child(2) { animation-delay: 0.2s; }
+.user-menu-item:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes slideInFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Estilo para el header del dropdown */
+.dropdown-header {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* Efecto de hover para el avatar en el dropdown */
+.dropdown-avatar {
+    transition: all 0.3s ease;
+}
+
+.dropdown-avatar:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+/* Estilo para los badges de notificación */
+.notification-badge {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.message-badge {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Animación de parpadeo para badges con notificaciones */
+.badge-pulse {
+    animation: badge-pulse 1.5s infinite;
+}
+
+@keyframes badge-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Estilo para el contenedor principal del usuario */
+.user-header-container {
+    position: relative;
+    z-index: 50;
+}
+
+/* Efecto de sombra para el dropdown */
+.user-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: 20px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid rgba(255, 255, 255, 0.9);
+    filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Estilo para el texto del usuario en el header */
+.user-text {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Animación de entrada para el dropdown completo */
+.user-dropdown {
+    animation: dropdown-fade-in 0.2s ease-out;
+}
+
+@keyframes dropdown-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
