@@ -105,24 +105,40 @@ async function cargarTiposSolicitud() {
         });
 
         const response = await fetch(`/admin/api/tipos-solicitud?${params}`);
+        
+        console.log('Response status:', response.status);
+        console.log('Response content-type:', response.headers.get('content-type'));
+        
         await manejarRespuestaFetch(response);
         
         if (!response.ok) {
-            throw new Error('Error en la respuesta del servidor');
+            console.error('Response not OK:', response.status);
+            throw new Error(`Error ${response.status}`);
         }
 
         const data = await response.json();
+        console.log('Data recibida:', data);
 
-        if (data.data && data.data.length === 0) {
+        // Verificar estructura
+        const tipos = data.data || data;
+
+        if (!Array.isArray(tipos)) {
+            console.error('Tipos no es array:', tipos);
             mostrarEstadoVacio();
-        } else if (data.data) {
-            renderizarTipos(data.data);
+            return;
+        }
+
+        if (tipos.length === 0) {
+            console.log('No hay tipos de solicitud en BD');
+            mostrarEstadoVacio();
         } else {
-            mostrarEstadoVacio();
+            console.log('Renderizando', tipos.length, 'tipos');
+            renderizarTipos(tipos);
         }
     } catch (error) {
-        console.error('Error al cargar tipos:', error);
-        mostrarToast('Error al cargar tipos de solicitud', 'error');
+        console.error('Error completo:', error);
+        console.error('Stack:', error.stack);
+        mostrarToast('Error al cargar: ' + error.message, 'error');
         mostrarEstadoVacio();
     }
 }
@@ -154,7 +170,7 @@ async function cargarAreas() {
     try {
         const response = await fetch('/admin/api/areas');
         await manejarRespuestaFetch(response);
-        
+        debugger;
         if (response.ok) {
             const areas = await response.json();
             
