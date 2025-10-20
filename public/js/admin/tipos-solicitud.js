@@ -104,7 +104,12 @@ async function cargarTiposSolicitud() {
             ...filtrosActuales
         });
 
-        const response = await fetch(`/admin/api/tipos-solicitud?${params}`);
+        const response = await fetch(`/admin/api/tipos-solicitud?${params}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
         
         console.log('Response status:', response.status);
         console.log('Response content-type:', response.headers.get('content-type'));
@@ -145,7 +150,12 @@ async function cargarTiposSolicitud() {
 
 async function cargarCategorias() {
     try {
-        const response = await fetch('/admin/api/tipos-solicitud/categorias/lista');
+        const response = await fetch('/admin/api/tipos-solicitud/categorias/lista', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
         await manejarRespuestaFetch(response);
         
         if (response.ok) {
@@ -168,9 +178,14 @@ async function cargarCategorias() {
 
 async function cargarAreas() {
     try {
-        const response = await fetch('/admin/api/areas');
+        const response = await fetch('/admin/api/areas', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
         await manejarRespuestaFetch(response);
-        debugger;
+       
         if (response.ok) {
             const areas = await response.json();
             
@@ -413,6 +428,8 @@ async function eliminarTipo(id, codigo) {
             const response = await fetch(`/admin/api/tipos-solicitud/${id}`, {
                 method: 'DELETE',
                 headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 }
             });
@@ -439,6 +456,8 @@ async function alternarEstadoTipo(id, nuevoEstado) {
         const response = await fetch(`/admin/api/tipos-solicitud/${id}/toggle`, {
             method: 'PATCH',
             headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             }
