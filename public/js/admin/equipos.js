@@ -324,7 +324,7 @@ function renderizarEquipos(equipos) {
                     <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                         <div class="py-1">
                             <a href="#" onclick="verEquipo(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ver Detalle</a>
-                            <a href="#" onclick="editarEquipo(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
+                            <a href="#" onclick="abrirModalEditarEquipo(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
                             <a href="#" onclick="gestionarMiembros(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Gestionar Miembros</a>
                             <a href="#" onclick="asignarLider(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Asignar Líder</a>
                             <a href="#" onclick="eliminarEquipo(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</a>
@@ -440,7 +440,7 @@ function abrirModalCrearEquipo() {
 
     // Cargar datos necesarios
     cargarAreas();
-
+    cargarRolesLiderEquipo();
     //cambiar el texto del botón
     document.getElementById('submitButton').textContent = 'Guardar Equipo';
 
@@ -483,7 +483,10 @@ function cerrarModalEquipo() {
     document.getElementById('area_id').value = '';
     document.getElementById('lider_id').value = '';
     document.getElementById('funciones').value = '';
+    document.getElementById('rol_id').value = '';
     document.getElementById('activo').checked = false;
+
+    document.getElementById('lider_id').innerHTML = '<option value="">Seleccione un líder</option>';
     document.getElementById('submitButton').classList.add('hidden');
 }
 
@@ -495,12 +498,59 @@ async function cargarUsuariosPorArea() {
     renderizarUsuarios(usuarios.usuarios);
 }
 
+async function cargarRolesLiderEquipo() {
+    const response = await fetch('/admin/roles-lider-equipo');
+    const roles = await response.json();
+    renderizarRoles(roles.roles);
+}
+
 function renderizarUsuarios(usuarios) {
     const select = document.getElementById('lider_id');
     select.innerHTML = '<option value="">Seleccione un líder</option>';
     usuarios.forEach(usuario => {
-        select.innerHTML += `<option value="${usuario.id}">${usuario.nombre} ${usuario.apellidos}</option>`;
+        select.innerHTML += `<option value="${usuario.id}">${usuario.nombre} ${usuario.apellidos} -> ${usuario.equipo ? usuario.equipo.nombre : 'Sin equipo'}</option>`;
     });
+
+    document.getElementById('lider_id').value = '';
+    document.getElementById('rol_id').value = '';
+}
+
+async function mostrarMensajeSiTieneEquipo(valor) {
+    //consultar si es lider o miembro de otro equipo
+    const id_usuario = valor.value;
+    if (id_usuario === '') {
+        return;
+    }
+    const response = await fetch(`/admin/verificar-miembro-equipo?id_usuario=${id_usuario}`);
+    const data = await response.json();
+    if (data.tipo === 'miembro') {
+        mensajeImportante(data.mensaje);
+    }
+    if (data.tipo === 'lider') {
+        mensajeImportante(data.mensaje);
+    }
+}
+
+function renderizarRoles(roles) {
+    const select = document.getElementById('rol_id');
+    select.innerHTML = '<option value="">Seleccione un rol</option>';
+    roles.forEach(role => {
+        select.innerHTML += `<option value="${role.id}">${role.name}</option>`;
+    });
+}
+
+function mensajeImportante(mensaje) {
+   Swal.fire({
+    title: 'información importante',
+    html: mensaje,
+    icon: 'info',
+    showCancelButton: false,
+    showConfirmButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Continuar',
+    allowOutsideClick: false,
+   });
 }
 
 // ========================================
@@ -592,11 +642,14 @@ function validarFormularioFinal() {
         isValid = false;
     }
 
-    // Validar líder
+    // si se asigna un lider, validar el rol
     const lider = document.getElementById('lider_id').value;
-    if (!lider) {
-        mostrarError('lider_id', 'El líder es obligatorio');
-        isValid = false;
+    if (lider !== '') {
+        const rol = document.getElementById('rol_id').value;
+        if (rol === '') {
+            mostrarError('rol_id', 'El rol es obligatorio');
+            isValid = false;
+        }
     }
 
     // Validar área
@@ -644,5 +697,199 @@ function mostrarToast(message, type = 'success') {
     Toast.fire({
         icon: icons[type] || 'success',
         title: message
+    });
+}
+// ========================================
+// EDITAR EQUIPO
+// ========================================
+// Abrir modal de edición de equipo
+let editingEquipoId = null;
+let originalEquipoData = null;
+async function abrirModalEditarEquipo(equipoId) {
+    editingEquipoId = equipoId;
+    document.getElementById('modalTitle').textContent = 'Editar Equipo';
+    document.getElementById('equipoModal').classList.remove('hidden');
+    document.getElementById('submitButton').classList.remove('hidden');
+    currentTab = 1;
+    formChanged = false;
+
+    // Mostrar Swal de cargando
+    mostrarSwalCargando('Cargando datos del equipo, por favor espere...');
+
+    //cargar roles del lider
+    await cargarRolesLiderEquipo();
+    //cargar areas
+    await cargarAreas();
+
+
+    // Cargar datos del equipo
+    try {
+        const response = await fetch(`/admin/datos-equipo/${equipoId}`);
+        if (!response.ok) throw new Error('Error al cargar equipo');
+
+        const data = await response.json();
+        originalEquipoData = JSON.parse(JSON.stringify(data.equipo)); // Deep clone
+        Swal.close();
+        // Actualizar título con nombre del equipo
+        document.getElementById('modalTitle').textContent = `Editar Equipo: ${data.equipo.nombre}`;
+
+        // Llenar formulario con datos
+        await llenarFormularioConDatosEquipo(data.equipo);
+
+        // Cambiar el evento del formulario a PUT
+        const form = document.getElementById('equipoForm');
+        form.removeEventListener('submit', manejarEnvioFormulario);
+        form.addEventListener('submit', manejarEnvioFormularioEditarEquipo);
+
+        // Cambiar texto del botón
+        document.getElementById('submitButton').textContent = 'Guardar Cambios';
+        limpiarTodosLosErrores();
+
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al cargar datos del equipo', 'error');
+        cerrarModalEquipo();
+    }
+}
+
+async function llenarFormularioConDatosEquipo(equipo) {
+    document.getElementById('nombre').value = equipo.nombre;
+    document.getElementById('area_id').value = equipo.area_id;
+    document.getElementById('lider_id').value = equipo.lider_id ? equipo.lider_id : "";
+    document.getElementById('funciones').value = equipo.funciones;
+    document.getElementById('activo').checked = equipo.activo;
+
+    await cargarUsuariosPorArea();
+
+    document.getElementById('rol_id').value = equipo.rol_lider ? equipo.rol_lider.id : "";
+}
+
+async function manejarEnvioFormularioEditarEquipo(e) {
+    e.preventDefault();
+
+    // Validación final
+    if (!validarFormularioFinalEditarEquipo()) {
+        return;
+    }
+
+    const submitButton = document.getElementById('submitButton');
+    const originalText = submitButton.innerHTML;
+
+    try {
+        submitButton.disabled = true;
+        submitButton.classList.add('loading');
+        submitButton.innerHTML = '<span class="opacity-0">Guardando...</span>';
+        mostrarSwalCargando('Guardando cambios, por favor espere...');
+
+        // Preparar FormData
+        const formData = new FormData(document.getElementById('equipoForm'));
+
+    
+        // Agregar activo
+        const activo = document.getElementById('activo').checked;
+        formData.append('activo', activo ? '1' : '0');
+
+        // Enviar petición
+        const response = await fetch(`/admin/editar-equipo/${editingEquipoId}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        Swal.close();
+        if (response.ok) {
+            // Éxito
+            mostrarToast(data.message, data.type);
+            cerrarModalEquipo();
+
+            // Recargar lista después de un momento
+            setTimeout(() => {
+                consultarNuevasEquipos();
+            }, 500);
+
+        } else if (response.status === 422) {
+            // Errores de validación o confirmaciones requeridas
+            if (data.requires_confirmation) {
+                handleConfirmationRequired(data);
+            } else {
+                mostrarToast(data.message || 'Por favor corrija los errores en el formulario', 'error');
+            }
+
+        } else {
+            mostrarToast(data.message || 'Error al actualizar equipo', 'error');
+        }
+
+    } catch (error) {
+        mostrarToast(error.message || 'Error al actualizar equipo', 'error');
+
+    } finally {
+        submitButton.disabled = false;
+        submitButton.classList.remove('loading');
+        submitButton.innerHTML = originalText;
+    }
+}
+
+async function consultarNuevasEquipos() {
+    var posicion_scroll = window.scrollY;
+    await cargarEquipos();
+    window.scrollTo(0, posicion_scroll);
+}
+
+function validarFormularioFinalEditarEquipo() {
+    limpiarTodosLosErrores();
+    let isValid = true;
+
+    // Validar nombre
+    const nombre = document.getElementById('nombre').value;
+    if (!nombre) {
+        mostrarError('nombre', 'El nombre es obligatorio');
+        isValid = false;
+    }
+
+    // Validar área
+    const area = document.getElementById('area_id').value;
+    if (!area) {
+        mostrarError('area_id', 'El área es obligatoria');
+        isValid = false;
+    }
+
+    // Validar funciones
+    const funciones = document.getElementById('funciones').value;
+    if (!funciones) {
+        mostrarError('funciones', 'Las funciones son obligatorias');
+        isValid = false;
+    }
+
+    // si se asigna un lider, validar el rol
+    const lider = document.getElementById('lider_id').value;
+    if (lider !== '') {
+        const rol = document.getElementById('rol_id').value;
+        if (rol === '') {
+            mostrarError('rol_id', 'El rol es obligatorio');
+            isValid = false;
+        }
+    }
+
+    return isValid;
+}
+
+
+function mostrarSwalCargando(mensaje) {
+    Swal.fire({
+        title: mensaje,
+        icon: 'info',
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        allowClose: false,
+        allowEscapeKey: false,
+        progressBar: true,
+        didOpen: () => {
+            Swal.showLoading();
+        }
     });
 }
