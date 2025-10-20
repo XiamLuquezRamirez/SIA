@@ -14,6 +14,14 @@ class TipoSolicitudController extends Controller
      */
     public function index(Request $request)
     {
+        // Debug: Verificar autenticación
+        \Log::info('TipoSolicitud index - Auth check', [
+            'authenticated' => auth()->check(),
+            'user_id' => auth()->id(),
+            'is_ajax' => $request->ajax(),
+            'session_id' => session()->getId(),
+        ]);
+
         try {
             // Si es petición AJAX, devolver JSON
             if ($request->ajax()) {
