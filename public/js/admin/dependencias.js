@@ -364,7 +364,7 @@ function mostrarCargadorEsqueleto() {
         <tr class="skeleton-row">
             <td colspan="7" class="px-6 py-4">
                 <div class="animate-pulse space-y-4">
-                    ${[1, 2, 3, 4, 5].map(() => `
+                    ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(() => `
                         <div class="flex space-x-4">
                             <div class="rounded-full bg-gray-200 h-10 w-10"></div>
                             <div class="flex-1 space-y-2 py-1">
@@ -445,6 +445,10 @@ function limpiarTodosLosErrores() {
 
 function cerrarModalDependencia() {
     document.getElementById('dependenciaModal').classList.add('hidden');
+    document.getElementById('nombre').value = '';
+    document.getElementById('descripcion').value = '';
+    document.getElementById('coordinador_id').value = '';
+    document.getElementById('activo').checked = false;
     formChanged = false;
     document.getElementById('submitButton').classList.add('hidden');
 }
@@ -502,12 +506,12 @@ async function manejarEnvioFormulario(e) {
 
             // Recargar lista de dependencias
             setTimeout(() => {
+                currentPage = 1;
                 cargarDependencias();
             }, 500);
 
         } else if (response.status === 422) {
             // Errores de validación
-            manejarErroresValidacion(data.errors);
             mostrarToast('Por favor corrija los errores en el formulario', 'error');
 
         } else {
@@ -567,14 +571,30 @@ function mostrarError(fieldId, message) {
 
 
 function mostrarToast(message, type = 'success') {
-    Swal.fire({
-        title: message,
-        icon: type === 'success' ? 'success' : 'error',
-        timer: 2000,
-        showConfirmButton: false
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+    });
+
+    const icons = {
+        'success': 'success',
+        'error': 'error',
+        'warning': 'warning',
+        'info': 'info'
+    };
+
+    Toast.fire({
+        icon: icons[type] || 'success',
+        title: message
     });
 }
-
 
 // ========================================
 // EDITAR DEPENDENCIA
@@ -700,7 +720,7 @@ async function manejarEnvioFormularioEditarDependencia(e) {
 
             // Recargar lista después de un momento
             setTimeout(() => {
-                cargarDependencias();
+                consultarNuevasDependencias();
             }, 500);
 
         } else if (response.status === 422) {
@@ -723,6 +743,13 @@ async function manejarEnvioFormularioEditarDependencia(e) {
         submitButton.classList.remove('loading');
         submitButton.innerHTML = originalText;
     }
+}
+
+
+async function consultarNuevasDependencias() {
+    var posicion_scroll = window.scrollY;
+    await cargarDependencias();
+    window.scrollTo(0, posicion_scroll);
 }
 
 function validarFormularioFinalDependenciaEdit() {
@@ -820,7 +847,7 @@ function abrirModalActivar() {
 
 
 async function cambiarEstadoDependencia(dependenciaId, checked) {
-    mostrarSwalCargando('Cambiando estado de la dependencia, por favor espere...');
+    mostrarSwalCargando('Activando la dependencia, por favor espere...');
     try {
         const formData = new FormData();
         formData.append('activo', checked ? '1' : '0');
@@ -837,7 +864,7 @@ async function cambiarEstadoDependencia(dependenciaId, checked) {
         Swal.close();
         if (response.ok) {
             // Éxito
-            mostrarToast('Estado de la dependencia cambiado exitosamente', 'success');
+            mostrarToast('Dependencia activada exitosamente', 'success');
             setTimeout(() => {
                 cargarDependencias();
             }, 500);
@@ -847,7 +874,7 @@ async function cambiarEstadoDependencia(dependenciaId, checked) {
                 checked = toggle.checked;
                 toggle.checked = !checked;
             }
-            mostrarToast(data.message || 'Error al cambiar estado de la dependencia', 'error');
+            mostrarToast(data.message || 'Error al activar la dependencia', 'error');
         }
     } catch (error) {
         const toggle = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`);
@@ -856,7 +883,334 @@ async function cambiarEstadoDependencia(dependenciaId, checked) {
             toggle.checked = !checked;
         }
         console.error('Error:', error);
-        mostrarToast('Error al cambiar estado de la dependencia', 'error');
+        mostrarToast('Error al activar la dependencia', 'error');
        
+    }
+}
+
+// ========================================
+// ACTIVAR/DESACTIVAR DEPENDENCIA
+// ========================================
+
+async function abrirModalDesactivar(dependenciaId, checked) {
+    const modal = document.getElementById('toggleStatusDependenciaModal');
+    modal.classList.remove('hidden');
+    const dependencia = currentToggleDependencia;
+
+    // Título
+    document.getElementById('toggleDependenciaModalTitle').textContent = '¿Desea desactivar la dependencia '+ dependencia.nombre + '?';
+    document.getElementById('toggleDependenciaModalHeader').className = 'px-6 py-4 border-b border-gray-200 bg-green-50';
+
+    document.getElementById('toggleDependenciaModalInfo').innerHTML = `
+        Esta dependencia cuenta con ${dependencia.equipos.length} equipos y ${dependencia.funcionarios.length} funcionarios.
+    `;
+
+    if (dependencia.equipos.length > 0 || dependencia.funcionarios.length > 0) {
+        document.getElementById('toogleOpciones').classList.remove('hidden');
+    } else {
+        document.getElementById('toogleOpciones').classList.add('hidden');
+    }
+}
+
+function cerrarModalDesactivar() {
+    document.getElementById('toggleStatusDependenciaModal').classList.add('hidden');
+    document.getElementById('toggleNotificar').checked = false;
+    document.getElementById('toggleDesactivarEquipos').checked = false;
+    const toggle = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`);
+    var checked = toggle.checked;
+    toggle.checked = !checked;
+    currentToggleDependencia = null;
+    currentToggleDependenciaId = null;
+}
+
+async function confirmarDesactivarDependencia() {
+    const toggleNotificar = document.getElementById('toggleNotificar').checked;
+    const toggleDesactivarEquipos = document.getElementById('toggleDesactivarEquipos').checked;
+    var checked = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`).checked
+
+    mostrarSwalCargando('Desactivando la dependencia, por favor espere...');
+    try {
+        const formData = new FormData();
+        formData.append('activo', checked ? '1' : '0');
+        formData.append('notificar', toggleNotificar ? '1' : '0');
+        formData.append('desactivar_equipos', toggleDesactivarEquipos ? '1' : '0');
+        const response = await fetch(`/admin/alternar-estado-dependencia/${currentToggleDependenciaId}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        Swal.close();
+        if (response.ok) {
+            // Éxito
+            mostrarToast('Dependencia desactivada exitosamente', 'success');
+            setTimeout(() => {
+                document.getElementById('toggleStatusDependenciaModal').classList.add('hidden');
+                cargarDependencias();
+            }, 500);
+        } else {
+            const toggle = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`);
+            if (toggle) {
+                checked = toggle.checked;
+                toggle.checked = !checked;
+            }
+            mostrarToast(data.message || 'Error al desactivar la dependencia', 'error');
+        }
+    } catch (error) {
+        const toggle = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`);
+        if (toggle) {
+            checked = toggle.checked;
+            toggle.checked = !checked;
+        }
+        console.error('Error:', error);
+        mostrarToast('Error al desactivar la dependencia', 'error');
+       
+    }
+}
+
+var dependenciaVistaActual = null;
+var tabActualVista = 'informacion';
+async function verDependencia(dependenciaId) {  
+    const modal = document.getElementById('viewDependenciaModal');
+    modal.classList.remove('hidden');
+
+    // Cargar datos de la dependencia
+    try {
+        mostrarSwalCargando('Cargando datos de la dependencia, por favor espere...');
+        const response = await fetch(`/admin/dependencias/${dependenciaId}`);
+        Swal.close();
+        if (!response.ok) throw new Error('Error al cargar dependencia');
+
+        const data = await response.json();
+        dependenciaVistaActual = data.dependencia;
+
+        // Mostrar primer tab
+        cambiarTabVista('informacion');
+
+        // Llenar información del modal
+        llenarModalDetalleDependencia(data.dependencia);
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al cargar datos de la dependencia', 'error');
+        cerrarModalVerDependencia();
+    }
+}
+
+// ========================================
+// LLENAR MODAL DETALLE DE DEPENDENCIA
+// ========================================
+
+function llenarModalDetalleDependencia() {
+    // Nombre
+    document.getElementById('viewDependenciaNombre').value = dependenciaVistaActual.nombre;
+    
+    // Descripción
+    document.getElementById('viewDependenciaDescripcion').innerText = dependenciaVistaActual.descripcion;
+    
+    // Coordinador
+    if (dependenciaVistaActual.coordinador_id) {
+        document.getElementById('viewDependenciaCoordinador').innerHTML = `<div class="flex-shrink-0 h-10 w-10">
+                ${dependenciaVistaActual.coordinador.foto_url
+                    ? `<img class="h-10 w-10 rounded-full" src="/storage/${dependenciaVistaActual.coordinador.foto_url}" alt="${dependenciaVistaActual.coordinador.nombre}">`
+                    : `<div class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                        ${dependenciaVistaActual.coordinador.nombre.charAt(0)}${dependenciaVistaActual.coordinador.apellidos.charAt(0)}
+                    </div>`
+                }
+            </div>
+            <div class="ml-4">
+                <div class="text-sm font-medium text-gray-900">${dependenciaVistaActual.coordinador.nombre} ${dependenciaVistaActual.coordinador.apellidos}</div>
+                <div class="text-sm text-gray-500">${dependenciaVistaActual.coordinador.email}</div>
+            </div>
+        </div>`;
+    }else{
+        document.getElementById('viewDependenciaCoordinador').innerHTML = `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+            <span class="text-xs">Sin coordinador</span>
+        </div>`;
+    }
+    
+    // Estado
+    document.getElementById('viewDependenciaEstado').checked = dependenciaVistaActual.activo == 1 ? true : false;
+    
+    // Equipos
+    document.getElementById('viewDependenciaEquipos').innerHTML = dependenciaVistaActual.equipos.map(equipo => `
+        <tr>
+            <td class="px-6 py-4">${equipo.nombre}</td>
+            <td class="px-6 py-4">${equipo.funciones}</td>
+        </tr>
+    `).join('');
+
+    // Funcionarios
+    document.getElementById('viewDependenciaFuncionarios').innerHTML = dependenciaVistaActual.funcionarios.map(funcionario => `
+        <tr>
+            <td class="px-6 py-4">
+                ${funcionario.foto_url
+                    ? `<img class="h-10 w-10 rounded-full" src="/storage/${funcionario.foto_url}" alt="${funcionario.nombre}">`
+                    : `<div class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                        ${funcionario.nombre.charAt(0)}${funcionario.apellidos.charAt(0)}
+                    </div>`
+                }
+            </td>
+            <td class="px-6 py-4">${funcionario.nombre} ${funcionario.apellidos}</td>
+            <td class="px-6 py-4">
+                ${funcionario.cargo ? `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <span class="text-xs">${funcionario.cargo}</span>
+                </span>` : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                    <span class="text-xs">Sin cargo</span>
+                </div>`}
+            </td>
+            <td class="px-6 py-4">${funcionario.email}</td>
+            <td class="px-6 py-4">
+                ${funcionario.celular
+                    ? `<a href="tel:${funcionario.celular}" class="text-blue-600 hover:underline">${funcionario.celular}</a>`
+                    : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                        <span class="text-xs">Sin numero de celular</span>
+                    </div>`
+                }
+            </td>
+        </tr>
+    `).join('');
+
+    // Botón Editar
+    document.getElementById('BtnviewTab_editar').classList.remove('hidden');
+    document.getElementById('BtnviewTab_editar').setAttribute('onclick', `editarDependenciaDesdeModal(${dependenciaVistaActual.id})`);
+}
+
+function editarDependenciaDesdeModal(dependenciaId ) {
+    editarDependencia(dependenciaId);
+    cerrarModalVerDependencia();
+}
+
+function cerrarModalVerDependencia() {
+    document.getElementById('viewDependenciaModal').classList.add('hidden');
+    document.getElementById('viewDependenciaNombre').value = '';
+    document.getElementById('viewDependenciaDescripcion').innerText = '';
+    document.getElementById('viewDependenciaCoordinador').innerHTML = '';
+    document.getElementById('viewDependenciaEstado').checked = false;
+    document.getElementById('viewDependenciaEquipos').innerHTML = '';
+    document.getElementById('viewDependenciaFuncionarios').innerHTML = '';
+
+    document.getElementById('BtnviewTab_editar').classList.add('hidden');
+    document.getElementById('BtnviewTab_editar').setAttribute('onclick', '');
+    dependenciaVistaActual = null;
+    tabActualVista = 'informacion';
+}
+
+function cambiarTabVista(nombreTab) {
+    tabVistaActual = nombreTab;
+    
+    // Actualizar UI de tabs
+    document.querySelectorAll('.view-tab-button').forEach(btn => {
+        btn.classList.remove('border-blue-600', 'text-blue-600');
+        btn.classList.add('border-transparent', 'text-gray-500');
+        btn.classList.remove('active');
+    });
+    
+    const botonActivo = document.getElementById(`BtnviewTab_${nombreTab}`);
+    if (botonActivo) {
+        botonActivo.classList.add('border-blue-600', 'text-blue-600');
+        botonActivo.classList.remove('border-transparent', 'text-gray-500');
+        botonActivo.classList.add('active');
+    }
+    
+    // Ocultar todos los contenidos
+    document.querySelectorAll('.view-tab-content').forEach(contenido => {
+        contenido.classList.add('hidden');
+    });
+    
+    // Mostrar contenido activo
+    const contenidoActivo = document.getElementById(`viewTab_${nombreTab}`);
+    if (contenidoActivo) {
+        contenidoActivo.classList.remove('hidden');
+    }
+}
+
+// ========================================
+// eliminar dependencia
+// ========================================
+
+var dependenciaEliminar = null;
+async function eliminarDependencia(dependenciaId) {
+    mostrarSwalCargando('Consultando datos para eliminar la dependencia, por favor espere...');
+    try {
+        const response = await fetch(`/admin/dependencias/${dependenciaId}`, {
+            method: 'GET',
+        });
+        if (!response.ok) throw new Error('Error al eliminar dependencia');
+        const data = await response.json();
+        dependenciaEliminar = data.dependencia;
+
+        if (dependenciaEliminar.equipos.length > 0) {
+            mostrarToast('La dependencia tiene equipos, por favor desactive los equipos antes de eliminar la dependencia', 'error');
+            return;
+        } 
+        
+        if (dependenciaEliminar.funcionarios.length > 0) {
+            mostrarToast('La dependencia tiene funcionarios, por favor desactive los funcionarios antes de eliminar la dependencia', 'error');
+            return;
+        } 
+    
+        Swal.fire({
+            title: '¿Estás seguro de querer eliminar la dependencia ('+ dependenciaEliminar.nombre + ')?',
+            html: '<p style="color:rgb(179, 2, 10); font-weight: bold;">Esta acción no se puede deshacer</p><p style="color:rgb(10, 10, 10); font-weight: bold;">Por favor ingrese el nombre de la dependencia para confirmar la eliminación</p>',
+            icon: 'warning',
+            showConfirmButton: true,
+            showCancelButton: true,
+            confirmButtonText: 'Eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#dc3545',
+            allowOutsideClick: false,
+            input: 'text',
+            inputPlaceholder: 'Ingrese el nombre de la dependencia',
+            inputValidator: (value) => {
+                if (value !== dependenciaEliminar.nombre) {
+                    return 'El nombre ingresado no es correcto';
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                confirmarEliminacionDependencia();
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al eliminar dependencia', 'error');
+    }
+}
+
+async function confirmarEliminacionDependencia() {
+    try {
+        mostrarSwalCargando('Eliminando dependencia, por favor espere...');
+        const response = await fetch(`/admin/eliminar-dependencia/${dependenciaEliminar.id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            }
+        });
+        Swal.close();
+        if (!response.ok) throw new Error('Error al eliminar dependencia');
+        const data = await response.json();
+        if (response.ok) {
+            var mensaje = data.message;
+            var icon = data.icon;
+            mostrarToast(mensaje, icon);
+            if (icon == 'success') {
+                setTimeout(() => {
+                    cargarDependencias();
+                }, 500);
+            }
+        } else {
+            mostrarToast(data.message || 'Error al eliminar dependencia', 'error');
+        }
+    } catch (error) {
+        Swal.close();
+        console.error('Error:', error);
+        mostrarToast('Error al eliminar dependencia', 'error');
     }
 }

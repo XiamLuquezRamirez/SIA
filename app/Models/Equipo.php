@@ -11,7 +11,6 @@ class Equipo extends Model
 
     protected $fillable = [
         'nombre',
-        'slug',
         'area_id',
         'lider_id',
         'funciones',
