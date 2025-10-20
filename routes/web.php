@@ -63,6 +63,8 @@ Route::middleware(['auth'])->group(function () {
         // CRUD de usuarios
         Route::resource('usuarios', App\Http\Controllers\Admin\UserController::class);
 
+        Route::get('equipos-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getEquiposAreaSelect'])->name('equipos-area.select');
+
         // Rutas adicionales para usuarios
         Route::patch('usuarios/{usuario}/toggle-estado', [App\Http\Controllers\Admin\UserController::class, 'toggleEstado'])
             ->name('usuarios.toggle-estado');

@@ -456,7 +456,7 @@
                                     </label>
                                     <select name="area_id" id="area_id"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        onchange="cargarEquiposPorArea()">
+                                        onchange="cargarEquiposPorArea(this.value)">
                                         <option value="">Seleccione un área...</option>
                                     </select>
                                     <span class="error-message text-red-500 text-xs hidden"></span>

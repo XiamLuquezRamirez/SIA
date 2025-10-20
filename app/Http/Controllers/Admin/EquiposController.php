@@ -60,6 +60,12 @@ class EquiposController extends Controller
     {
         $usuarios = User::where('area_id', $request->area_id)->where('equipo_id', null)->get();
         return response()->json(['usuarios' => $usuarios, 'total' => $usuarios->count()]);
+}
+
+    public function getEquiposAreaSelect(Request $request)
+    {
+        $equipos = Equipo::where('area_id', $request->area_id)->get();
+        return response()->json(['equipos' => $equipos, 'total' => $equipos->count()]);
     }
 
     public function guardarEquipo(Request $request)

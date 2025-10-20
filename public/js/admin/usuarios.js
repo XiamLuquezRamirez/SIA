@@ -1823,6 +1823,24 @@ async function alternarEstadoUsuario(id, checked) {
     }
 }
 
+async function cargarEquiposPorArea(areaId) {
+    const response = await fetch(`/admin/equipos-area-select?area_id=${areaId}`);
+    const equiposData = await response.json();
+
+    const equipos = document.getElementById('equipo_id');
+    equipos.innerHTML = '<option value="">Seleccione un equipo...</option>';
+    equipos.disabled = true;
+    equiposData.equipos.forEach(equipo => {
+        const option = document.createElement('option');
+        option.value = equipo.id;
+        option.textContent = equipo.nombre;
+        equipos.appendChild(option);
+        equipos.disabled = false;
+    });
+
+   
+}
+
 function abrirModalDesactivar() {
     const modal = document.getElementById('toggleStatusModal');
     const user = currentToggleUser;

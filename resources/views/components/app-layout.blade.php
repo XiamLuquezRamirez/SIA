@@ -7,6 +7,10 @@
     <title>{{ $title ?? 'Dashboard' }} - SIA OAPM</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    <!-- fav Icons -->
+
+    <link rel="icon" href="{{ asset('images/favicon.ico') }}">
+ 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
