@@ -488,6 +488,12 @@ function cerrarModalEquipo() {
 
     document.getElementById('lider_id').innerHTML = '<option value="">Seleccione un líder</option>';
     document.getElementById('submitButton').classList.add('hidden');
+
+    if (isEditingModeEquipo) {
+        isEditingModeEquipo = false;
+
+        document.getElementById('danger-message-equipo').classList.add('hidden');
+    }
 }
 
 // Cargar usuarios por área
@@ -519,15 +525,40 @@ async function mostrarMensajeSiTieneEquipo(valor) {
     //consultar si es lider o miembro de otro equipo
     const id_usuario = valor.value;
     if (id_usuario === '') {
+        if(isEditingModeEquipo) {
+            if(originalEquipoData.lider_id != null) {
+                document.getElementById('danger-message-equipo').classList.remove('hidden');
+                document.getElementById('danger-message-text').textContent = "Este equipo ya tiene un líder asignado, al no seleccionar un lider, el lider anterior quedara como miembro del equipo.";
+                document.getElementById('rol_id').value = '';
+            }
+            else {
+                document.getElementById('danger-message-equipo').classList.add('hidden');
+            }
+        }
         return;
-    }
-    const response = await fetch(`/admin/verificar-miembro-equipo?id_usuario=${id_usuario}`);
-    const data = await response.json();
-    if (data.tipo === 'miembro') {
-        mensajeImportante(data.mensaje);
-    }
-    if (data.tipo === 'lider') {
-        mensajeImportante(data.mensaje);
+    }else{
+        var ruta = '/admin/verificar-miembro-equipo';
+        if(isEditingModeEquipo) {
+            if(id_usuario != originalEquipoData.lider_id && originalEquipoData.lider_id != null) {
+                document.getElementById('danger-message-equipo').classList.remove('hidden');
+                document.getElementById('danger-message-text').textContent = "Este equipo ya tiene un líder asignado, al continuar se asignara el nuevo lider, y el lider anterior quedara como miembro del equipo.";
+            }
+            else {
+                document.getElementById('danger-message-equipo').classList.add('hidden');
+            }
+            ruta = `${ruta}?id_equipo=${editingEquipoId}&id_usuario=${id_usuario}`;
+        }else{
+            ruta = `${ruta}?id_usuario=${id_usuario}`;
+        }
+    
+        const response = await fetch(ruta);
+        const data = await response.json();
+        if (data.tipo === 'miembro') {
+            mensajeImportante(data.mensaje);
+        }
+        if (data.tipo === 'lider') {
+            mensajeImportante(data.mensaje);
+        }
     }
 }
 
@@ -705,8 +736,10 @@ function mostrarToast(message, type = 'success') {
 // Abrir modal de edición de equipo
 let editingEquipoId = null;
 let originalEquipoData = null;
+let isEditingModeEquipo = false;
 async function abrirModalEditarEquipo(equipoId) {
     editingEquipoId = equipoId;
+    isEditingModeEquipo = true;
     document.getElementById('modalTitle').textContent = 'Editar Equipo';
     document.getElementById('equipoModal').classList.remove('hidden');
     document.getElementById('submitButton').classList.remove('hidden');
@@ -720,7 +753,6 @@ async function abrirModalEditarEquipo(equipoId) {
     await cargarRolesLiderEquipo();
     //cargar areas
     await cargarAreas();
-
 
     // Cargar datos del equipo
     try {
@@ -755,12 +787,11 @@ async function abrirModalEditarEquipo(equipoId) {
 async function llenarFormularioConDatosEquipo(equipo) {
     document.getElementById('nombre').value = equipo.nombre;
     document.getElementById('area_id').value = equipo.area_id;
-    document.getElementById('lider_id').value = equipo.lider_id ? equipo.lider_id : "";
     document.getElementById('funciones').value = equipo.funciones;
     document.getElementById('activo').checked = equipo.activo;
 
     await cargarUsuariosPorArea();
-
+    document.getElementById('lider_id').value = equipo.lider_id ? equipo.lider_id : "";
     document.getElementById('rol_id').value = equipo.rol_lider ? equipo.rol_lider.id : "";
 }
 

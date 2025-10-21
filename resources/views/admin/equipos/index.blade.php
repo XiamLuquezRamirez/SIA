@@ -182,6 +182,20 @@
                                     <span class="error-message text-red-500 text-xs hidden"></span>
                                 </div>
 
+                                <div class="md:col-span-2 danger-message hidden" id="danger-message-equipo">
+                                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                                        <div class="flex items-center">
+                                            <svg class="w-5 h-5 text-red-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7.707-4.707a1 1 0 00-1.414 1.414L10.586 10l-1.293 1.293a1 1 0 101.414 1.414L12 11.414l1.293 1.293a1 1 0 001.414-1.414L13.414 10l1.293-1.293a1 1 0 00-1.414-1.414L12 8.586z" clip-rule="evenodd"></path>
+                                            </svg>
+                                            <div>
+                                                <span class="font-medium text-red-800">Importante</span>
+                                                <p class="text-sm text-red-700" id="danger-message-text"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Rol -->
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">
