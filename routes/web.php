@@ -178,5 +178,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('editar-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'update'])->name('editar-equipo');
         //obtener roles relacionados con lider de equipo mediante el slug
         Route::get('roles-lider-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'getRolesLiderEquipo'])->name('equipos.roles-lider-equipo');
+        Route::post('alternar-estado-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'alternarEstadoEquipo'])->name('alternar-estado-equipo');
+        Route::get('informacion-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'getInformacionEquipo'])->name('equipos.get-informacion-equipo');
+        Route::delete('eliminar-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'eliminarEquipo'])->name('eliminar-equipo');
+        Route::post('empleados-por-area-otros-equipos', [App\Http\Controllers\Admin\EquiposController::class, 'getEmpleadosPorAreaOtrosEquipos'])->name('equipos.get-empleados-por-area-otros-equipos');
     });
 });

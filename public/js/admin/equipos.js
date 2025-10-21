@@ -325,7 +325,6 @@ function renderizarEquipos(equipos) {
                         <div class="py-1">
                             <a href="#" onclick="verEquipo(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ver Detalle</a>
                             <a href="#" onclick="abrirModalEditarEquipo(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
-                            <a href="#" onclick="gestionarMiembros(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Gestionar Miembros</a>
                             <a href="#" onclick="eliminarEquipo(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</a>
                         </div>
                     </div>
@@ -424,7 +423,7 @@ function limpiarFiltros() {
 }
 
 
-// Abrir modal de creación de dependencia
+// Abrir modal de creación de equipo
 function abrirModalCrearEquipo() {
     document.getElementById('modalTitle').textContent = 'Crear Nuevo Equipo';
     document.getElementById('equipoForm').reset();
@@ -971,4 +970,536 @@ function mostrarSwalCargando(mensaje) {
             Swal.showLoading();
         }
     });
+}
+
+// ========================================
+// DESHABILITAR EQUIPO
+// ========================================
+
+let currentToggleEquipo = null;
+let currentToggleEquipoId = null;
+async function alternarEstadoEquipo(equipoId, checked) {
+    currentToggleEquipoId = equipoId;
+    // Cargar datos del equipo primero
+    mostrarSwalCargando('Cargando datos del equipo, por favor espere...');
+    try {
+        const response = await fetch(`/admin/datos-equipo/${equipoId}`);
+        if (!response.ok) throw new Error('Error al cargar equipo');
+        Swal.close();
+
+        const data = await response.json();
+        currentToggleEquipo = data.equipo;
+
+        // Abrir modal de confirmación
+        if (checked) {
+            abrirModalActivar();
+        } else {
+            abrirModalDesactivar();
+        }
+
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al cargar información del equipo', 'error');
+
+        // Revertir el toggle si hubo error
+        const toggle = document.getElementById(`check_equipo_${currentToggleEquipoId}`);
+        if (toggle) {
+            checked = toggle.checked;
+            toggle.checked = !checked;
+        }
+    }
+}
+
+function abrirModalActivar() {
+    Swal.fire({
+        title: '¿Estás seguro de querer activar el equipo ('+currentToggleEquipo.nombre+')?',
+        icon: 'warning',
+        showConfirmButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'Activar',
+        denyButtonText: 'Cancelar',
+        showDenyButton: true,
+        showCancelButton: false,
+        confirmButtonColor: '#28a745',
+        denyButtonColor: '#dc3545',
+        allowOutsideClick: false,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            var toggle = document.getElementById(`check_equipo_${currentToggleEquipoId}`);
+            var checked = toggle.checked;
+            cambiarEstadoEquipo(currentToggleEquipoId, checked);
+        }else if (result.isDenied) {
+            const toggle = document.getElementById(`check_equipo_${currentToggleEquipoId}`);
+            if (toggle) {
+                checked = toggle.checked;
+                toggle.checked = !checked;
+            }
+        }
+    });
+}
+
+function abrirModalDesactivar() {
+    Swal.fire({
+        title: '¿Estás seguro de querer desactivar el equipo ('+currentToggleEquipo.nombre+')?',
+        html: currentToggleEquipo.miembros.length > 0 ? '<div class="danger-message"> <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4"><p class="text-red-500">Este equipo cuenta con <strong>'+currentToggleEquipo.miembros.length+'</strong> miembros, al desactivar el equipo se notificará a los miembros del equipo.</p></div></div>' : '',
+        icon: 'warning',
+        showConfirmButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'Desactivar',
+        denyButtonText: 'Cancelar',
+        showDenyButton: true,
+        showCancelButton: false,
+        confirmButtonColor: '#28a745',
+        denyButtonColor: '#dc3545',
+        allowOutsideClick: false,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            var toggle = document.getElementById(`check_equipo_${currentToggleEquipoId}`);
+            var checked = toggle.checked;
+            cambiarEstadoEquipo(currentToggleEquipoId, checked);
+        }else if (result.isDenied) {
+            const toggle = document.getElementById(`check_equipo_${currentToggleEquipoId}`);
+            if (toggle) {
+                checked = toggle.checked;
+                toggle.checked = !checked;
+            }
+        }
+    });
+}
+
+async function cambiarEstadoEquipo(equipoId, checked) {
+    mostrarSwalCargando('Activando el equipo, por favor espere...');
+    try {
+        const formData = new FormData();
+        formData.append('activo', checked ? '1' : '0');
+        const response = await fetch(`/admin/alternar-estado-equipo/${equipoId}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        Swal.close();
+        if (response.ok) {
+            // Éxito
+            mostrarToast('Equipo activado exitosamente', 'success');
+            setTimeout(() => {
+                consultarNuevasEquipos();
+            }, 500);
+        } else {
+            const toggle = document.getElementById(`check_equipo_${currentToggleEquipoId}`);
+            if (toggle) {
+                checked = toggle.checked;
+                toggle.checked = !checked;
+            }
+            mostrarToast(data.message || 'Error al activar el equipo', 'error');
+        }
+    } catch (error) {
+        const toggle = document.getElementById(`check_equipo_${currentToggleEquipoId}`);
+        if (toggle) {
+            checked = toggle.checked;
+            toggle.checked = !checked;
+        }
+        console.error('Error:', error);
+        mostrarToast('Error al activar el equipo', 'error');
+    }
+}
+
+// ========================================
+// VER EQUIPO
+// ========================================
+
+var equipoVistaActual = null;
+var tabActualVista = 'informacion';
+async function verEquipo(equipoId) {  
+    const modal = document.getElementById('viewEquipoModal');
+    modal.classList.remove('hidden');
+
+    // Cargar datos del equipo
+    try {
+        mostrarSwalCargando('Cargando datos del equipo, por favor espere...');
+        const response = await fetch(`/admin/informacion-equipo/${equipoId}`);
+        Swal.close();
+        if (!response.ok) throw new Error('Error al cargar equipo');
+
+        const data = await response.json();
+        equipoVistaActual = data.equipo;
+
+        // Mostrar primer tab
+        cambiarTabVista('informacion');
+
+        // Llenar información del modal
+        llenarModalDetalleEquipo();
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al cargar datos del equipo', 'error');
+        cerrarModalVerEquipo();
+    }
+}
+
+function llenarModalDetalleEquipo() {
+    // Nombre
+    document.getElementById('viewEquipoNombre').value = equipoVistaActual.nombre;
+
+    // Área
+    document.getElementById('viewEquipoAreaNombre').value = equipoVistaActual.area.nombre;
+    
+    // Descripción
+    document.getElementById('viewEquipoDescripcion').value = equipoVistaActual.funciones;
+    
+    // Coordinador
+    if (equipoVistaActual.lider_id) {
+        document.getElementById('viewEquipoLider').innerHTML = `<div class="flex-shrink-0 h-10 w-10">
+                ${equipoVistaActual.lider.foto_url
+                    ? `<img class="h-10 w-10 rounded-full" src="/storage/${equipoVistaActual.lider.foto_url}" alt="${equipoVistaActual.lider.nombre}">`
+                    : `<div class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                        ${equipoVistaActual.lider.nombre.charAt(0)}${equipoVistaActual.lider.apellidos.charAt(0)}
+                    </div>`
+                }
+            </div>
+            <div class="ml-4">
+                <div class="text-sm font-medium text-gray-900">${equipoVistaActual.lider.nombre} ${equipoVistaActual.lider.apellidos}</div>
+                <div class="text-sm text-gray-500">${equipoVistaActual.lider.email}</div>
+                <div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <span class="font-bold mr-1">Rol: </span>${equipoVistaActual.rol_lider.name}
+                </div>
+            </div>
+        </div>`;
+    }else{
+        document.getElementById('viewEquipoLider').innerHTML = `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+            <span class="text-xs">Sin líder</span>
+        </div>`;
+    }
+
+    // Miembros
+    document.getElementById('viewEquipoMiembrosNombre').innerHTML = equipoVistaActual.nombre;
+    document.getElementById('viewEquipoMiembrosCount').innerHTML = "Número de miembros: " + equipoVistaActual.miembros.length;
+    document.getElementById('viewEquipoMiembros').innerHTML = equipoVistaActual.miembros.map(miembro => `
+        <tr>
+            <td class="px-6 py-4">
+                ${miembro.foto_url
+                    ? `<img class="h-10 w-10 rounded-full" src="/storage/${miembro.foto_url}" alt="${miembro.nombre}">`
+                    : `<div class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                        ${miembro.nombre.charAt(0)}${miembro.apellidos.charAt(0)}
+                    </div>`
+                }
+            </td>
+            <td class="px-6 py-4">${miembro.nombre} ${miembro.apellidos}</td>
+            <td class="px-6 py-4">
+                    ${miembro.tipo_miembro === 'lider' ? `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        <span class="font-bold mr-1">Líder</span>
+                    </span>` : `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                        <span class="text-xs">Miembro</span>
+                    </span>`}
+            </td>
+            <td class="px-6 py-4">
+                ${miembro.cargo ? `${miembro.cargo}` : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                    <span class="text-xs">Sin cargo</span>
+                </div>`}
+            </td>
+            <td class="px-6 py-4">
+                ${miembro.email
+                    ? `<a href="mailto:${miembro.email}" class="text-blue-600 hover:underline">${miembro.email}</a>`
+                    : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                        <span class="text-xs">Sin email</span>
+                    </div>`
+                }
+            </td>
+            <td class="px-6 py-4">
+                
+            </td>
+            <td class="px-6 py-4">
+                ${miembro.id != equipoVistaActual.lider_id ? `<div class="flex items-center">
+                    <button type="button" onclick="eliminarMiembro(miembro.id)" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div >` : ''}
+            </td>
+        </tr>
+    `).join('');
+    
+    // Estado
+    document.getElementById('viewEquipoEstado').checked = equipoVistaActual.activo ? true : false;
+    
+
+    // Botón Editar
+    document.getElementById('BtnviewTab_editar').classList.remove('hidden');
+    document.getElementById('BtnviewTab_editar').setAttribute('onclick', `editarEquipoDesdeModal(${equipoVistaActual.id})`);
+}
+
+function editarEquipoDesdeModal(equipoId) {
+    abrirModalEditarEquipo(equipoId);
+    cerrarModalVerEquipo();
+}
+
+function cerrarModalVerEquipo() {
+    document.getElementById('viewEquipoModal').classList.add('hidden');
+    document.getElementById('viewEquipoNombre').value = '';
+    document.getElementById('viewEquipoAreaNombre').value = '';
+    document.getElementById('viewEquipoDescripcion').value = '';
+    document.getElementById('viewEquipoLider').innerHTML = '';
+    document.getElementById('viewEquipoEstado').checked = false;
+
+    document.getElementById('BtnviewTab_editar').classList.add('hidden');
+    document.getElementById('BtnviewTab_editar').setAttribute('onclick', '');
+    equipoVistaActual = null;
+    tabActualVista = 'informacion';
+}
+
+
+function cambiarTabVista(nombreTab) {
+    tabVistaActual = nombreTab;
+    
+    // Actualizar UI de tabs
+    document.querySelectorAll('.view-tab-button').forEach(btn => {
+        btn.classList.remove('border-blue-600', 'text-blue-600');
+        btn.classList.add('border-transparent', 'text-gray-500');
+        btn.classList.remove('active');
+    });
+    
+    const botonActivo = document.getElementById(`BtnviewTab_${nombreTab}`);
+    if (botonActivo) {
+        botonActivo.classList.add('border-blue-600', 'text-blue-600');
+        botonActivo.classList.remove('border-transparent', 'text-gray-500');
+        botonActivo.classList.add('active');
+    }
+    
+    // Ocultar todos los contenidos
+    document.querySelectorAll('.view-tab-content').forEach(contenido => {
+        contenido.classList.add('hidden');
+    });
+    
+    // Mostrar contenido activo
+    const contenidoActivo = document.getElementById(`viewTab_${nombreTab}`);
+    if (contenidoActivo) {
+        contenidoActivo.classList.remove('hidden');
+    }
+}
+
+
+// ========================================
+// eliminar equipo
+// ========================================
+
+var equipoEliminar = null;
+async function eliminarEquipo(equipoId) {
+    mostrarSwalCargando('Consultando datos para eliminar el equipo, por favor espere...');
+    try {
+        const response = await fetch(`/admin/datos-equipo/${equipoId}`);
+        if (!response.ok) throw new Error('Error al consultar datos del equipo');
+        const data = await response.json();
+        equipoEliminar = data.equipo;
+        
+        if (equipoEliminar.miembros.length > 0) {
+            mostrarToast('El equipo tiene miembros activos, por favor reasigne o elimine los miembros antes de eliminar el equipo', 'error');
+            return;
+        } 
+    
+        Swal.fire({
+            title: '¿Estás seguro de querer eliminar el equipo ('+ equipoEliminar.nombre + ')?',
+            html: '<p style="color:rgb(179, 2, 10); font-weight: bold;">Esta acción no se puede deshacer</p><p style="color:rgb(10, 10, 10); font-weight: bold;">Por favor ingrese el nombre del equipo para confirmar la eliminación</p>',
+            icon: 'warning',
+            showConfirmButton: true,
+            showCancelButton: true,
+            confirmButtonText: 'Eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#dc3545',
+            allowOutsideClick: false,
+            input: 'text',
+            inputPlaceholder: 'Ingrese el nombre del equipo',
+            inputValidator: (value) => {
+                if (value !== equipoEliminar.nombre) {
+                    return 'El nombre ingresado no es correcto';
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                confirmarEliminacionEquipo();
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al eliminar equipo', 'error');
+    }
+}
+
+async function confirmarEliminacionEquipo() {
+    try {
+        mostrarSwalCargando('Eliminando equipo, por favor espere...');
+        const response = await fetch(`/admin/eliminar-equipo/${equipoEliminar.id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            }
+        });
+        Swal.close();
+        if (!response.ok) throw new Error('Error al eliminar equipo');
+        const data = await response.json();
+        if (response.ok) {
+            var mensaje = data.message;
+            var tipo = data.type;
+            mostrarToast(mensaje, tipo);
+            if (tipo == 'success') {
+                setTimeout(() => {
+                    consultarNuevasEquipos();
+                }, 500);
+            }
+        } else {
+            mostrarToast(data.message || 'Error al eliminar equipo', 'error');
+        }
+    } catch (error) {
+        Swal.close();
+        console.error('Error:', error);
+        mostrarToast('Error al eliminar equipo', 'error');
+    }
+}
+
+// ========================================
+// abrir modal agregar miembro
+// ========================================
+var debounceTimerEmpleadosPorArea = null;
+
+document.getElementById('buscar_empleado').addEventListener('keyup', () => {
+    clearTimeout(debounceTimerEmpleadosPorArea);
+    debounceTimerEmpleadosPorArea = setTimeout(() => {
+        consultarEmpleadosPorArea();
+    }, 500);
+});
+
+async function abrirModalAgregarMiembro() {
+    const modal = document.getElementById('viewEquipoAgregarMiembroModal');
+    modal.classList.remove('hidden');
+
+    document.getElementById('areaNombreAgregarMiembro').innerHTML = equipoVistaActual.area.nombre;
+
+    await consultarEmpleadosPorArea();
+}
+
+function cerrarModalAgregarMiembro() {
+    document.getElementById('viewEquipoAgregarMiembroModal').classList.add('hidden');
+    document.getElementById('empleadosAgregarMiembro').innerHTML = '';
+    empleadosSeleccionados = [];
+    document.getElementById('cantidadEmpleadosSeleccionados').innerHTML = '0';
+    document.getElementById('buscar_empleado').value = '';
+    parametrosBusquedaEmpleadosPorArea = {
+        id_equipo: null,
+        id_area: null,
+        texto_busqueda: '',
+    };
+}
+
+
+var empleadosPorArea = [];
+var parametrosBusquedaEmpleadosPorArea = {
+   id_equipo: null,
+   id_area: null,
+   texto_busqueda: '',
+};
+async function consultarEmpleadosPorArea() {
+    try {
+        mostrarSwalCargando('Consultando empleados por área, por favor espere...');
+        parametrosBusquedaEmpleadosPorArea.id_equipo = equipoVistaActual.id;
+        parametrosBusquedaEmpleadosPorArea.id_area = equipoVistaActual.area.id;
+        parametrosBusquedaEmpleadosPorArea.texto_busqueda = document.getElementById('buscar_empleado').value;
+        const response = await fetch(`/admin/empleados-por-area-otros-equipos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify(parametrosBusquedaEmpleadosPorArea)
+        });
+
+        Swal.close();
+        if (!response.ok) {
+            mostrarToast('Error al consultar empleados por área', 'error');
+            return;
+        }
+
+        const data = await response.json();
+        empleadosPorArea = data.empleados;
+        renderizarEmpleadosAgregarMiembro(data.empleados);
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al consultar empleados por área', 'error');
+    }
+}
+
+function renderizarEmpleadosAgregarMiembro(empleados) {
+    const empleadosContainer = document.getElementById('empleadosAgregarMiembro');
+    empleadosContainer.innerHTML = empleados.map(empleado => `
+        <tr>
+            <td style="width: 15%; text-align: center;" class="px-6 py-4">
+                <input ${empleadosSeleccionados.includes(empleado.id) ? 'checked' : ''} id="checkbox_empleado_${empleado.id}" onchange="seleccionarEmpleado(this)" type="checkbox" style="transform: scale(1.5);" name="empleado_id" value="${empleado.id}">
+            </td>
+            <td style="width: 10%; text-align: center;" class="px-6 py-4">
+                ${empleado.foto_url
+                    ? `<img class="h-10 w-10 rounded-full" src="/storage/${empleado.foto_url}" alt="${empleado.nombre}">`
+                    : `<div class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                        ${empleado.nombre.charAt(0)}${empleado.apellidos.charAt(0)}
+                    </div>`
+                }
+            </td>
+            <td class="px-6 py-4">${empleado.nombre} ${empleado.apellidos}</td>
+            <td class="px-6 py-4">
+                ${empleado.equipo ? `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                    <span class="font-bold mr-1">${empleado.equipo.nombre}</span>
+                </span>` : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                    <span class="text-xs">Sin equipo</span>
+                </div>`
+                }
+            </td>
+            <td class="px-6 py-4">
+                ${empleado.cargo ? `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <span class="font-bold mr-1">${empleado.cargo}</span>
+                </span>` : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                    <span class="text-xs">Sin cargo</span>
+                </div>`
+                }
+            </td>
+            <td class="px-6 py-4">
+                ${empleado.email ? `<a href="mailto:${empleado.email}" class="text-blue-600 hover:underline">${empleado.email}</a>` : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                    <span class="text-xs">Sin email</span>
+                </div>`
+                }
+            </td>
+        </tr>
+    `).join('');
+}
+
+var empleadosSeleccionados = [];
+function seleccionarEmpleado(checkbox) {
+    var value = parseInt(checkbox.value);
+    if (checkbox.checked) {
+        empleadosSeleccionados.push(value);
+    } else {
+        empleadosSeleccionados = empleadosSeleccionados.filter(id => id !== value);
+    }
+
+    document.getElementById('cantidadEmpleadosSeleccionados').innerHTML = empleadosSeleccionados.length;
+}
+
+function seleccionarTodosEmpleados(checkbox) {
+    if (checkbox.checked) {
+        empleadosPorArea.forEach(empleado => {
+            document.getElementById(`checkbox_empleado_${empleado.id}`).checked = true;
+            if (!empleadosSeleccionados.includes(empleado.id)) {
+                empleadosSeleccionados.push(empleado.id);
+            }
+        });
+    } else {
+        empleadosPorArea.forEach(empleado => {
+            document.getElementById(`checkbox_empleado_${empleado.id}`).checked = false;
+        });
+        empleadosSeleccionados = [];
+    }
+
+    document.getElementById('cantidadEmpleadosSeleccionados').innerHTML = empleadosSeleccionados.length;
 }

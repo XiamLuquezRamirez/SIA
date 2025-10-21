@@ -169,30 +169,31 @@ class EquiposController extends Controller
         if(!$id_equipo) {
             $equipo = Equipo::with('lider')->where('lider_id', $request->id_usuario)->first();
             if ($equipo) {
-                return response()->json(['tipo' => 'lider', 'mensaje' => '<p>El usuario seleccionado es <strong style="color:rgb(214, 100, 48);">lider</strong> de otro equipo, al continuar se movera el usuario al equipo que esta creando.</p>']);
+                return response()->json(['tipo' => 'lider', 'mensaje' => '<p>El usuario seleccionado es <strong style="color:rgb(214, 100, 48);">lider</strong> del equipo <strong style="color:rgb(214, 100, 48);">('.$equipo->nombre.')</strong>, al continuar se movera el usuario al equipo que esta creando.</p>']);
             }
 
             $usuario = User::find($request->id_usuario);
-            if ($usuario->equipo_id) {  
-                return response()->json(['tipo' => 'miembro', 'mensaje' => '<p>El usuario seleccionado es <strong style="color:rgb(214, 100, 48);">miembro</strong> de otro equipo, al continuar se movera el usuario al equipo que esta creando.</p>']);
+            if ($usuario->equipo_id) {
+                $equipo = Equipo::find($usuario->equipo_id);
+                return response()->json(['tipo' => 'miembro', 'mensaje' => '<p>El usuario seleccionado es <strong style="color:rgb(214, 100, 48);">miembro</strong> del equipo <strong style="color:rgb(214, 100, 48);">('.$equipo->nombre.')</strong>, al continuar se movera el usuario al equipo que esta creando.</p>']);
             }
 
             return response()->json(['tipo' => 'ninguno']);
         }else{
             $equipo = Equipo::with('lider')->where('lider_id', $request->id_usuario)->first();
             if ($equipo && $equipo->id != $id_equipo) {
-                return response()->json(['tipo' => 'lider', 'mensaje' => '<p>El usuario seleccionado es <strong style="color:rgb(214, 100, 48);">lider</strong> de otro equipo, al continuar se movera el usuario al equipo que esta editando.</p>']);
+                return response()->json(['tipo' => 'lider', 'mensaje' => '<p>El usuario seleccionado es <strong style="color:rgb(214, 100, 48);">lider</strong> del equipo <strong style="color:rgb(214, 100, 48);">('.$equipo->nombre.')</strong>, al continuar se movera el usuario al equipo que esta editando.</p>']);
             }
 
             $usuario = User::find($request->id_usuario);
             if ($usuario->equipo_id && $usuario->equipo_id != $id_equipo) {  
-                return response()->json(['tipo' => 'miembro', 'mensaje' => '<p>El usuario seleccionado es <strong style="color:rgb(214, 100, 48);">miembro</strong> de otro equipo, al continuar se movera el usuario al equipo que esta editando.</p>']);
+                $equipo = Equipo::find($usuario->equipo_id);
+                return response()->json(['tipo' => 'miembro', 'mensaje' => '<p>El usuario seleccionado es <strong style="color:rgb(214, 100, 48);">miembro</strong> del equipo <strong style="color:rgb(214, 100, 48);">('.$equipo->nombre.')</strong>, al continuar se movera el usuario al equipo que esta editando.</p>']);
             }
 
             return response()->json(['tipo' => 'ninguno']);
         }
     }
-
 
     public function getRolesLiderEquipo(Request $request)
     {
@@ -208,7 +209,7 @@ class EquiposController extends Controller
         $roles_lider_equipo = Role::where('slug', 'like', '%' . $slug . '%')->get();
 
         //buscar equipo
-        $equipo = Equipo::with('lider','area')->find($id);
+        $equipo = Equipo::with('lider','area','miembros')->find($id);
 
         if ($equipo->lider_id) {
             //buscar rol del lider
@@ -227,7 +228,6 @@ class EquiposController extends Controller
 
         return response()->json(['equipo' => $equipo]);
     }
-
 
     public function update(Request $request, $id)
     {
@@ -353,5 +353,131 @@ class EquiposController extends Controller
             'type' => 'success',
             'equipo' => $equipo
         ], 201);
+    }
+
+    public function alternarEstadoEquipo(Request $request, $id)
+    {
+        $equipo = Equipo::findOrFail($id);
+        $equipo->activo = $request->activo == '1' ? true : false;
+        $equipo->save();
+
+        //si se desactiva el equipo, notificar a los miembros del equipo
+        $mensaje = '';
+        $cambios = [];
+        if ($request->activo == 0) {
+            $mensaje = 'El equipo ' . $equipo->nombre . ' ha sido desactivado.';
+            $cambios['activo'] = ['anterior' => $equipo->activo, 'nuevo' => false];
+            //$this->notificarMiembrosEquipo($equipo->id);
+        }else{
+            $mensaje = 'El equipo ' . $equipo->nombre . ' ha sido activado.';
+            $cambios['activo'] = ['anterior' => $equipo->activo, 'nuevo' => true];
+        }
+
+        \Log::info('Equipo actualizado exitosamente: ', [
+            'equipo_id' => $equipo->id,
+            'equipo_nombre' => $equipo->nombre,
+            'usuario_que_actualiza' => auth()->id(),
+            'fecha_actualizacion' => now(),
+            'cambios' => $cambios
+        ]);
+
+        return response()->json(['message' => $mensaje, 'type' => 'success']);
+    }
+
+    public function getInformacionEquipo($id)
+    {
+        //buscar roles relacionados con lider de equipo
+        $slug = 'lider-de-equipo';
+        $roles_lider_equipo = Role::where('slug', 'like', '%' . $slug . '%')->get();
+
+        //buscar equipo
+        $equipo = Equipo::with('lider','area','miembros')->find($id);
+
+        if ($equipo->lider_id) {
+            //buscar rol del lider
+            $lider = User::with('roles')->find($equipo->lider_id);
+            //filtrar roles del lider por los roles relacionados con lider de equipo
+            $roles_lider = null;
+            $roles_lider = $lider->roles->first(fn($role) => $roles_lider_equipo->pluck('id')->contains($role->id));
+
+
+            $equipo->setRelation('lider', $lider);
+            $equipo->rol_lider = $roles_lider;
+        }
+        else {
+            $equipo->rol_lider = null;
+        }
+
+        //tipo de usuario de los miembros
+        $miembros = $equipo->miembros;
+        foreach ($miembros as $miembro) {
+            if($miembro->id == $equipo->lider_id) {
+                $miembro->tipo_miembro = 'lider';
+            }else{
+                $miembro->tipo_miembro = 'miembro';
+            }
+        }
+
+        //ordenar los miembros por tipo de miembro el líder al inicio y los miembros al final
+        $miembros = $miembros->sortBy('tipo_miembro')->values();
+        $equipo->setRelation('miembros', $miembros);
+
+        return response()->json(['equipo' => $equipo]);
+    }
+
+    public function eliminarEquipo($id)
+    {
+        $equipo = Equipo::findOrFail($id);
+        $equipo->delete();
+
+        //registrar cambios en log para auditoría
+        \Log::info('Equipo eliminado exitosamente: ', [
+            'equipo_id' => $equipo->id,
+            'equipo_nombre' => $equipo->nombre,
+            'usuario_que_elimina' => auth()->id(),
+            'fecha_eliminacion' => now()
+        ]);
+
+        return response()->json(['message' => 'Equipo eliminado exitosamente', 'type' => 'success']);
+    }
+
+    public function getEmpleadosPorAreaOtrosEquipos(Request $request)
+    {
+
+        $equipoId = $request->input('id_equipo');
+        $areaId = $request->input('id_area');
+        $textoBusqueda = $request->input('texto_busqueda');
+
+        $query = User::with('equipo')->orderBy('nombre', 'asc');
+
+        // Búsqueda
+        if ($textoBusqueda != null && $textoBusqueda != "") {
+            $query->where(function($q) use ($textoBusqueda) {
+                $q->where('nombre', 'ILIKE', "%{$textoBusqueda}%")
+                  ->orWhere('email', 'ILIKE', "%{$textoBusqueda}%")
+                  ->orWhere('cargo', 'ILIKE', "%{$textoBusqueda}%");
+            });
+        }
+
+        // Filtro por id de area
+        if ($areaId != null && $areaId != '') {
+            $query->where('area_id', $areaId);
+        }
+
+
+        // Filtro por id de equipo
+        $query->where(function ($q) use ($equipoId) {
+            $q->where('equipo_id', '!=', $equipoId)
+              ->orWhereNull('equipo_id');
+        });
+
+        
+        // Filtro por estado
+        $query->where('activo', true);
+        $query->where('tipo_usuario', 'interno');
+
+        $empleados = $query->get();
+
+        return response()->json(['empleados' => $empleados]);
     }
 }
