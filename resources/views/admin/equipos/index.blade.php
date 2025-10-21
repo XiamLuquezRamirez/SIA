@@ -191,6 +191,27 @@
                                             <div>
                                                 <span class="font-medium text-red-800">Importante</span>
                                                 <p class="text-sm text-red-700" id="danger-message-text"></p>
+                                                <br>
+                                                <div class="md:col-span-2">
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                        Motivos por los cuales se esta cambiando de lider
+                                                    </label>
+                                                    <textarea name="motivo_cambio_lider" id="motivo_cambio_lider" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ej: Reestructuración organizacional, cambio de funciones, etc."></textarea>
+                                                    <span class="error-message text-red-500 text-xs hidden"></span>
+                                                </div>
+                                                <br>
+                                                <div class="md:col-span-2" style="display: flex; align-items: center; gap: 10px;">
+                                                    <input type="checkbox"  checked name="notificar_anterior_lider" id="notificar_anterior_lider" class="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded">
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                        Notificar por correo al anterior lider del cambio
+                                                    </label>
+                                                </div>
+                                                <div class="md:col-span-2" style="display: flex; align-items: center; gap: 10px;">
+                                                    <input type="checkbox"  checked name="mantener_anterior_lider" id="mantener_anterior_lider" class="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded">
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                                        Mantener al anterior lider como miembro del equipo
+                                                    </label>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

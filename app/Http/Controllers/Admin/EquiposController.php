@@ -262,7 +262,7 @@ class EquiposController extends Controller
         ];
 
         //buscra si la id del lider mandada ya esta asociada a otro equipo
-        if ($request->lider_id) {
+        if ($request->lider_id && $request->lider_id != $datos_originales['lider_id']) {
             //buscra si la id del lider mandada ya esta asociada a otro equipo
             $equipo_asociado = Equipo::where('lider_id', $request->lider_id)->first();
             // si existe quitarla 
@@ -315,6 +315,29 @@ class EquiposController extends Controller
         }
         if ($datos_originales['activo'] != $equipo->activo) {
             $cambios['activo'] = ['anterior' => $datos_originales['activo'], 'nuevo' => $equipo->activo];
+        }
+
+        //si se esta cambiando de lider, agregar el motivo
+        if ($request->es_cambiando_lider == 1) {
+            $cambios['motivo_cambio_lider'] = $request->motivo_cambio_lider;
+
+            //si se esta notificando al anterior lider, agregar el motivo
+            if ($request->notificar_anterior_lider == 1) {
+                //$this->notificarAnteriorLider($request->lider_anterior, $request->motivo_cambio_lider);
+            }
+
+            //si no es manteniendo al anterior lider como miembro del equipo, actualizar el equipo del lider anterior
+            if ($request->mantener_anterior_lider == 0) {
+                $lider_anterior = User::find($datos_originales['lider_id']);
+                $lider_anterior->equipo_id = null;
+                $lider_anterior->save();
+
+                //registrar cambios en log para auditoría
+                $cambios['se_deja_como_miembro'] = "No";
+            }else{
+                //registrar cambios en log para auditoría
+                $cambios['se_deja_como_miembro'] = "Si";
+            }
         }
 
         \Log::info('Equipo actualizado exitosamente: ', [

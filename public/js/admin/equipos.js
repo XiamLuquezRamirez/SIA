@@ -326,7 +326,6 @@ function renderizarEquipos(equipos) {
                             <a href="#" onclick="verEquipo(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ver Detalle</a>
                             <a href="#" onclick="abrirModalEditarEquipo(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
                             <a href="#" onclick="gestionarMiembros(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Gestionar Miembros</a>
-                            <a href="#" onclick="asignarLider(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Asignar Líder</a>
                             <a href="#" onclick="eliminarEquipo(${equipo.id}); return false;" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</a>
                         </div>
                     </div>
@@ -493,6 +492,9 @@ function cerrarModalEquipo() {
         isEditingModeEquipo = false;
 
         document.getElementById('danger-message-equipo').classList.add('hidden');
+        document.getElementById('area_id').removeAttribute('disabled');
+        esta_cambiando_lider = false;
+        document.getElementById('motivo_cambio_lider').value = '';
     }
 }
 
@@ -521,17 +523,22 @@ function renderizarUsuarios(usuarios) {
     document.getElementById('rol_id').value = '';
 }
 
+var esta_cambiando_lider = false;
 async function mostrarMensajeSiTieneEquipo(valor) {
     //consultar si es lider o miembro de otro equipo
     const id_usuario = valor.value;
     if (id_usuario === '') {
         if(isEditingModeEquipo) {
             if(originalEquipoData.lider_id != null) {
+                esta_cambiando_lider = true;
+                document.getElementById('notificar_anterior_lider').checked = true;
+                document.getElementById('mantener_anterior_lider').checked = true;
                 document.getElementById('danger-message-equipo').classList.remove('hidden');
                 document.getElementById('danger-message-text').textContent = "Este equipo ya tiene un líder asignado, al no seleccionar un lider, el lider anterior quedara como miembro del equipo.";
                 document.getElementById('rol_id').value = '';
             }
             else {
+                esta_cambiando_lider = false;
                 document.getElementById('danger-message-equipo').classList.add('hidden');
             }
         }
@@ -540,10 +547,14 @@ async function mostrarMensajeSiTieneEquipo(valor) {
         var ruta = '/admin/verificar-miembro-equipo';
         if(isEditingModeEquipo) {
             if(id_usuario != originalEquipoData.lider_id && originalEquipoData.lider_id != null) {
+                esta_cambiando_lider = true;
+                document.getElementById('notificar_anterior_lider').checked = true;
+                document.getElementById('mantener_anterior_lider').checked = true;
                 document.getElementById('danger-message-equipo').classList.remove('hidden');
                 document.getElementById('danger-message-text').textContent = "Este equipo ya tiene un líder asignado, al continuar se asignara el nuevo lider, y el lider anterior quedara como miembro del equipo.";
             }
             else {
+                esta_cambiando_lider = false;
                 document.getElementById('danger-message-equipo').classList.add('hidden');
             }
             ruta = `${ruta}?id_equipo=${editingEquipoId}&id_usuario=${id_usuario}`;
@@ -743,6 +754,7 @@ async function abrirModalEditarEquipo(equipoId) {
     document.getElementById('modalTitle').textContent = 'Editar Equipo';
     document.getElementById('equipoModal').classList.remove('hidden');
     document.getElementById('submitButton').classList.remove('hidden');
+    document.getElementById('area_id').setAttribute('disabled', true);
     currentTab = 1;
     formChanged = false;
 
@@ -819,6 +831,33 @@ async function manejarEnvioFormularioEditarEquipo(e) {
         // Agregar activo
         const activo = document.getElementById('activo').checked;
         formData.append('activo', activo ? '1' : '0');
+        formData.append('area_id', document.getElementById('area_id').value);
+
+        // si se esta cambiando de lider, agregar el motivo
+        if (esta_cambiando_lider) {
+
+            //agregar variable es_cambiando_lider
+            formData.append('es_cambiando_lider', 1);
+
+            const motivo = document.getElementById('motivo_cambio_lider').value;
+            formData.append('motivo_cambio_lider', motivo);
+
+            // si se esta notificando al anterior lider, agregar el checkbox
+            if (document.getElementById('notificar_anterior_lider').checked) {
+                formData.append('notificar_anterior_lider', 1);
+            }else{
+                formData.append('notificar_anterior_lider', 0);
+            }
+
+            // si se esta manteniendo al anterior lider como miembro del equipo, agregar el checkbox
+            if (document.getElementById('mantener_anterior_lider').checked) {
+                formData.append('mantener_anterior_lider', 1);
+            }else{
+                formData.append('mantener_anterior_lider', 0);
+            }
+        }else{
+            formData.append('es_cambiando_lider', 0);
+        }
 
         // Enviar petición
         const response = await fetch(`/admin/editar-equipo/${editingEquipoId}`, {
@@ -901,6 +940,15 @@ function validarFormularioFinalEditarEquipo() {
         const rol = document.getElementById('rol_id').value;
         if (rol === '') {
             mostrarError('rol_id', 'El rol es obligatorio');
+            isValid = false;
+        }
+    }
+
+    // si se esta cambiando de lider, validar el motivo
+    if (esta_cambiando_lider) {
+        const motivo = document.getElementById('motivo_cambio_lider').value;
+        if (!motivo) {
+            mostrarError('motivo_cambio_lider', 'El motivo es obligatorio');
             isValid = false;
         }
     }
