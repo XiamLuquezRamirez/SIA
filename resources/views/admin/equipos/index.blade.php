@@ -26,7 +26,7 @@
                 <!-- Filtro Dependencia -->
                 <div>
                     <select id="filterDependencia" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                        <option value="">Todas las dependencias</option>
+                        <option value="">Todas las areas</option>
                     </select>
                 </div>
 

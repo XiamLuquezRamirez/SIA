@@ -121,12 +121,6 @@ Route::middleware(['auth'])->group(function () {
         // 👥 EQUIPOS Y ÁREAS
         // ========================================
         Route::prefix('equipos-areas')->name('equipos-areas.')->group(function () {
-            // Equipos
-            Route::resource('equipos', App\Http\Controllers\Admin\EquiposController::class);
-            Route::get('equipos-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getEquiposAreaSelect'])->name('equipos-select');
-            Route::get('usuarios-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getUsuariosAreaSelect'])->name('usuarios-area-select');
-            Route::post('guardar-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'guardarEquipo'])->name('guardar-equipo');
-            
             // Áreas (Dependencias)
             Route::resource('dependencias', App\Http\Controllers\Admin\DependenciasController::class);
             Route::post('guardar-dependencia', [App\Http\Controllers\Admin\DependenciasController::class, 'guardarDependencia'])->name('guardar-dependencia');
@@ -135,22 +129,29 @@ Route::middleware(['auth'])->group(function () {
             Route::post('alternar-estado-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'alternarEstadoDependencia'])->name('alternar-estado-dependencia');
             Route::delete('eliminar-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'eliminarDependencia'])->name('eliminar-dependencia');
             Route::get('dependencias-select', [App\Http\Controllers\Admin\DependenciasController::class, 'getDependenciasSelect'])->name('dependencias-select');
+            Route::get('usuarios', [App\Http\Controllers\Admin\DependenciasController::class, 'getUsuarios'])->name('usuarios');
+
+            // Rutas para gestion de equipos
+            Route::resource('equipos', App\Http\Controllers\Admin\EquiposController::class);
+            Route::get('equipos-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getEquiposAreaSelect'])->name('equipos-select');
+            Route::get('usuarios-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getUsuariosAreaSelect'])->name('usuarios-area.select');
+            Route::post('guardar-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'guardarEquipo'])->name('guardar-equipo');
+            Route::get('verificar-miembro-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'verificarMiembroEquipo'])->name('equipos.verificar-miembro-equipo');
+            Route::get('datos-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'getDatosEquipo'])->name('equipos.get-datos-equipo');
+            Route::post('editar-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'update'])->name('editar-equipo');
+            //obtener roles relacionados con lider de equipo mediante el slug
+            Route::get('roles-lider-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'getRolesLiderEquipo'])->name('equipos.roles-lider-equipo');
+            Route::post('alternar-estado-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'alternarEstadoEquipo'])->name('alternar-estado-equipo');
+            Route::get('informacion-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'getInformacionEquipo'])->name('equipos.get-informacion-equipo');
+            Route::delete('eliminar-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'eliminarEquipo'])->name('eliminar-equipo');
+            Route::post('empleados-por-area-otros-equipos', [App\Http\Controllers\Admin\EquiposController::class, 'getEmpleadosPorAreaOtrosEquipos'])->name('equipos.get-empleados-por-area-otros-equipos');
+            Route::post('agregar-miembros-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'agregarMiembrosAlEquipo'])->name('equipos.agregar-miembros-equipo');
+            Route::get('eliminar-miembro-equipo/{id_empleado}', [App\Http\Controllers\Admin\EquiposController::class, 'eliminarMiembroDelEquipo'])->name('equipos.eliminar-miembro-equipo');
             
             // Organigrama
-            // Route::get('organigrama', [App\Http\Controllers\Admin\OrganigramaController::class, 'index'])->name('organigrama');
+            Route::get('organigrama', [App\Http\Controllers\Admin\DependenciasController::class, 'organigrama'])->name('dependencias.organigrama');
         });
-        
-        // Alias para compatibilidad
-        Route::get('equipos-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getEquiposAreaSelect'])->name('equipos-area.select');
-        Route::resource('equipos', App\Http\Controllers\Admin\EquiposController::class);
-        Route::resource('dependencias', App\Http\Controllers\Admin\DependenciasController::class);
-        Route::post('guardar-dependencia', [App\Http\Controllers\Admin\DependenciasController::class, 'guardarDependencia'])->name('guardar-dependencia');
-        Route::get('dependencias/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'show'])->name('dependencias.show');
-        Route::post('editar-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'update'])->name('editar-dependencia');
-        Route::post('alternar-estado-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'alternarEstadoDependencia'])->name('alternar-estado-dependencia');
-        Route::delete('eliminar-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'eliminarDependencia'])->name('eliminar-dependencia');
-        Route::get('dependencias-select', [App\Http\Controllers\Admin\DependenciasController::class, 'getDependenciasSelect'])->name('dependencias.select');
-       
+    
         // ========================================
         // ⚙️ CONFIGURACIÓN
         // ========================================
@@ -287,20 +288,6 @@ Route::middleware(['auth'])->group(function () {
         // Route::prefix('reportes')->name('reportes.')->group(function () {
         //     Route::get('/', [App\Http\Controllers\Admin\ReportesController::class, 'index'])->name('index');
         // });
-        // Rutas para gestion de equipos
-        Route::resource('equipos', App\Http\Controllers\Admin\EquiposController::class);
-        Route::get('usuarios-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getUsuariosAreaSelect'])->name('usuarios-area.select');
-        Route::post('guardar-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'guardarEquipo'])->name('guardar-equipo');
-        Route::get('verificar-miembro-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'verificarMiembroEquipo'])->name('equipos.verificar-miembro-equipo');
-        Route::get('datos-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'getDatosEquipo'])->name('equipos.get-datos-equipo');
-        Route::post('editar-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'update'])->name('editar-equipo');
-        //obtener roles relacionados con lider de equipo mediante el slug
-        Route::get('roles-lider-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'getRolesLiderEquipo'])->name('equipos.roles-lider-equipo');
-        Route::post('alternar-estado-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'alternarEstadoEquipo'])->name('alternar-estado-equipo');
-        Route::get('informacion-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'getInformacionEquipo'])->name('equipos.get-informacion-equipo');
-        Route::delete('eliminar-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'eliminarEquipo'])->name('eliminar-equipo');
-        Route::post('empleados-por-area-otros-equipos', [App\Http\Controllers\Admin\EquiposController::class, 'getEmpleadosPorAreaOtrosEquipos'])->name('equipos.get-empleados-por-area-otros-equipos');
-        Route::post('agregar-miembros-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'agregarMiembrosAlEquipo'])->name('equipos.agregar-miembros-equipo');
-        Route::get('eliminar-miembro-equipo/{id_empleado}', [App\Http\Controllers\Admin\EquiposController::class, 'eliminarMiembroDelEquipo'])->name('equipos.eliminar-miembro-equipo');
+       
     });
 });

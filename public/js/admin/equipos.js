@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Cargar dependencias
 async function cargarDependencias() {
     try {
-        const response = await fetch('/admin/dependencias-select');
+        const response = await fetch('/admin/equipos-areas/dependencias-select');
         const dependencias = await response.json();
         renderizarDependencias(dependencias);
     } catch (error) {
@@ -131,7 +131,7 @@ async function cargarDependencias() {
 
 function renderizarDependencias(dependencias) {
     const select = document.getElementById('filterDependencia');
-    select.innerHTML = '<option value="">Todas las dependencias</option>';
+    select.innerHTML = '<option value="">Todas las áreas</option>';
     dependencias.forEach(dependencia => {
         select.innerHTML += `<option value="${dependencia.id}">${dependencia.nombre}</option>`;
     });
@@ -199,7 +199,7 @@ async function cargarEquipos() {
             ...currentFilters
         });
 
-        const response = await fetch(`/admin/equipos?${params}`, {
+        const response = await fetch(`/admin/equipos-areas/equipos?${params}`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
@@ -454,7 +454,7 @@ function abrirModalCrearEquipo() {
 
 // Cargar áreas
 async function cargarAreas() {
-    const response = await fetch('/admin/dependencias-select');
+    const response = await fetch('/admin/equipos-areas/dependencias-select');
     const areas = await response.json();
     renderizarAreas(areas);
 }
@@ -500,13 +500,13 @@ function cerrarModalEquipo() {
 // Cargar usuarios por área
 async function cargarUsuariosPorArea() {
     const areaId = document.getElementById('area_id').value;
-    const response = await fetch(`/admin/usuarios-area-select?area_id=${areaId}`);
+    const response = await fetch(`/admin/equipos-areas/usuarios-area-select?area_id=${areaId}`);
     const usuarios = await response.json();
     renderizarUsuarios(usuarios.usuarios);
 }
 
 async function cargarRolesLiderEquipo() {
-    const response = await fetch('/admin/roles-lider-equipo');
+    const response = await fetch('/admin/equipos-areas/roles-lider-equipo');
     const roles = await response.json();
     renderizarRoles(roles.roles);
 }
@@ -543,7 +543,7 @@ async function mostrarMensajeSiTieneEquipo(valor) {
         }
         return;
     }else{
-        var ruta = '/admin/verificar-miembro-equipo';
+        var ruta = '/admin/equipos-areas/verificar-miembro-equipo';
         if(isEditingModeEquipo) {
             if(id_usuario != originalEquipoData.lider_id && originalEquipoData.lider_id != null) {
                 esta_cambiando_lider = true;
@@ -622,7 +622,7 @@ async function manejarEnvioFormulario(e) {
         formData.append('activo', activo ? '1' : '0');
 
         // Enviar petición
-        const response = await fetch('/admin/guardar-equipo', {
+        const response = await fetch('/admin/equipos-areas/guardar-equipo', {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -767,7 +767,7 @@ async function abrirModalEditarEquipo(equipoId) {
 
     // Cargar datos del equipo
     try {
-        const response = await fetch(`/admin/datos-equipo/${equipoId}`);
+        const response = await fetch(`/admin/equipos-areas/datos-equipo/${equipoId}`);
         if (!response.ok) throw new Error('Error al cargar equipo');
 
         const data = await response.json();
@@ -859,7 +859,7 @@ async function manejarEnvioFormularioEditarEquipo(e) {
         }
 
         // Enviar petición
-        const response = await fetch(`/admin/editar-equipo/${editingEquipoId}`, {
+        const response = await fetch(`/admin/equipos-areas/editar-equipo/${editingEquipoId}`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -983,7 +983,7 @@ async function alternarEstadoEquipo(equipoId, checked) {
     // Cargar datos del equipo primero
     mostrarSwalCargando('Cargando datos del equipo, por favor espere...');
     try {
-        const response = await fetch(`/admin/datos-equipo/${equipoId}`);
+        const response = await fetch(`/admin/equipos-areas/datos-equipo/${equipoId}`);
         if (!response.ok) throw new Error('Error al cargar equipo');
         Swal.close();
 
@@ -1072,7 +1072,7 @@ async function cambiarEstadoEquipo(equipoId, checked) {
     try {
         const formData = new FormData();
         formData.append('activo', checked ? '1' : '0');
-        const response = await fetch(`/admin/alternar-estado-equipo/${equipoId}`, {
+        const response = await fetch(`/admin/equipos-areas/alternar-estado-equipo/${equipoId}`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -1121,7 +1121,7 @@ async function verEquipo(equipoId, tab = 'informacion') {
     // Cargar datos del equipo
     try {
         mostrarSwalCargando('Cargando datos del equipo, por favor espere...');
-        const response = await fetch(`/admin/informacion-equipo/${equipoId}`);
+        const response = await fetch(`/admin/equipos-areas/informacion-equipo/${equipoId}`);
         Swal.close();
         if (!response.ok) throw new Error('Error al cargar equipo');
 
@@ -1288,7 +1288,7 @@ var equipoEliminar = null;
 async function eliminarEquipo(equipoId) {
     mostrarSwalCargando('Consultando datos para eliminar el equipo, por favor espere...');
     try {
-        const response = await fetch(`/admin/datos-equipo/${equipoId}`);
+        const response = await fetch(`/admin/equipos-areas/datos-equipo/${equipoId}`);
         if (!response.ok) throw new Error('Error al consultar datos del equipo');
         const data = await response.json();
         equipoEliminar = data.equipo;
@@ -1339,7 +1339,7 @@ async function eliminarEquipo(equipoId) {
 async function confirmarEliminacionEquipo() {
     try {
         mostrarSwalCargando('Eliminando equipo, por favor espere...');
-        const response = await fetch(`/admin/eliminar-equipo/${equipoEliminar.id}`, {
+        const response = await fetch(`/admin/equipos-areas/eliminar-equipo/${equipoEliminar.id}`, {
             method: 'DELETE',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -1415,7 +1415,7 @@ async function consultarEmpleadosPorArea() {
         parametrosBusquedaEmpleadosPorArea.id_equipo = equipoVistaActual.id;
         parametrosBusquedaEmpleadosPorArea.id_area = equipoVistaActual.area.id;
         parametrosBusquedaEmpleadosPorArea.texto_busqueda = document.getElementById('buscar_empleado').value;
-        const response = await fetch(`/admin/empleados-por-area-otros-equipos`, {
+        const response = await fetch(`/admin/equipos-areas/empleados-por-area-otros-equipos`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1531,7 +1531,7 @@ async function agregarMiembrosAlEquipo() {
     var result = await verificarSiHayEmpleadosSeleccionadosDeOtrosEquipos();
     if (result) {
         mostrarSwalCargando('Agregando miembros al equipo, por favor espere...');
-        const response = await fetch(`/admin/agregar-miembros-equipo`, {
+        const response = await fetch(`/admin/equipos-areas/agregar-miembros-equipo`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1655,7 +1655,7 @@ function eliminarMiembroEquipo(equipoId, miembroId, miembroNombre) {
 
 async function eliminarMiembro(miembroId, miembroNombre) {
     mostrarSwalCargando('Eliminando miembro del equipo, por favor espere...');
-    const response = await fetch(`/admin/eliminar-miembro-equipo/${miembroId}`);
+    const response = await fetch(`/admin/equipos-areas/eliminar-miembro-equipo/${miembroId}`);
     Swal.close();
     if (!response.ok) {
         mostrarToast('Error al eliminar miembro del equipo', 'error');

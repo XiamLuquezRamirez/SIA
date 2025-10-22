@@ -168,7 +168,7 @@ async function cargarDependencias() {
             ...currentFilters
         });
 
-        const response = await fetch(`/admin/dependencias?${params}`, {
+        const response = await fetch(`/admin/equipos-areas/dependencias?${params}`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
@@ -393,9 +393,9 @@ function limpiarFiltros() {
     cargarDependencias();
 }
 
-// Abrir modal de creación de dependencia
+// Abrir modal de creación de area
 function abrirModalCrearDependencia() {
-    document.getElementById('modalTitle').textContent = 'Crear Nueva Dependencia';
+    document.getElementById('modalTitle').textContent = 'Crear Nueva Área';
     document.getElementById('dependenciaForm').reset();
     document.getElementById('dependenciaModal').classList.remove('hidden');
     document.getElementById('submitButton').classList.remove('hidden');
@@ -407,7 +407,7 @@ function abrirModalCrearDependencia() {
     form.addEventListener('submit', manejarEnvioFormulario);
 
     //cambiar el texto del botón
-    document.getElementById('submitButton').textContent = 'Guardar Dependencia';
+    document.getElementById('submitButton').textContent = 'Guardar Área';
 
     // Cargar datos necesarios
     cargarCoordinadores();
@@ -423,7 +423,7 @@ function abrirModalCrearDependencia() {
 
 async function cargarCoordinadores() {
     try {
-        const response = await fetch('/admin/api/usuarios');
+        const response = await fetch('/admin/equipos-areas/usuarios');
         var usuarios = await response.json();
         usuarios = usuarios.usuarios;
 
@@ -488,7 +488,7 @@ async function manejarEnvioFormulario(e) {
         formData.append('activo', activo ? '1' : '0');
 
         // Enviar petición
-        const response = await fetch('/admin/guardar-dependencia', {
+        const response = await fetch('/admin/equipos-areas/guardar-dependencia', {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -501,10 +501,10 @@ async function manejarEnvioFormulario(e) {
 
         if (response.ok) {
             // Éxito
-            mostrarToast('Dependencia creada exitosamente', 'success');
+            mostrarToast('Área creada exitosamente', 'success');
             cerrarModalDependencia();
 
-            // Recargar lista de dependencias
+            // Recargar lista de áreas
             setTimeout(() => {
                 currentPage = 1;
                 cargarDependencias();
@@ -516,11 +516,11 @@ async function manejarEnvioFormulario(e) {
 
         } else {
             // Error del servidor
-            mostrarToast(data.message || 'Error al crear dependencia', 'error');
+            mostrarToast(data.message || 'Error al crear área', 'error');
         }
 
     } catch (error) {
-        mostrarToast(error.message || 'Error al guardar dependencia', 'error');
+        mostrarToast(error.message || 'Error al guardar área', 'error');
 
     } finally {
         // Restaurar botón
@@ -597,32 +597,32 @@ function mostrarToast(message, type = 'success') {
 }
 
 // ========================================
-// EDITAR DEPENDENCIA
+// EDITAR ÁREA
 // ========================================
 let editingDependenciaId = null;
 let originalDependenciaData = null;
 
 async function editarDependencia(dependenciaId) {
     editingDependenciaId = dependenciaId;
-    document.getElementById('modalTitle').textContent = 'Editar Dependencia';
+    document.getElementById('modalTitle').textContent = 'Editar Área';
     document.getElementById('dependenciaModal').classList.remove('hidden');
     document.getElementById('submitButton').classList.remove('hidden');
     currentTab = 1;
     formChanged = false;
 
     // Mostrar Swal de cargando
-    mostrarSwalCargando('Cargando datos de la dependencia, por favor espere...');
+    mostrarSwalCargando('Cargando datos del área, por favor espere...');
 
-    // Cargar datos de la dependencia
+    // Cargar datos del área
     try {
-        const response = await fetch(`/admin/dependencias/${dependenciaId}`);
-        if (!response.ok) throw new Error('Error al cargar dependencia');
+        const response = await fetch(`/admin/equipos-areas/dependencias/${dependenciaId}`);
+        if (!response.ok) throw new Error('Error al cargar área');
 
         const data = await response.json();
         originalDependenciaData = JSON.parse(JSON.stringify(data.dependencia)); // Deep clone
 
-        // Actualizar título con nombre de la dependencia
-        document.getElementById('modalTitle').textContent = `Editar Dependencia: ${data.dependencia.nombre}`;
+        // Actualizar título con nombre del área
+        document.getElementById('modalTitle').textContent = `Editar Área: ${data.dependencia.nombre}`;
 
         // Llenar formulario con datos
         await llenarFormularioConDatosDependencia(data.dependencia);
@@ -638,14 +638,14 @@ async function editarDependencia(dependenciaId) {
 
     } catch (error) {
         console.error('Error:', error);
-        mostrarToast('Error al cargar datos de la dependencia', 'error');
+        mostrarToast('Error al cargar datos del área', 'error');
         cerrarModalDependencia();
     }
 }
 
 async function llenarFormularioConDatosDependencia(dependencia) {
     Swal.close();
-    // Información de la Dependencia
+    // Información del Área
     document.getElementById('nombre').value = dependencia.nombre || '';
     document.getElementById('descripcion').value = dependencia.descripcion || '';
     document.getElementById('activo').checked = dependencia.activo ? true : false;
@@ -702,7 +702,7 @@ async function manejarEnvioFormularioEditarDependencia(e) {
         formData.append('activo', activo ? '1' : '0');
 
         // Enviar petición
-        const response = await fetch(`/admin/editar-dependencia/${editingDependenciaId}`, {
+        const response = await fetch(`/admin/equipos-areas/editar-dependencia/${editingDependenciaId}`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -715,7 +715,7 @@ async function manejarEnvioFormularioEditarDependencia(e) {
         Swal.close();
         if (response.ok) {
             // Éxito
-            mostrarToast('Dependencia actualizada exitosamente', 'success');
+            mostrarToast('Área actualizada exitosamente', 'success');
             cerrarModalDependencia();
 
             // Recargar lista después de un momento
@@ -732,11 +732,11 @@ async function manejarEnvioFormularioEditarDependencia(e) {
             }
 
         } else {
-            mostrarToast(data.message || 'Error al actualizar dependencia', 'error');
+            mostrarToast(data.message || 'Error al actualizar área', 'error');
         }
 
     } catch (error) {
-        mostrarToast(error.message || 'Error al actualizar dependencia', 'error');
+        mostrarToast(error.message || 'Error al actualizar área', 'error');
 
     } finally {
         submitButton.disabled = false;
@@ -782,17 +782,17 @@ function validarFormularioFinalDependenciaEdit() {
 
 
 // ========================================
-// DESHABILITAR DEPENDENCIA
+// DESHABILITAR ÁREA
 // ========================================
 
 let currentToggleDependencia = null;
 let currentToggleDependenciaId = null;
 async function alternarEstadoDependencia(dependenciaId, checked) {
     currentToggleDependenciaId = dependenciaId;
-    // Cargar datos de la dependencia primero
+    // Cargar datos del área primero
     try {
-        const response = await fetch(`/admin/dependencias/${dependenciaId}`);
-        if (!response.ok) throw new Error('Error al cargar dependencia');
+        const response = await fetch(`/admin/equipos-areas/dependencias/${dependenciaId}`);
+        if (!response.ok) throw new Error('Error al cargar área');
 
         const data = await response.json();
         currentToggleDependencia = data.dependencia;
@@ -806,7 +806,7 @@ async function alternarEstadoDependencia(dependenciaId, checked) {
 
     } catch (error) {
         console.error('Error:', error);
-        mostrarToast('Error al cargar información de la dependencia', 'error');
+        mostrarToast('Error al cargar información del área', 'error');
 
         // Revertir el toggle si hubo error
         const toggle = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`);
@@ -819,7 +819,7 @@ async function alternarEstadoDependencia(dependenciaId, checked) {
 
 function abrirModalActivar() {
     Swal.fire({
-        title: '¿Estás seguro de querer activar la dependencia?',
+        title: '¿Estás seguro de querer activar el área?',
         icon: 'warning',
         showConfirmButton: true,
         showCancelButton: true,
@@ -847,11 +847,11 @@ function abrirModalActivar() {
 
 
 async function cambiarEstadoDependencia(dependenciaId, checked) {
-    mostrarSwalCargando('Activando la dependencia, por favor espere...');
+    mostrarSwalCargando('Activando el área, por favor espere...');
     try {
         const formData = new FormData();
         formData.append('activo', checked ? '1' : '0');
-        const response = await fetch(`/admin/alternar-estado-dependencia/${dependenciaId}`, {
+        const response = await fetch(`/admin/equipos-areas/alternar-estado-dependencia/${dependenciaId}`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -864,7 +864,7 @@ async function cambiarEstadoDependencia(dependenciaId, checked) {
         Swal.close();
         if (response.ok) {
             // Éxito
-            mostrarToast('Dependencia activada exitosamente', 'success');
+            mostrarToast('Área activada exitosamente', 'success');
             setTimeout(() => {
                 cargarDependencias();
             }, 500);
@@ -874,7 +874,7 @@ async function cambiarEstadoDependencia(dependenciaId, checked) {
                 checked = toggle.checked;
                 toggle.checked = !checked;
             }
-            mostrarToast(data.message || 'Error al activar la dependencia', 'error');
+            mostrarToast(data.message || 'Error al activar el área', 'error');
         }
     } catch (error) {
         const toggle = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`);
@@ -883,13 +883,13 @@ async function cambiarEstadoDependencia(dependenciaId, checked) {
             toggle.checked = !checked;
         }
         console.error('Error:', error);
-        mostrarToast('Error al activar la dependencia', 'error');
+        mostrarToast('Error al activar el área', 'error');
        
     }
 }
 
 // ========================================
-// ACTIVAR/DESACTIVAR DEPENDENCIA
+// ACTIVAR/DESACTIVAR ÁREA
 // ========================================
 
 async function abrirModalDesactivar(dependenciaId, checked) {
@@ -898,11 +898,11 @@ async function abrirModalDesactivar(dependenciaId, checked) {
     const dependencia = currentToggleDependencia;
 
     // Título
-    document.getElementById('toggleDependenciaModalTitle').textContent = '¿Desea desactivar la dependencia '+ dependencia.nombre + '?';
+    document.getElementById('toggleDependenciaModalTitle').textContent = '¿Desea desactivar el área '+ dependencia.nombre + '?';
     document.getElementById('toggleDependenciaModalHeader').className = 'px-6 py-4 border-b border-gray-200 bg-green-50';
 
     document.getElementById('toggleDependenciaModalInfo').innerHTML = `
-        Esta dependencia cuenta con ${dependencia.equipos.length} equipos y ${dependencia.funcionarios.length} funcionarios.
+        Esta área cuenta con ${dependencia.equipos.length} equipos y ${dependencia.funcionarios.length} funcionarios.
     `;
 
     if (dependencia.equipos.length > 0 || dependencia.funcionarios.length > 0) {
@@ -928,13 +928,13 @@ async function confirmarDesactivarDependencia() {
     const toggleDesactivarEquipos = document.getElementById('toggleDesactivarEquipos').checked;
     var checked = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`).checked
 
-    mostrarSwalCargando('Desactivando la dependencia, por favor espere...');
+    mostrarSwalCargando('Desactivando el área, por favor espere...');
     try {
         const formData = new FormData();
         formData.append('activo', checked ? '1' : '0');
         formData.append('notificar', toggleNotificar ? '1' : '0');
         formData.append('desactivar_equipos', toggleDesactivarEquipos ? '1' : '0');
-        const response = await fetch(`/admin/alternar-estado-dependencia/${currentToggleDependenciaId}`, {
+        const response = await fetch(`/admin/equipos-areas/alternar-estado-dependencia/${currentToggleDependenciaId}`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -947,7 +947,7 @@ async function confirmarDesactivarDependencia() {
         Swal.close();
         if (response.ok) {
             // Éxito
-            mostrarToast('Dependencia desactivada exitosamente', 'success');
+            mostrarToast('Área desactivada exitosamente', 'success');
             setTimeout(() => {
                 document.getElementById('toggleStatusDependenciaModal').classList.add('hidden');
                 cargarDependencias();
@@ -958,7 +958,7 @@ async function confirmarDesactivarDependencia() {
                 checked = toggle.checked;
                 toggle.checked = !checked;
             }
-            mostrarToast(data.message || 'Error al desactivar la dependencia', 'error');
+            mostrarToast(data.message || 'Error al desactivar el área', 'error');
         }
     } catch (error) {
         const toggle = document.getElementById(`check_dependencia_${currentToggleDependenciaId}`);
@@ -967,7 +967,7 @@ async function confirmarDesactivarDependencia() {
             toggle.checked = !checked;
         }
         console.error('Error:', error);
-        mostrarToast('Error al desactivar la dependencia', 'error');
+        mostrarToast('Error al desactivar el área', 'error');
        
     }
 }
@@ -978,12 +978,12 @@ async function verDependencia(dependenciaId) {
     const modal = document.getElementById('viewDependenciaModal');
     modal.classList.remove('hidden');
 
-    // Cargar datos de la dependencia
+    // Cargar datos del área
     try {
-        mostrarSwalCargando('Cargando datos de la dependencia, por favor espere...');
-        const response = await fetch(`/admin/dependencias/${dependenciaId}`);
+        mostrarSwalCargando('Cargando datos del área, por favor espere...');
+        const response = await fetch(`/admin/equipos-areas/dependencias/${dependenciaId}`);
         Swal.close();
-        if (!response.ok) throw new Error('Error al cargar dependencia');
+        if (!response.ok) throw new Error('Error al cargar área');
 
         const data = await response.json();
         dependenciaVistaActual = data.dependencia;
@@ -995,13 +995,13 @@ async function verDependencia(dependenciaId) {
         llenarModalDetalleDependencia(data.dependencia);
     } catch (error) {
         console.error('Error:', error);
-        mostrarToast('Error al cargar datos de la dependencia', 'error');
+        mostrarToast('Error al cargar datos del área', 'error');
         cerrarModalVerDependencia();
     }
 }
 
 // ========================================
-// LLENAR MODAL DETALLE DE DEPENDENCIA
+// LLENAR MODAL DETALLE DE ÁREA
 // ========================================
 
 function llenarModalDetalleDependencia() {
@@ -1129,32 +1129,32 @@ function cambiarTabVista(nombreTab) {
 }
 
 // ========================================
-// eliminar dependencia
+// eliminar área
 // ========================================
 
 var dependenciaEliminar = null;
 async function eliminarDependencia(dependenciaId) {
-    mostrarSwalCargando('Consultando datos para eliminar la dependencia, por favor espere...');
+    mostrarSwalCargando('Consultando datos para eliminar el área, por favor espere...');
     try {
-        const response = await fetch(`/admin/dependencias/${dependenciaId}`, {
+        const response = await fetch(`/admin/equipos-areas/dependencias/${dependenciaId}`, {
             method: 'GET',
         });
-        if (!response.ok) throw new Error('Error al eliminar dependencia');
+        if (!response.ok) throw new Error('Error al eliminar área');
         const data = await response.json();
         dependenciaEliminar = data.dependencia;
 
         if (dependenciaEliminar.equipos.length > 0) {
-            mostrarToast('La dependencia tiene equipos, por favor desactive los equipos antes de eliminar la dependencia', 'error');
+            mostrarToast('El área tiene equipos, por favor desactive los equipos antes de eliminar el área', 'error');
             return;
         } 
         
         if (dependenciaEliminar.funcionarios.length > 0) {
-            mostrarToast('La dependencia tiene funcionarios, por favor desactive los funcionarios antes de eliminar la dependencia', 'error');
+            mostrarToast('El área tiene funcionarios, por favor desactive los funcionarios antes de eliminar el área', 'error');
             return;
         } 
     
         Swal.fire({
-            title: '¿Estás seguro de querer eliminar la dependencia ('+ dependenciaEliminar.nombre + ')?',
+            title: '¿Estás seguro de querer eliminar el área ('+ dependenciaEliminar.nombre + ')?',
             html: '<p style="color:rgb(179, 2, 10); font-weight: bold;">Esta acción no se puede deshacer</p><p style="color:rgb(10, 10, 10); font-weight: bold;">Por favor ingrese el nombre de la dependencia para confirmar la eliminación</p>',
             icon: 'warning',
             showConfirmButton: true,
@@ -1165,7 +1165,7 @@ async function eliminarDependencia(dependenciaId) {
             cancelButtonColor: '#dc3545',
             allowOutsideClick: false,
             input: 'text',
-            inputPlaceholder: 'Ingrese el nombre de la dependencia',
+            inputPlaceholder: 'Ingrese el nombre del área',
             inputValidator: (value) => {
                 if (value !== dependenciaEliminar.nombre) {
                     return 'El nombre ingresado no es correcto';
@@ -1179,14 +1179,14 @@ async function eliminarDependencia(dependenciaId) {
         
     } catch (error) {
         console.error('Error:', error);
-        mostrarToast('Error al eliminar dependencia', 'error');
+        mostrarToast('Error al eliminar área', 'error');
     }
 }
 
 async function confirmarEliminacionDependencia() {
     try {
-        mostrarSwalCargando('Eliminando dependencia, por favor espere...');
-        const response = await fetch(`/admin/eliminar-dependencia/${dependenciaEliminar.id}`, {
+        mostrarSwalCargando('Eliminando área, por favor espere...');
+        const response = await fetch(`/admin/equipos-areas/eliminar-dependencia/${dependenciaEliminar.id}`, {
             method: 'DELETE',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -1194,7 +1194,7 @@ async function confirmarEliminacionDependencia() {
             }
         });
         Swal.close();
-        if (!response.ok) throw new Error('Error al eliminar dependencia');
+        if (!response.ok) throw new Error('Error al eliminar área');
         const data = await response.json();
         if (response.ok) {
             var mensaje = data.message;
@@ -1206,11 +1206,11 @@ async function confirmarEliminacionDependencia() {
                 }, 500);
             }
         } else {
-            mostrarToast(data.message || 'Error al eliminar dependencia', 'error');
+            mostrarToast(data.message || 'Error al eliminar área', 'error');
         }
     } catch (error) {
         Swal.close();
         console.error('Error:', error);
-        mostrarToast('Error al eliminar dependencia', 'error');
+        mostrarToast('Error al eliminar área', 'error');
     }
 }

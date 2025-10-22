@@ -245,7 +245,7 @@
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M9 9a2 2 0 114 0 2 2 0 01-4 0z"></path>
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a4 4 0 00-3.446 6.032l-2.261 2.26a1 1 0 101.414 1.415l2.261-2.261A4 4 0 1011 5z" clip-rule="evenodd"></path>
-</svg>
+                                </svg>
                                 <span class="ml-2">Seguimiento de Solicitudes</span>
                             </a>
                         </li>
@@ -253,23 +253,32 @@
                 </li>
 
                 <!-- Equipos y Áreas -->
-                <li x-data="{ open: {{ request()->routeIs('admin.equipos.*') || request()->routeIs('admin.areas.*') || request()->routeIs('admin.dependencias.*') ? 'true' : 'false' }} }">
+                <li x-data="{ open: {{ request()->routeIs('admin.equipos-areas.equipos.*') || request()->routeIs('admin.equipos-areas.dependencias.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open"
                         class="flex items-center justify-between w-full p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos.*') || request()->routeIs('admin.areas.*') || request()->routeIs('admin.dependencias.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}">
                         <div class="flex items-center">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>
                             </svg>
-                            <span class="ml-3">Equipos y Áreas</span>
+                            <span class="ml-3">Áreas y Equipos</span>
                         </div>
                         <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                         </svg>
                     </button>
                     <ul x-show="open" x-transition class="pl-10 mt-2 space-y-1">
+                        <li>
+                            <a href="{{ route('admin.equipos-areas.dependencias.index') }}"
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos-areas.dependencias.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="ml-2">Áreas</span>
+                            </a>
+                        </li>
                        <li>
-                            <a href="{{ route('admin.equipos.index') }}"
-                               class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
+                            <a href="{{ route('admin.equipos-areas.equipos.index') }}"
+                               class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos-areas.equipos.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>
                                 </svg>                  
@@ -277,16 +286,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('admin.dependencias.index') }}"
-                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.dependencias.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span class="ml-2">Áreas</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#"
+                            <a href="{{ route('admin.equipos-areas.dependencias.organigrama') }}"
                                 class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-gray-700">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm11 1H6v8l4-2 4 2V6z" clip-rule="evenodd"></path>

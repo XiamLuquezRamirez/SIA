@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Dependencia;
 use Illuminate\Http\Request;
+use App\Models\User;
 
 class DependenciasController extends Controller
 {
@@ -46,6 +47,19 @@ class DependenciasController extends Controller
         return view('admin.dependencias.index');
     }
 
+    public function getUsuarios()
+    {
+        $usuarios = User::with('roles')
+        ->where('tipo_usuario', 'interno')
+        ->where('activo', true)
+        ->orderBy('nombre', 'asc')
+        ->get();
+
+        return response()->json([
+            'usuarios' => $usuarios
+        ]);
+    }
+
     public function guardarDependencia(Request $request)
     {
         $validated = $request->validate([
@@ -70,7 +84,7 @@ class DependenciasController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Dependencia creada exitosamente',
+            'message' => 'Área creada exitosamente',
             'dependencia' => $dependencia
         ], 201);
     }
@@ -133,7 +147,7 @@ class DependenciasController extends Controller
 
 
         if (!empty($cambios)) {
-            \Log::info('Dependencia actualizada exitosamente, cambios realizados: ', [
+            \Log::info('Área actualizada exitosamente, cambios realizados: ', [
                 'dependencia_id' => $dependencia->id,
                 'usuario_que_actualiza' => auth()->id(),
                 'cambios' => $cambios,
@@ -141,7 +155,7 @@ class DependenciasController extends Controller
         }
 
         return response()->json([
-            'message' => 'Dependencia actualizada exitosamente',
+            'message' => 'Área actualizada exitosamente',
             'dependencia' => $dependencia->load(['coordinador']),
             'cambios_realizados' => $cambios,
         ]);
@@ -174,7 +188,7 @@ class DependenciasController extends Controller
 
         // Registrar cambios en log para auditoría
 
-        \Log::info('Dependencia actualizada exitosamente, cambios realizados: ', [
+        \Log::info('Área actualizada exitosamente, cambios realizados: ', [
             'dependencia_id' => $dependencia->id,
             'usuario_que_actualiza' => auth()->id(),
             'cambios' => [
@@ -184,7 +198,7 @@ class DependenciasController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Estado de la dependencia cambiado exitosamente',
+            'message' => 'Estado del área cambiado exitosamente',
         ]);
     }
 
@@ -195,18 +209,18 @@ class DependenciasController extends Controller
         if ($dependencia) {
             $dependencia->delete();
 
-            \Log::info('Dependencia eliminada exitosamente: ', [
+            \Log::info('Área eliminada exitosamente: ', [
                 'dependencia_id' => $dependencia->id,
                 'usuario_que_elimina' => auth()->id(),
             ]);
 
             return response()->json([
-                'message' => 'Dependencia eliminada exitosamente',
+                'message' => 'Área eliminada exitosamente',
                 'icon' => 'success',
             ]);
         } else {
             return response()->json([
-                'message' => 'Dependencia no encontrada',
+                'message' => 'Área no encontrada',
                 'icon' => 'error',
             ]);
         }
@@ -216,5 +230,10 @@ class DependenciasController extends Controller
     {
         $dependencias = Dependencia::select('id', 'nombre')->where('activo', true)->orderBy('nombre', 'asc')->get();
         return response()->json($dependencias);
+    }
+
+    public function organigrama()
+    {
+        return view('admin.dependencias.organigrama');
     }
 }
