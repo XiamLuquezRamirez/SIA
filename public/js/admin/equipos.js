@@ -1594,18 +1594,18 @@ async function verificarSiHayEmpleadosSeleccionadosDeOtrosEquipos() {
     });
 
     if (empleadosSeleccionadosDeOtrosEquipos.length > 0) {
-        var html = '<div class="danger-message"><div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4"><p class="text-red-500">Los siguientes empleados son de otros equipos, al continuar, se transferiran a este equipo, siempre y cuando no tengan tareas pendientes.</p><br><ul>';
+        var html = '<div class="danger-message"><div class="bg-yellow-100 border border-yellow-200 rounded-lg p-4 mb-4"><p class="text-yellow-700">Los siguientes empleados son <strong>miembros</strong> de otros equipos, al continuar, se transferiran a este equipo, siempre y cuando no tengan tareas pendientes.</p><br><ul>';
         empleadosSeleccionadosDeOtrosEquipos.forEach(empleado => {
-            html += `<li><p class="text-red-500">${empleado.nombre} ${empleado.apellidos} - ${empleado.equipo.nombre}</p></li>`;
+            html += `<li style="margin-bottom: 10px;"><p class="text-yellow-700">${empleado.nombre} ${empleado.apellidos} - ${empleado.equipo.nombre}</p></li>`;
         });
         html += '</ul></div></div>';
 
         if (empleadosSeleccionadosLideresDeOtrosEquipos.length > 0) {
-            html += '<div class="warning-message"><div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4"><p class="text-yellow-500">Los siguientes empleados son líderes de otros equipos, al continuar, se transferiran a este equipo y quedaran como <strong>miembros</strong>, siempre y cuando no tengan tareas pendientes.</p><br><ul>';
+            html += '<div class="warning-message"><div class="bg-red-100 border border-red-200 rounded-lg p-4 mb-4"><p class="text-red-700">Los siguientes empleados son <strong>líderes</strong> de otros equipos, al continuar, se transferiran a este equipo y quedaran como <strong>miembros</strong>, siempre y cuando no tengan tareas pendientes.</p><br><ul>';
             if (empleadosSeleccionadosLideresDeOtrosEquipos.length > 0) {
 
                 empleadosSeleccionadosLideresDeOtrosEquipos.forEach(empleado => {
-                    html += `<li><p class="text-yellow-500">${empleado.nombre} ${empleado.apellidos} - ${empleado.equipo.nombre}</p></li>`;
+                    html += `<li style="margin-bottom: 10px;"><p class="text-red-700">${empleado.nombre} ${empleado.apellidos} - ${empleado.equipo.nombre}</p></li>`;
                 });
                 html += '</ul></div></div>';
             }
@@ -1615,7 +1615,6 @@ async function verificarSiHayEmpleadosSeleccionadosDeOtrosEquipos() {
         var result = await Swal.fire({
             title: 'Información importante',
             html: html,
-            icon: 'warning',
             showConfirmButton: true,
             confirmButtonText: 'Continuar',
             confirmButtonColor: '#28a745',
