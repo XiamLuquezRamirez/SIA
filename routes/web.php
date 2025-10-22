@@ -151,7 +151,6 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('eliminar-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'eliminarDependencia'])->name('eliminar-dependencia');
         Route::get('dependencias-select', [App\Http\Controllers\Admin\DependenciasController::class, 'getDependenciasSelect'])->name('dependencias.select');
        
-<<<<<<< HEAD
         // ========================================
         // ⚙️ CONFIGURACIÓN
         // ========================================
@@ -288,7 +287,6 @@ Route::middleware(['auth'])->group(function () {
         // Route::prefix('reportes')->name('reportes.')->group(function () {
         //     Route::get('/', [App\Http\Controllers\Admin\ReportesController::class, 'index'])->name('index');
         // });
-=======
         // Rutas para gestion de equipos
         Route::resource('equipos', App\Http\Controllers\Admin\EquiposController::class);
         Route::get('usuarios-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getUsuariosAreaSelect'])->name('usuarios-area.select');
@@ -304,6 +302,5 @@ Route::middleware(['auth'])->group(function () {
         Route::post('empleados-por-area-otros-equipos', [App\Http\Controllers\Admin\EquiposController::class, 'getEmpleadosPorAreaOtrosEquipos'])->name('equipos.get-empleados-por-area-otros-equipos');
         Route::post('agregar-miembros-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'agregarMiembrosAlEquipo'])->name('equipos.agregar-miembros-equipo');
         Route::get('eliminar-miembro-equipo/{id_empleado}', [App\Http\Controllers\Admin\EquiposController::class, 'eliminarMiembroDelEquipo'])->name('equipos.eliminar-miembro-equipo');
->>>>>>> 931fcfdd9c78d24ce72dc1d97b2c21b69e438f94
     });
 });
