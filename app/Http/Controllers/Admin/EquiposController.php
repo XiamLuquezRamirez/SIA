@@ -289,10 +289,10 @@ class EquiposController extends Controller
             $usuario->equipo_id = $equipo->id;
             $usuario->save();
 
-            //verificar si tenia rol de lider de equipo, si lo tiene, quitarlo
+            //verificar si tenia rol de lider de otro equipo, si lo tiene, quitarlo
             $this->quitarPermisosLiderEquipo($request->lider_id);
             
-            //asignar el rol al lider con soloel rol mandado
+            //asignar el rol al lider con  rol mandado para el nuevo equipo
             $usuario->assignRole($request->rol_id);
         }
 
@@ -478,6 +478,95 @@ class EquiposController extends Controller
 
         $empleados = $query->get();
 
+        //tipo de usuario de los miembros
+        foreach ($empleados as $empleado) {
+            if($empleado->equipo) {
+                if($empleado->id == $empleado->equipo->lider_id) {
+                    $empleado->tipo_miembro = 'lider';
+                }else{
+                    $empleado->tipo_miembro = 'miembro';
+                }
+            }else{
+                $empleado->tipo_miembro = null;
+            }
+        }
+
         return response()->json(['empleados' => $empleados]);
+    }
+
+    public function agregarMiembrosAlEquipo(Request $request)
+    {
+        //obtener los datos del request
+        $id_equipo = $request->input('id_equipo');
+        $id_empleados = $request->input('id_empleados');
+
+        //inicializar el array de cambios
+        $cambios = [];
+        //recorrer los empleados seleccionados
+        foreach ($id_empleados as $id_empleado) {
+            //obtener el empleado
+            $empleado = User::findOrFail($id_empleado);
+
+            //obtener el id del equipo anterior
+            $id_equipo_anterior = $empleado->equipo_id;
+
+            $empleado->equipo_id = $id_equipo;
+            $empleado->save();
+
+            $cambios['cambio_equipo'][] = [
+                'id_empleado' => $empleado->id,
+                'empleado' => $empleado->nombre . ' ' . $empleado->apellidos,
+                'anterior' => $id_equipo_anterior,
+                'nuevo' => $id_equipo,
+            ];
+
+            //verificar si el empleado es lider de otro equipo, si lo es, quitarle el lider
+            if ($id_equipo_anterior != null) {
+                //si tenia un equipo anterior, verificar si es lider de ese equipo
+                $equipo_anterior = Equipo::find($id_equipo_anterior);
+                if ($equipo_anterior->lider_id == $empleado->id) {
+                    $equipo_anterior->lider_id = null;
+                    $equipo_anterior->save();
+                    
+                    //quitar el rol de lider de equipo
+                    $this->quitarPermisosLiderEquipo($empleado->id);
+
+                    //registrar cambios en log para auditoría
+                    $cambios['quitar_lider_equipo'][] = [
+                        'id_empleado' => $empleado->id,
+                        'empleado' => $empleado->nombre . ' ' . $empleado->apellidos,
+                        'equipo_anterior' => $equipo_anterior->id,
+                        'equipo_nuevo' => $id_equipo,
+                    ];
+                }
+            }
+        }
+
+        \Log::info('Miembros agregados al equipo exitosamente: ', [
+            'equipo_id' => $id_equipo,
+            'usuario_que_agrega' => auth()->id(),
+            'fecha_agregacion' => now(),
+            'cambios' => $cambios
+        ]);
+
+        return response()->json(['message' => 'Miembros agregados al equipo exitosamente', 'type' => 'success']);
+    }
+
+    public function eliminarMiembroDelEquipo($id_empleado)
+    {
+        //obtener el empleado
+        $empleado = User::findOrFail($id_empleado);
+        $id_equipo_anterior = $empleado->equipo_id;
+        $empleado->equipo_id = null;
+        $empleado->save();
+
+        //registrar cambios en log para auditoría
+        \Log::info('Miembro eliminado del equipo exitosamente: ', [
+            'empleado_id' => $empleado->id,
+            'empleado_nombre' => $empleado->nombre . ' ' . $empleado->apellidos,
+            'equipo_anterior' => $id_equipo_anterior,
+        ]);
+
+        return response()->json(['message' => 'Miembro eliminado del equipo exitosamente', 'type' => 'success']);
     }
 }

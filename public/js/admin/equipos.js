@@ -304,8 +304,8 @@ function renderizarEquipos(equipos) {
                 </div>
             </td>
             <td class="px-6 py-4 text-sm text-gray-500 text-center">
-                <div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                    <span class="text-xs">${equipo.miembros.length}</span>
+                <div onclick="verMiembrosEquipo(${equipo.id})" style="cursor: pointer;" class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <span class="text-xs">${equipo.miembros.length} miembros</span>
                 </div>
             </td>
             <td class="px-6 py-4">
@@ -1114,7 +1114,7 @@ async function cambiarEstadoEquipo(equipoId, checked) {
 
 var equipoVistaActual = null;
 var tabActualVista = 'informacion';
-async function verEquipo(equipoId) {  
+async function verEquipo(equipoId, tab = 'informacion') {  
     const modal = document.getElementById('viewEquipoModal');
     modal.classList.remove('hidden');
 
@@ -1129,7 +1129,7 @@ async function verEquipo(equipoId) {
         equipoVistaActual = data.equipo;
 
         // Mostrar primer tab
-        cambiarTabVista('informacion');
+        cambiarTabVista(tab);
 
         // Llenar información del modal
         llenarModalDetalleEquipo();
@@ -1213,7 +1213,7 @@ function llenarModalDetalleEquipo() {
             </td>
             <td class="px-6 py-4">
                 ${miembro.id != equipoVistaActual.lider_id ? `<div class="flex items-center">
-                    <button type="button" onclick="eliminarMiembro(miembro.id)" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    <button type="button" onclick="eliminarMiembroEquipo(${equipoVistaActual.id}, ${miembro.id}, '${miembro.nombre} ${miembro.apellidos}')" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                         <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     </button>
                 </div >` : ''}
@@ -1294,7 +1294,15 @@ async function eliminarEquipo(equipoId) {
         equipoEliminar = data.equipo;
         
         if (equipoEliminar.miembros.length > 0) {
-            mostrarToast('El equipo tiene miembros activos, por favor reasigne o elimine los miembros antes de eliminar el equipo', 'error');
+            Swal.fire({
+                title: 'El equipo tiene miembros activos',
+                text: 'Por favor antes de eliminar el equipo, reasignar estos miembros a otro equipo o elimínalos de este equipo',
+                icon: 'warning',
+                showConfirmButton: true,
+                confirmButtonText: 'Ok, Entendido',
+                confirmButtonColor: '#28a745',
+                allowOutsideClick: false,
+            });
             return;
         } 
     
@@ -1372,12 +1380,10 @@ document.getElementById('buscar_empleado').addEventListener('keyup', () => {
     }, 500);
 });
 
-async function abrirModalAgregarMiembro() {
-    const modal = document.getElementById('viewEquipoAgregarMiembroModal');
-    modal.classList.remove('hidden');
-
+async function abrirModalAgregarMiembro() {    
+    document.getElementById('viewEquipoModal').classList.add('hidden');
+    document.getElementById('viewEquipoAgregarMiembroModal').classList.remove('hidden');
     document.getElementById('areaNombreAgregarMiembro').innerHTML = equipoVistaActual.area.nombre;
-
     await consultarEmpleadosPorArea();
 }
 
@@ -1387,6 +1393,7 @@ function cerrarModalAgregarMiembro() {
     empleadosSeleccionados = [];
     document.getElementById('cantidadEmpleadosSeleccionados').innerHTML = '0';
     document.getElementById('buscar_empleado').value = '';
+    document.getElementById('checkbox_seleccionar_todos_empleados').checked = false;
     parametrosBusquedaEmpleadosPorArea = {
         id_equipo: null,
         id_area: null,
@@ -1402,6 +1409,7 @@ var parametrosBusquedaEmpleadosPorArea = {
    texto_busqueda: '',
 };
 async function consultarEmpleadosPorArea() {
+    debugger;
     try {
         mostrarSwalCargando('Consultando empleados por área, por favor espere...');
         parametrosBusquedaEmpleadosPorArea.id_equipo = equipoVistaActual.id;
@@ -1432,11 +1440,11 @@ async function consultarEmpleadosPorArea() {
     }
 }
 
-function renderizarEmpleadosAgregarMiembro(empleados) {
+function renderizarEmpleadosAgregarMiembro() {
     const empleadosContainer = document.getElementById('empleadosAgregarMiembro');
-    empleadosContainer.innerHTML = empleados.map(empleado => `
+    empleadosContainer.innerHTML = empleadosPorArea.map(empleado => `
         <tr>
-            <td style="width: 15%; text-align: center;" class="px-6 py-4">
+            <td style="width: 8%; text-align: center;" class="px-6 py-4">
                 <input ${empleadosSeleccionados.includes(empleado.id) ? 'checked' : ''} id="checkbox_empleado_${empleado.id}" onchange="seleccionarEmpleado(this)" type="checkbox" style="transform: scale(1.5);" name="empleado_id" value="${empleado.id}">
             </td>
             <td style="width: 10%; text-align: center;" class="px-6 py-4">
@@ -1447,25 +1455,35 @@ function renderizarEmpleadosAgregarMiembro(empleados) {
                     </div>`
                 }
             </td>
-            <td class="px-6 py-4">${empleado.nombre} ${empleado.apellidos}</td>
-            <td class="px-6 py-4">
-                ${empleado.equipo ? `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+            <td class="px-6 py-4 text-center">${empleado.nombre} ${empleado.apellidos}</td>
+            <td class="px-6 py-4 text-center">
+                ${empleado.equipo ? `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 text-center">
                     <span class="font-bold mr-1">${empleado.equipo.nombre}</span>
-                </span>` : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                </span>` : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 text-center">
                     <span class="text-xs">Sin equipo</span>
                 </div>`
                 }
             </td>
-            <td class="px-6 py-4">
-                ${empleado.cargo ? `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+            <td class="px-6 py-4 text-center">
+                ${empleado.tipo_miembro == 'lider' ? `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 text-center">
+                    <span class="font-bold mr-1">Líder</span>
+                </span>` : empleado.tipo_miembro == 'miembro' ? `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 text-center">
+                    <span class="font-bold mr-1">Miembro</span>
+                </span>` : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 text-center">
+                    <span class="text-xs">No tiene</span>
+                </div>`
+                }
+            </td>
+            <td class="px-6 py-4 text-center">
+                ${empleado.cargo ? `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 text-center">
                     <span class="font-bold mr-1">${empleado.cargo}</span>
-                </span>` : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                </span>` : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 text-center">
                     <span class="text-xs">Sin cargo</span>
                 </div>`
                 }
             </td>
-            <td class="px-6 py-4">
-                ${empleado.email ? `<a href="mailto:${empleado.email}" class="text-blue-600 hover:underline">${empleado.email}</a>` : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+            <td class="px-6 py-4 text-center">
+                ${empleado.email ? `<a href="mailto:${empleado.email}" class="text-blue-600 hover:underline">${empleado.email}</a>` : `<div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 text-center">
                     <span class="text-xs">Sin email</span>
                 </div>`
                 }
@@ -1502,4 +1520,163 @@ function seleccionarTodosEmpleados(checkbox) {
     }
 
     document.getElementById('cantidadEmpleadosSeleccionados').innerHTML = empleadosSeleccionados.length;
+}
+
+async function agregarMiembrosAlEquipo() {
+    if (empleadosSeleccionados.length == 0) {
+        mostrarToast('No hay empleados seleccionados para agregar al equipo', 'error');
+        return;
+    }
+
+    var result = await verificarSiHayEmpleadosSeleccionadosDeOtrosEquipos();
+    if (result) {
+        mostrarSwalCargando('Agregando miembros al equipo, por favor espere...');
+        const response = await fetch(`/admin/agregar-miembros-equipo`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify({
+                id_equipo: equipoVistaActual.id,
+                id_empleados: empleadosSeleccionados
+            })
+        });
+        Swal.close();
+        
+        if (!response.ok) {
+            mostrarToast("Error al agregar miembros al equipo", 'error');
+            return;
+        }
+
+        const data = await response.json();
+        if (data.type == 'success') {
+            Swal.fire({
+                title: data.message,
+                icon: data.type,
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                timer: 1500,
+            });
+
+            setTimeout(() => {
+                cerrarModalAgregarMiembro();
+                empleadosSeleccionados = [];
+                document.getElementById('cantidadEmpleadosSeleccionados').innerHTML = '0';
+                document.getElementById('buscar_empleado').value = '';
+                document.getElementById('checkbox_seleccionar_todos_empleados').checked = false;
+                
+                consultarNuevasEquipos();
+                verEquipo(equipoVistaActual.id, 'miembros');
+            }, 1500);
+        } else {
+            mostrarToast(data.message, data.type);
+        }
+    }
+}
+
+async function verificarSiHayEmpleadosSeleccionadosDeOtrosEquipos() {
+    var empleadosSeleccionadosDeOtrosEquipos = [];
+    var empleadosSeleccionadosLideresDeOtrosEquipos = [];
+    empleadosSeleccionados.forEach(id_empleado => {
+        var empleadoSeleccionado = empleadosPorArea.find(empleado => empleado.id == id_empleado);
+        if (empleadoSeleccionado.equipo != null) {
+            if (empleadoSeleccionado.equipo.id != equipoVistaActual.id) {
+                empleadosSeleccionadosDeOtrosEquipos.push(empleadoSeleccionado);
+            }
+
+            if (empleadoSeleccionado.tipo_miembro == 'lider') {
+                empleadosSeleccionadosLideresDeOtrosEquipos.push(empleadoSeleccionado);
+            }
+        }
+    });
+
+    if (empleadosSeleccionadosDeOtrosEquipos.length > 0) {
+        var html = '<div class="danger-message"><div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4"><p class="text-red-500">Los siguientes empleados son de otros equipos, al continuar, se transferiran a este equipo, siempre y cuando no tengan tareas pendientes.</p><br><ul>';
+        empleadosSeleccionadosDeOtrosEquipos.forEach(empleado => {
+            html += `<li><p class="text-red-500">${empleado.nombre} ${empleado.apellidos} - ${empleado.equipo.nombre}</p></li>`;
+        });
+        html += '</ul></div></div>';
+
+        if (empleadosSeleccionadosLideresDeOtrosEquipos.length > 0) {
+            html += '<div class="warning-message"><div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4"><p class="text-yellow-500">Los siguientes empleados son líderes de otros equipos, al continuar, se transferiran a este equipo y quedaran como <strong>miembros</strong>, siempre y cuando no tengan tareas pendientes.</p><br><ul>';
+            if (empleadosSeleccionadosLideresDeOtrosEquipos.length > 0) {
+
+                empleadosSeleccionadosLideresDeOtrosEquipos.forEach(empleado => {
+                    html += `<li><p class="text-yellow-500">${empleado.nombre} ${empleado.apellidos} - ${empleado.equipo.nombre}</p></li>`;
+                });
+                html += '</ul></div></div>';
+            }
+        }
+
+
+        var result = await Swal.fire({
+            title: 'Información importante',
+            html: html,
+            icon: 'warning',
+            showConfirmButton: true,
+            confirmButtonText: 'Continuar',
+            confirmButtonColor: '#28a745',
+            allowOutsideClick: false,
+            showCancelButton: true,
+            cancelButtonText: 'Cancelar',
+            cancelButtonColor: '#dc3545',
+        });
+
+        return result.isConfirmed ? true : false;
+    }
+
+    return true;
+}
+
+function verMiembrosEquipo(equipoId) {
+    verEquipo(equipoId, 'miembros');
+}
+
+function eliminarMiembroEquipo(equipoId, miembroId, miembroNombre) {
+    Swal.fire({
+        title: '¿Estás seguro de querer eliminar a (' + miembroNombre + ') del equipo?',
+        html: '<div class="danger-message"><div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4"><p class="text-red-500">Esta acción no se puede deshacer, se validara si el miembro tiene tareas pendientes antes de eliminarlo</p></div></div>',
+        icon: 'warning',
+        showConfirmButton: true,
+        confirmButtonText: 'Si, Eliminar',
+        confirmButtonColor: '#28a745',
+        allowOutsideClick: false,
+        showCancelButton: true,
+        cancelButtonText: 'No, Cancelar',
+        cancelButtonColor: '#dc3545',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            eliminarMiembro(miembroId, miembroNombre);
+        }
+    });
+}
+
+async function eliminarMiembro(miembroId, miembroNombre) {
+    mostrarSwalCargando('Eliminando miembro del equipo, por favor espere...');
+    const response = await fetch(`/admin/eliminar-miembro-equipo/${miembroId}`);
+    Swal.close();
+    if (!response.ok) {
+        mostrarToast('Error al eliminar miembro del equipo', 'error');
+        return;
+    }
+    const data = await response.json();
+    if (data.type == 'success') {
+        Swal.fire({
+            title: data.message,
+            icon: data.type,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            timer: 1500,
+        });
+        setTimeout(() => {
+            consultarNuevasEquipos();
+            verEquipo(equipoVistaActual.id, 'miembros');
+        }, 1500);
+    } else {
+        mostrarToast(data.message, data.type);
+    }
 }

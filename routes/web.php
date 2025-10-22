@@ -182,5 +182,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('informacion-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'getInformacionEquipo'])->name('equipos.get-informacion-equipo');
         Route::delete('eliminar-equipo/{equipo}', [App\Http\Controllers\Admin\EquiposController::class, 'eliminarEquipo'])->name('eliminar-equipo');
         Route::post('empleados-por-area-otros-equipos', [App\Http\Controllers\Admin\EquiposController::class, 'getEmpleadosPorAreaOtrosEquipos'])->name('equipos.get-empleados-por-area-otros-equipos');
+        Route::post('agregar-miembros-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'agregarMiembrosAlEquipo'])->name('equipos.agregar-miembros-equipo');
+        Route::get('eliminar-miembro-equipo/{id_empleado}', [App\Http\Controllers\Admin\EquiposController::class, 'eliminarMiembroDelEquipo'])->name('equipos.eliminar-miembro-equipo');
     });
 });

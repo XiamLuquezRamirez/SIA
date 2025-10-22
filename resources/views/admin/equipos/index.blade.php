@@ -294,7 +294,7 @@
                         <button id="BtnviewTab_informacion" onclick="cambiarTabVista('informacion')" class="view-tab-button active border-b-2 border-blue-600 py-4 px-1 text-sm font-medium text-blue-600">
                             Información del Equipo
                         </button>
-                        <button id="BtnviewTab_equipos" onclick="cambiarTabVista('equipos')" class="view-tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        <button id="BtnviewTab_miembros" onclick="cambiarTabVista('miembros')" class="view-tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
                             Miembros del Equipo
                         </button>
                         <button id="BtnviewTab_estadisticas" onclick="cambiarTabVista('estadisticas')" class="view-tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
@@ -304,7 +304,7 @@
                 </div>
 
                 <!-- Tab Content -->
-                <div class="px-6 py-6 max-h-[65vh] overflow-y-auto">
+                <div class="px-6 py-4">
                     <!-- Tab: Información Personal -->
                     <div id="viewTab_informacion" class="hidden view-tab-content">
                         <div class="mb-4">
@@ -351,7 +351,7 @@
                         </div>
                     </div>
 
-                    <div id="viewTab_equipos" class="hidden view-tab-content">
+                    <div id="viewTab_miembros" class="hidden view-tab-content">
                         <div class="mb-4" style="position: relative;">
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 Lista de miembros del Equipo <span class="text-blue-500" id="viewEquipoMiembrosNombre"></span><br>
@@ -407,6 +407,7 @@
             </div>
         </div>
     </div>
+    </div>
 
 
     <!-- Modal agregar miembros a un equipo -->
@@ -426,9 +427,9 @@
                 </div>
             </div>
             <!-- Modal Body -->
-            <div class="bg-white" style="border-radius: 30px; height: 65vh; overflow-y: auto;">
+            <div class="bg-white" style="border-radius: 30px;">
                 <!-- Tab Content -->
-                <div class="px-6 py-6 max-h-[65vh] overflow-y-auto">
+                <div class="px-6 py-4 overflow-y-auto">
                     <!-- Tab: Información Personal -->
                     <div>
                         <div class="mb-4">
@@ -451,13 +452,12 @@
                                     <thead class="bg-gray-50">
                                         <tr>
                                             <th style="padding: 0 !important;" class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">
-                                                Seleccionar Todos
-                                                <br><br>
-                                                <input onchange="seleccionarTodosEmpleados(this)" type="checkbox" style="transform: scale(1.5);">
+                                                <input onchange="seleccionarTodosEmpleados(this)" id="checkbox_seleccionar_todos_empleados" type="checkbox" style="transform: scale(1.5);">
                                             </th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Foto de perfil</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Foto</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">equipo actual</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de miembro</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                                         </tr>
@@ -474,7 +474,7 @@
 
             <!-- Modal Footer -->
             <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-end gap-2 hov" style="border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;">
-                <button type="button" onclick="agregarMiembro()" class="px-4 py-2 text-white bg-green-600 border border-gray-300 rounded-lg hover:bg-green-700 transition">
+                <button type="button" onclick="agregarMiembrosAlEquipo()" class="px-4 py-2 text-white bg-green-600 border border-gray-300 rounded-lg hover:bg-green-700 transition">
                     Añadir funcionarios seleccionados
                 </button>
                 <button type="button" onclick="cerrarModalAgregarMiembro()" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
