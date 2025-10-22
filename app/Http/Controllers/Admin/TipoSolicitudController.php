@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\TipoSolicitud;
 use App\Models\Area;
+use App\Models\Categoria;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class TipoSolicitudController extends Controller
 {
@@ -27,9 +29,9 @@ class TipoSolicitudController extends Controller
             if ($request->ajax()) {
                 $query = TipoSolicitud::query();
                 
-                // Intentar cargar relación area si existe
+                // Intentar cargar relaciones si existen
                 try {
-                    $query->with(['area']);
+                    $query->with(['area', 'categoria']);
                 } catch (\Exception $e) {
                     // Si falla la relación, continuar sin ella
                 }
@@ -52,9 +54,15 @@ class TipoSolicitudController extends Controller
                     }
                 }
 
-                // Filtro por área
-                if ($request->filled('area_id')) {
-                    $query->where('area_id', $request->area_id);
+                // Filtro por área (usar area_responsable_id)
+                if ($request->filled('area_id') || $request->filled('area_responsable_id')) {
+                    $areaId = $request->filled('area_responsable_id') ? $request->area_responsable_id : $request->area_id;
+                    $query->where('area_responsable_id', $areaId);
+                }
+
+                // Filtro por categoría
+                if ($request->filled('categoria_id')) {
+                    $query->where('categoria_id', $request->categoria_id);
                 }
 
                 // Ordenar - usar solo campos que existen con seguridad
@@ -92,7 +100,7 @@ class TipoSolicitudController extends Controller
      */
     public function show(string $id)
     {
-        $tipo = TipoSolicitud::with(['area', 'creador', 'editor'])->findOrFail($id);
+        $tipo = TipoSolicitud::with(['areaResponsable', 'categoria', 'creador', 'editor'])->findOrFail($id);
 
         // Estadísticas simuladas (implementar cuando exista modelo Solicitud)
         $estadisticas = [
@@ -116,20 +124,35 @@ class TipoSolicitudController extends Controller
         $validated = $request->validate([
             'codigo' => 'required|string|max:50|unique:tipos_solicitud,codigo',
             'nombre' => 'required|string|max:255',
+            'slug' => 'required|string|max:255|unique:tipos_solicitud,slug|regex:/^[a-z0-9-]+$/',
             'descripcion' => 'nullable|string',
-            'categoria' => 'required|string|max:100',
-            'area_id' => 'required|exists:areas,id',
-            'tiempo_respuesta_dias' => 'required|integer|min:1',
+            'instrucciones' => 'nullable|string',
+            'categoria_id' => 'required|exists:categorias,id',
+            'area_responsable_id' => 'required|exists:areas,id',
+            'dias_respuesta' => 'required|integer|min:1',
+            'dias_alerta' => 'nullable|integer|min:1',
+            'dias_alerta_amarilla' => 'nullable|integer|min:1',
+            'dias_alerta_roja' => 'nullable|integer|min:1',
+            'tipo_dias' => 'nullable|string|in:habiles,calendario',
+            'iniciar_conteo_desde' => 'nullable|string|in:radicacion,asignacion,pago,estado_especifico',
             'sla_dias' => 'nullable|integer|min:1',
             'requiere_aprobacion' => 'boolean',
             'requiere_pago' => 'boolean',
-            'costo' => 'nullable|numeric|min:0',
+            'valor_tramite' => 'nullable|numeric|min:0',
+            'tipo_valor' => 'nullable|string|in:fijo,variable',
+            'requiere_documentos' => 'boolean',
+            'documentos_requeridos' => 'nullable|array',
+            'prioridad_defecto' => 'nullable|string|in:baja,normal,alta,urgente',
+            'momento_generacion' => 'nullable|string|in:al_aprobar,al_completar,manual',
             'icono' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:20',
+            'visible_portal' => 'boolean',
+            'solo_usuarios_registrados' => 'boolean',
+            'activo' => 'boolean',
         ]);
 
         $validated['created_by'] = auth()->id();
-        $validated['activo'] = $validated['activo'] ?? true;
+        $validated['activo'] = $validated['activo'] ?? false;
 
         $tipo = TipoSolicitud::create($validated);
 
@@ -155,13 +178,26 @@ class TipoSolicitudController extends Controller
         $validated = $request->validate([
             'codigo' => 'required|string|max:50|unique:tipos_solicitud,codigo,' . $id,
             'nombre' => 'required|string|max:255',
+            'slug' => 'required|string|max:255|unique:tipos_solicitud,slug,' . $id . '|regex:/^[a-z0-9-]+$/',
             'descripcion' => 'nullable|string',
-            'categoria' => 'required|string|max:100',
-            'area_id' => 'required|exists:areas,id',
-            'tiempo_respuesta_dias' => 'required|integer|min:1',
+            'instrucciones' => 'nullable|string',
+            'categoria_id' => 'required|exists:categorias,id',
+            'area_responsable_id' => 'required|exists:areas,id',
+            'dias_respuesta' => 'required|integer|min:1',
+            'dias_alerta' => 'nullable|integer|min:1',
+            'dias_alerta_amarilla' => 'nullable|integer|min:1',
+            'dias_alerta_roja' => 'nullable|integer|min:1',
+            'tipo_dias' => 'nullable|string|in:habiles,calendario',
+            'iniciar_conteo_desde' => 'nullable|string|in:radicacion,asignacion,pago,estado_especifico',
             'sla_dias' => 'nullable|integer|min:1',
             'requiere_aprobacion' => 'boolean',
             'requiere_pago' => 'boolean',
+            'valor_tramite' => 'nullable|numeric|min:0',
+            'tipo_valor' => 'nullable|string|in:fijo,variable',
+            'requiere_documentos' => 'boolean',
+            'documentos_requeridos' => 'nullable|array',
+            'prioridad_defecto' => 'nullable|string|in:baja,normal,alta,urgente',
+            'momento_generacion' => 'nullable|string|in:al_aprobar,al_completar,manual',
             'costo' => 'nullable|numeric|min:0',
             'icono' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:20',
@@ -234,23 +270,124 @@ class TipoSolicitudController extends Controller
     }
 
     /**
-     * Obtener categorías disponibles
+     * Obtener categorías disponibles desde la tabla
      */
     public function getCategorias()
     {
-        // Por ahora devolver categorías predefinidas
-        // TODO: Crear modelo CategoriaSolicitud cuando exista la tabla
-        $categorias = [
-            'Certificados',
-            'Permisos',
-            'Licencias',
-            'Consultas',
-            'Trámites',
-            'Otros'
-        ];
+        try {
+            $categorias = Categoria::activas()
+                ->ordenado()
+                ->get()
+                ->map(function($categoria) {
+                    return [
+                        'id' => $categoria->id,
+                        'nombre' => $categoria->nombre,
+                        'slug' => $categoria->slug,
+                        'descripcion' => $categoria->descripcion,
+                        'color' => $categoria->color,
+                        'icono' => $categoria->icono,
+                        'nombre_con_icono' => $categoria->nombre_con_icono,
+                        'tipos_count' => $categoria->tipos_solicitud_activos_count,
+                    ];
+                });
 
-        return response()->json([
-            'categorias' => $categorias
+            return response()->json([
+                'success' => true,
+                'categorias' => $categorias
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error al cargar categorías', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cargar categorías',
+                'categorias' => []
+            ], 500);
+        }
+    }
+
+    /**
+     * Guardar plantillas asociadas al tipo de solicitud
+     */
+    public function guardarPlantillas(Request $request, string $id)
+    {
+        \Log::info('Iniciando guardarPlantillas', [
+            'tipo_id' => $id,
+            'request_data' => $request->all(),
         ]);
+
+        $tipo = TipoSolicitud::findOrFail($id);
+
+        try {
+            $validated = $request->validate([
+                'plantillas' => 'required|array',
+                'plantillas.*.plantilla_documento_id' => 'required|exists:plantillas_documentos,id',
+                'plantillas.*.generar_automatico' => 'boolean',
+                'plantillas.*.momento_generacion' => 'required|in:al_aprobar,al_completar,manual',
+                'plantillas.*.es_principal' => 'boolean',
+                'plantillas.*.orden' => 'required|integer|min:1',
+            ]);
+
+            \Log::info('Validación exitosa', ['validated' => $validated]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Error de validación en guardarPlantillas', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all(),
+            ]);
+            throw $e;
+        }
+
+        try {
+            \DB::beginTransaction();
+
+            // Eliminar plantillas anteriores del tipo de solicitud
+            \DB::table('tipo_solicitud_plantilla')
+                ->where('tipo_solicitud_id', $id)
+                ->delete();
+
+            // Insertar las nuevas plantillas
+            foreach ($validated['plantillas'] as $plantilla) {
+                \DB::table('tipo_solicitud_plantilla')->insert([
+                    'tipo_solicitud_id' => $id,
+                    'plantilla_documento_id' => $plantilla['plantilla_documento_id'],
+                    'generar_automatico' => $plantilla['generar_automatico'] ?? true,
+                    'momento_generacion' => $plantilla['momento_generacion'],
+                    'es_principal' => $plantilla['es_principal'] ?? false,
+                    'orden' => $plantilla['orden'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            \DB::commit();
+
+            \Log::info('Plantillas asociadas a tipo de solicitud', [
+                'tipo_id' => $id,
+                'plantillas_count' => count($validated['plantillas']),
+                'user_id' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Plantillas guardadas exitosamente',
+                'plantillas_count' => count($validated['plantillas']),
+            ]);
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+
+            \Log::error('Error al guardar plantillas del tipo de solicitud', [
+                'tipo_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al guardar plantillas: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

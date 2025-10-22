@@ -26,6 +26,7 @@ class RoleController extends Controller
                     return [
                         'id' => $role->id,
                         'name' => $role->name,
+                        'slug' => $role->slug,
                         'description' => $role->description,
                         'area_id' => $role->area_id,
                         'activo' => $role->activo ?? true,
@@ -74,6 +75,7 @@ class RoleController extends Controller
                 'role' => [
                     'id' => $role->id,
                     'name' => $role->name,
+                    'slug' => $role->slug,
                     'description' => $role->description,
                     'area_id' => $role->area_id,
                     'activo' => $role->activo ?? true,
@@ -112,15 +114,21 @@ class RoleController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255|unique:roles,name',
+                'slug' => 'required|string|max:255|unique:roles,slug|regex:/^[a-z0-9-]+$/',
                 'description' => 'nullable|string|max:500',
                 'area_id' => 'nullable|exists:areas,id',
                 'activo' => 'boolean',
+            ], [
+                'slug.required' => 'El slug es obligatorio',
+                'slug.unique' => 'Este slug ya está en uso',
+                'slug.regex' => 'El slug solo puede contener letras minúsculas, números y guiones',
             ]);
 
             DB::beginTransaction();
 
             $role = Role::create([
                 'name' => $validated['name'],
+                'slug' => $validated['slug'],
                 'description' => $validated['description'] ?? null,
                 'area_id' => $validated['area_id'] ?? null,
                 'activo' => $validated['activo'] ?? true,
@@ -188,9 +196,20 @@ class RoleController extends Controller
                     'max:255',
                     Rule::unique('roles', 'name')->ignore($role->id),
                 ],
+                'slug' => [
+                    'sometimes',
+                    'required',
+                    'string',
+                    'max:255',
+                    'regex:/^[a-z0-9-]+$/',
+                    Rule::unique('roles', 'slug')->ignore($role->id),
+                ],
                 'description' => 'nullable|string|max:500',
                 'area_id' => 'nullable|exists:areas,id',
                 'activo' => 'boolean',
+            ], [
+                'slug.unique' => 'Este slug ya está en uso',
+                'slug.regex' => 'El slug solo puede contener letras minúsculas, números y guiones',
             ]);
 
             DB::beginTransaction();
@@ -204,6 +223,7 @@ class RoleController extends Controller
             } else {
                 $role->update([
                     'name' => $validated['name'] ?? $role->name,
+                    'slug' => $validated['slug'] ?? $role->slug,
                     'description' => $validated['description'] ?? $role->description,
                     'area_id' => $validated['area_id'] ?? $role->area_id,
                     'activo' => $validated['activo'] ?? $role->activo,
@@ -398,6 +418,56 @@ class RoleController extends Controller
     }
 
     /**
+     * Validar disponibilidad de un slug
+     */
+    public function validateSlug(Request $request)
+    {
+        try {
+            $slug = $request->input('slug');
+            $ignoreId = $request->input('ignore_id'); // ID del rol que se está editando (para ignorarlo)
+            
+            if (empty($slug)) {
+                return response()->json([
+                    'available' => false,
+                    'message' => 'El slug no puede estar vacío'
+                ]);
+            }
+            
+            // Validar formato del slug
+            if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
+                return response()->json([
+                    'available' => false,
+                    'message' => 'El slug solo puede contener letras minúsculas, números y guiones'
+                ]);
+            }
+            
+            // Verificar si el slug ya existe
+            $query = Role::where('slug', $slug);
+            
+            if ($ignoreId) {
+                $query->where('id', '!=', $ignoreId);
+            }
+            
+            $exists = $query->exists();
+            
+            return response()->json([
+                'available' => !$exists,
+                'message' => $exists ? 'Este slug ya está en uso' : 'Slug disponible'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error al validar slug', [
+                'error' => $e->getMessage(),
+                'slug' => $request->input('slug')
+            ]);
+            
+            return response()->json([
+                'available' => false,
+                'message' => 'Error al validar el slug'
+            ], 500);
+        }
+    }
+
+    /**
      * Clonar un rol existente
      */
     public function clonar(Request $request, Role $role)
@@ -405,10 +475,15 @@ class RoleController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255|unique:roles,name',
+                'slug' => 'required|string|max:255|unique:roles,slug|regex:/^[a-z0-9-]+$/',
                 'description' => 'nullable|string|max:500',
                 'area_id' => 'nullable|exists:areas,id',
                 'clonar_permisos' => 'boolean',
                 'activo' => 'boolean',
+            ], [
+                'slug.required' => 'El slug es obligatorio',
+                'slug.unique' => 'Este slug ya está en uso',
+                'slug.regex' => 'El slug solo puede contener letras minúsculas, números y guiones',
             ]);
 
             DB::beginTransaction();
@@ -416,6 +491,7 @@ class RoleController extends Controller
             // Crear el nuevo rol
             $nuevoRol = Role::create([
                 'name' => $validated['name'],
+                'slug' => $validated['slug'],
                 'description' => $validated['description'] ?? null,
                 'area_id' => $validated['area_id'] ?? null,
                 'activo' => $validated['activo'] ?? true,

@@ -183,27 +183,29 @@
         :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
         <div class="h-full px-3 pb-4 overflow-y-auto">
             <ul class="space-y-2 font-medium">
-                <!-- Dashboard -->
+                <!-- Inicio -->
                 <li>
                     <a href="{{ route('dashboard') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
                         </svg>
-                        <span class="ml-3">Dashboard</span>
+                        <span class="ml-3">Inicio</span>
                     </a>
                 </li>
 
                 @role('Super Administrador|Director OAPM')
-                <!-- Administración -->
-                <li x-data="{ open: {{ request()->routeIs('admin.*') && !request()->routeIs('admin.dashboard') ? 'true' : 'false' }} }">
+
+                <!-- Solicitudes -->
+                <li x-data="{ open: {{ request()->routeIs('admin.solicitudes.*') || request()->routeIs('admin.configurarSolicitudes.*') ? 'true' : 'false' }} }">
                     <button @click="open = !open"
-                        class="flex items-center justify-between w-full p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.*') && !request()->routeIs('admin.dashboard') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}">
+                        class="flex items-center justify-between w-full p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.solicitudes.*') || request()->routeIs('admin.configurarSolicitudes.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}">
                         <div class="flex items-center">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
+                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
                             </svg>
-                            <span class="ml-3">Administración</span>
+                            <span class="ml-3">Solicitudes</span>
                         </div>
                         <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
@@ -211,67 +213,225 @@
                     </button>
                     <ul x-show="open" x-transition class="pl-10 mt-2 space-y-1">
                         <li>
-                            <a href="{{ route('admin.configurarSolicitudes.index') }}"
-                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configurarSolicitudes.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
-                                <svg fill="#000000" class="w-4 h-4" version="1.1" id="XMLID_116_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                                    viewBox="0 0 24 24" xml:space="preserve">
-                                    <g id="document-config">
-                                        <path d="M23,24h-9v-2h7V8h-6V2H5v9H3V0h14.4L23,5.6V24z M17,6h3.6L17,2.4V6z M8,24H6v-2.1c-0.4-0.1-0.7-0.2-1-0.4l-1.5,1.5
-		l-1.4-1.4L3.6,20c-0.2-0.3-0.3-0.7-0.4-1H1v-2h2.1c0.1-0.4,0.2-0.7,0.4-1l-1.5-1.5l1.4-1.4L5,14.6c0.3-0.2,0.7-0.3,1-0.4V12h2v2.1
-		c0.4,0.1,0.7,0.2,1,0.4l1.5-1.5l1.4,1.4L10.4,16c0.2,0.3,0.3,0.7,0.4,1H13v2h-2.1c-0.1,0.4-0.2,0.7-0.4,1l1.5,1.5l-1.4,1.4L9,21.4
-		c-0.3,0.2-0.7,0.3-1,0.4V24z M7,16c-1.1,0-2,0.9-2,2s0.9,2,2,2s2-0.9,2-2S8.1,16,7,16z" />
-                                    </g>
+                            <a href="{{ route('admin.solicitudes.create') }}"
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.solicitudes.create') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span class="ml-2">Configurar Solicitudes</span>
+                                <span class="ml-2">Agregar Solicitud</span>
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('admin.dependencias.index') }}"
-                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.dependencias.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
-<svg fill="#000000" class="w-4 h-4" viewBox="0 0 36 36" version="1.1"  preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <title>organization-line</title>
-    <polygon points="9.8 18.8 26.2 18.8 26.2 21.88 27.8 21.88 27.8 17.2 18.8 17.2 18.8 14 17.2 14 17.2 17.2 8.2 17.2 8.2 21.88 9.8 21.88 9.8 18.8" class="clr-i-outline clr-i-outline-path-1"></polygon><path d="M14,23H4a2,2,0,0,0-2,2v6a2,2,0,0,0,2,2H14a2,2,0,0,0,2-2V25A2,2,0,0,0,14,23ZM4,31V25H14v6Z" class="clr-i-outline clr-i-outline-path-2"></path><path d="M32,23H22a2,2,0,0,0-2,2v6a2,2,0,0,0,2,2H32a2,2,0,0,0,2-2V25A2,2,0,0,0,32,23ZM22,31V25H32v6Z" class="clr-i-outline clr-i-outline-path-3"></path><path d="M13,13H23a2,2,0,0,0,2-2V5a2,2,0,0,0-2-2H13a2,2,0,0,0-2,2v6A2,2,0,0,0,13,13Zm0-8H23v6H13Z" class="clr-i-outline clr-i-outline-path-4"></path>
-    <rect x="0" y="0" width="36" height="36" fill-opacity="0"/>
-</svg>
-                                <span class="ml-2">Dependencias</span>
+                            <a href="{{ route('admin.solicitudes.index') }}"
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.solicitudes.index') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"></path>
+                                </svg>
+                                <span class="ml-2">Bandeja de Solicitudes</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="{{ route('admin.configurarSolicitudes.index') }}"
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configurarSolicitudes.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="ml-2">Tipos de Solicitud</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#"
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-gray-700">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 9a2 2 0 114 0 2 2 0 01-4 0z"></path>
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a4 4 0 00-3.446 6.032l-2.261 2.26a1 1 0 101.414 1.415l2.261-2.261A4 4 0 1011 5z" clip-rule="evenodd"></path>
+</svg>
+                                <span class="ml-2">Seguimiento de Solicitudes</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Equipos y Áreas -->
+                <li x-data="{ open: {{ request()->routeIs('admin.equipos.*') || request()->routeIs('admin.areas.*') || request()->routeIs('admin.dependencias.*') ? 'true' : 'false' }} }">
+                    <button @click="open = !open"
+                        class="flex items-center justify-between w-full p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos.*') || request()->routeIs('admin.areas.*') || request()->routeIs('admin.dependencias.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>
+                            </svg>
+                            <span class="ml-3">Equipos y Áreas</span>
+                        </div>
+                        <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                    <ul x-show="open" x-transition class="pl-10 mt-2 space-y-1">
                        <li>
                             <a href="{{ route('admin.equipos.index') }}"
                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
-                               <svg class="svg-icon" style="width: 16px; height: 16px;vertical-align: middle;fill: currentColor;overflow: hidden;" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M774.4 742.4c0-44.8-12.8-89.6-38.4-121.6C691.2 569.6 640 544 576 544c-38.4 0-76.8 0-115.2 0-44.8 0-83.2 12.8-121.6 38.4-44.8 32-70.4 76.8-76.8 128-6.4 57.6 0 121.6-6.4 185.6 6.4 0 19.2 6.4 25.6 6.4 76.8 19.2 147.2 38.4 224 38.4 44.8 0 96 0 140.8-6.4 38.4-6.4 76.8-19.2 115.2-32 6.4 0 6.4-6.4 6.4-12.8C774.4 838.4 774.4 787.2 774.4 742.4z"  />
-                                    <path d="M358.4 531.2c12.8-6.4 19.2-6.4 32-12.8-38.4-38.4-57.6-76.8-57.6-128-44.8 0-89.6 0-134.4 0C172.8 390.4 147.2 396.8 128 403.2 57.6 428.8 0 499.2 0 576c0 51.2 0 102.4 0 160 0 6.4 0 6.4 6.4 12.8 51.2 12.8 102.4 25.6 153.6 32 19.2 0 44.8 6.4 64 6.4 0-12.8 0-25.6 0-38.4 0-19.2 0-38.4 6.4-57.6C249.6 614.4 294.4 563.2 358.4 531.2z"  />
-                                    <path d="M1024 588.8c0-25.6-6.4-57.6-19.2-83.2-38.4-76.8-96-115.2-179.2-115.2-121.6 0 0 0-121.6 0 0 51.2-19.2 96-57.6 128 6.4 0 12.8 6.4 12.8 6.4 32 12.8 64 32 89.6 57.6 38.4 44.8 57.6 96 57.6 153.6 0 12.8 0 32 0 44.8 32-6.4 57.6-6.4 89.6-12.8 38.4-6.4 83.2-19.2 121.6-38.4 6.4 0 6.4-6.4 6.4-12.8C1024 684.8 1024 633.6 1024 588.8z"  />
-                                    <path d="M518.4 537.6c83.2 0 153.6-70.4 147.2-153.6 0-83.2-70.4-147.2-147.2-147.2-83.2 0-153.6 64-153.6 147.2C371.2 467.2 435.2 537.6 518.4 537.6z"  />
-                                    <path d="M704 371.2C723.2 377.6 742.4 384 768 384c83.2 0 153.6-70.4 147.2-153.6 0-83.2-70.4-147.2-147.2-147.2-83.2 0-153.6 64-153.6 147.2C665.6 256 697.6 307.2 704 371.2z"  />
-                                    <path d="M256 384c25.6 0 57.6-6.4 76.8-19.2 6.4-51.2 32-96 70.4-121.6 0 0 0-6.4 0-6.4 0-83.2-70.4-147.2-147.2-147.2-83.2 0-153.6 64-153.6 147.2C102.4 313.6 172.8 384 256 384z"  />
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>
                                 </svg>                  
                                 <span class="ml-2">Equipos</span>
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('admin.usuarios.index') }}"
-                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.usuarios.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
+                            <a href="{{ route('admin.dependencias.index') }}"
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.dependencias.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
+                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span class="ml-2">Usuarios y Roles</span>
+                                <span class="ml-2">Áreas</span>
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('admin.activity-logs.index') }}"
-                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.activity-logs.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
+                            <a href="#"
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-gray-700">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"></path>
+                                    <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm11 1H6v8l4-2 4 2V6z" clip-rule="evenodd"></path>
                                 </svg>
-                                <span class="ml-2">Historial de Actividades</span>
+                                <span class="ml-2">Organigrama</span>
                             </a>
                         </li>
-                        <li>
-
                     </ul>
                 </li>
+
+                <!-- Configuración -->
+                <li x-data="{ open: {{ request()->routeIs('admin.configuracion.*') ? 'true' : 'false' }} }">
+                    <button @click="open = !open"
+                        class="flex items-center justify-between w-full p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="ml-3">Configuración</span>
+                        </div>
+                        <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                    <ul x-show="open" x-transition class="pl-10 mt-2 space-y-1">
+                        <!-- Flujos y Estados -->
+                        <li>
+                            <a href="#"
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-gray-700">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="ml-2">Estados</span>
+                            </a>
+                        </li>
+                        
+                        <!-- Documentos (con submenú) -->
+                        <li x-data="{ openDocs: {{ request()->routeIs('admin.configuracion.documentos.*') || request()->routeIs('admin.configuracion.plantillas') || request()->routeIs('admin.configuracion.consecutivos') ? 'true' : 'false' }} }">
+                            <button @click="openDocs = !openDocs"
+                                class="flex items-center justify-between w-full p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.documentos.*') || request()->routeIs('admin.configuracion.plantillas') || request()->routeIs('admin.configuracion.consecutivos') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700' }}">
+                                <div class="flex items-center">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="ml-2">Documentos</span>
+                                </div>
+                                <svg class="w-3 h-3 transition-transform" :class="openDocs ? 'rotate-180' : ''" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                </svg>
+                            </button>
+                            <ul x-show="openDocs" x-transition class="pl-8 mt-1 space-y-1">
+                                <li>
+                                    <a href="{{ route('admin.configuracion.documentos.plantillas') }}"
+                                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.documentos.plantillas') || request()->routeIs('admin.configuracion.plantillas') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600' }} text-sm">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"></path>
+                                            <path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"></path>
+                                        </svg>
+                                        <span class="ml-2">Plantillas de Documento</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('admin.configuracion.documentos.consecutivos') }}"
+                                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.documentos.consecutivos') || request()->routeIs('admin.configuracion.consecutivos') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600' }} text-sm">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        <span class="ml-2">Consecutivos y Radicados</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        
+                        <!-- Parámetros Generales (con submenú) -->
+                        <li x-data="{ openParams: {{ request()->routeIs('admin.configuracion.parametros.*') || request()->routeIs('admin.configuracion.categorias') || request()->routeIs('admin.configuracion.festivos') ? 'true' : 'false' }} }">
+                            <button @click="openParams = !openParams"
+                                class="flex items-center justify-between w-full p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.parametros.*') || request()->routeIs('admin.configuracion.categorias') || request()->routeIs('admin.configuracion.festivos') ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700' }}">
+                                <div class="flex items-center">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="ml-2">Parámetros Generales</span>
+                                </div>
+                                <svg class="w-3 h-3 transition-transform" :class="openParams ? 'rotate-180' : ''" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                </svg>
+                            </button>
+                            <ul x-show="openParams" x-transition class="pl-8 mt-1 space-y-1">
+                                <li>
+                                    <a href="{{ route('admin.configuracion.parametros.categorias') }}"
+                                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.parametros.categorias') || request()->routeIs('admin.configuracion.categorias') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600' }} text-sm">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1H8a3 3 0 00-3 3v1.5a1.5 1.5 0 01-3 0V6z" clip-rule="evenodd"></path>
+                                            <path d="M6 12a2 2 0 012-2h8a2 2 0 012 2v2a2 2 0 01-2 2H2h2a2 2 0 002-2v-2z"></path>
+                                        </svg>
+                                        <span class="ml-2">Categorías</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('admin.configuracion.parametros.festivos') }}"
+                                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.parametros.festivos') || request()->routeIs('admin.configuracion.festivos') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600' }} text-sm">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        <span class="ml-2">Festivos</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Usuarios y Roles -->
+                <li>
+                    <a href="{{ route('admin.usuarios.index') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.usuarios.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"></path>
+                        </svg>
+                        <span class="ml-3">Usuarios y Roles</span>
+                    </a>
+                </li>
+
+                <!-- Auditoría y Monitoreo -->
+                <li>
+                    <a href="{{ route('admin.activity-logs.index') }}"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.activity-logs.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="ml-3">Auditoría y Monitoreo</span>
+                    </a>
+                </li>
+
+                <!-- Reportes -->
+                <li>
+                    <a href="#"
+                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-gray-900">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
+                        </svg>
+                        <span class="ml-3">Reportes</span>
+                    </a>
+                </li>
+
                 @endrole
             </ul>
         </div>

@@ -58,79 +58,50 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('role:Super Administrador|Director OAPM')
         ->name('admin.dashboard');
 
-    // Rutas de administración de usuarios
+    // ========================================
+    // RUTAS DE ADMINISTRACIÓN
+    // ========================================
     Route::prefix('admin')->name('admin.')->middleware('role:Super Administrador|Director OAPM')->group(function () {
-        // CRUD de usuarios
-        Route::resource('usuarios', App\Http\Controllers\Admin\UserController::class);
-
-        Route::get('equipos-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getEquiposAreaSelect'])->name('equipos-area.select');
-
-        // Rutas adicionales para usuarios
-        Route::patch('usuarios/{usuario}/toggle-estado', [App\Http\Controllers\Admin\UserController::class, 'toggleEstado'])
-            ->name('usuarios.toggle-estado');
         
-        // Rutas para modal de detalle de usuario
-        Route::get('usuarios/{usuario}/detalle', [App\Http\Controllers\Admin\UserController::class, 'getDetalle'])
-            ->name('usuarios.detalle');
-        Route::get('usuarios/{usuario}/actividad', [App\Http\Controllers\Admin\UserController::class, 'getActividad'])
-            ->name('usuarios.actividad');
-
-        // Ruta para restablecer contraseña
-        Route::post('api/usuarios/{usuario}/restablecer-password', [App\Http\Controllers\Admin\UserController::class, 'restablecerPassword'])
-            ->name('api.usuarios.restablecer-password');
-
-        // Ruta para actualizar roles
-        Route::post('api/usuarios/{usuario}/actualizar-roles', [App\Http\Controllers\Admin\UserController::class, 'actualizarRoles'])
-            ->name('api.usuarios.actualizar-roles');
-
-        // Rutas de acciones masivas
-        Route::post('usuarios/exportar', [App\Http\Controllers\Admin\UserController::class, 'exportarMasivo'])
-            ->name('usuarios.exportar');
-        Route::post('api/usuarios/cambiar-estado-masivo', [App\Http\Controllers\Admin\UserController::class, 'cambiarEstadoMasivo'])
-            ->name('api.usuarios.cambiar-estado-masivo');
-        Route::post('api/usuarios/asignar-rol-masivo', [App\Http\Controllers\Admin\UserController::class, 'asignarRolMasivo'])
-            ->name('api.usuarios.asignar-rol-masivo');
-
-        // API auxiliares
-        Route::get('api/areas', [App\Http\Controllers\Admin\UserController::class, 'getAreas'])
-            ->name('api.areas');
-        Route::get('api/equipos', [App\Http\Controllers\Admin\UserController::class, 'getEquipos'])
-            ->name('api.equipos');
-        Route::get('api/usuarios/{usuario}', [App\Http\Controllers\Admin\UserController::class, 'show'])
-            ->name('api.usuarios.show');
-        Route::get('api/usuarios', [App\Http\Controllers\Admin\UserController::class, 'getUsuariosForSelect'])
-            ->name('api.usuarios');
-
-        // Rutas API para gestión de roles
-        Route::get('api/roles', [App\Http\Controllers\Admin\RoleController::class, 'index'])
-            ->name('api.roles.index');
-        Route::get('api/roles/{role}', [App\Http\Controllers\Admin\RoleController::class, 'show'])
-            ->name('api.roles.show');
-        Route::post('api/roles', [App\Http\Controllers\Admin\RoleController::class, 'store'])
-            ->name('api.roles.store');
-        Route::put('api/roles/{role}', [App\Http\Controllers\Admin\RoleController::class, 'update'])
-            ->name('api.roles.update');
-        Route::delete('api/roles/{role}', [App\Http\Controllers\Admin\RoleController::class, 'destroy'])
-            ->name('api.roles.destroy');
-
-        // Rutas para gestión de permisos de roles
-        Route::get('api/permisos', [App\Http\Controllers\Admin\RoleController::class, 'getPermisos'])
-            ->name('api.permisos');
-        Route::post('api/roles/{role}/permisos', [App\Http\Controllers\Admin\RoleController::class, 'updatePermisos'])
-            ->name('api.roles.permisos');
-
-        // Ruta para clonar rol
-        Route::post('api/roles/{role}/clonar', [App\Http\Controllers\Admin\RoleController::class, 'clonar'])
-            ->name('api.roles.clonar');
-
-        // Rutas para tipos de solicitud
+        // ========================================
+        // 📁 SOLICITUDES
+        // ========================================
+        Route::prefix('solicitudes')->name('solicitudes.')->group(function () {
+            // Bandeja de Solicitudes
+            Route::get('/', [App\Http\Controllers\Admin\SolicitudController::class, 'index'])->name('index');
+            
+            // Agregar Solicitud
+            Route::get('create', [App\Http\Controllers\Admin\SolicitudController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Admin\SolicitudController::class, 'store'])->name('store');
+            
+            // Ver/Editar/Eliminar Solicitud
+            Route::get('{solicitud}', [App\Http\Controllers\Admin\SolicitudController::class, 'show'])->name('show');
+            Route::get('{solicitud}/edit', [App\Http\Controllers\Admin\SolicitudController::class, 'edit'])->name('edit');
+            Route::put('{solicitud}', [App\Http\Controllers\Admin\SolicitudController::class, 'update'])->name('update');
+            Route::delete('{solicitud}', [App\Http\Controllers\Admin\SolicitudController::class, 'destroy'])->name('destroy');
+            
+            // Tipos de Solicitud
+            Route::get('tipos', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'index'])
+                ->name('tipos.index');
+            
+            // APIs de Tipos de Solicitud
+            Route::prefix('api/tipos')->name('api.tipos.')->group(function () {
+                Route::get('categorias', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'getCategorias'])->name('categorias');
+                Route::get('/', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'index'])->name('index');
+                Route::post('/', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'store'])->name('store');
+                Route::get('{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'show'])->name('show');
+                Route::put('{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'update'])->name('update');
+                Route::patch('{tipo}/toggle', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'toggleEstado'])->name('toggle');
+                Route::delete('{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'destroy'])->name('destroy');
+                Route::post('{tipo}/plantillas', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'guardarPlantillas'])->name('plantillas');
+            });
+        });
+        
+        // Alias para compatibilidad con código existente
         Route::get('tipos-solicitud', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'index'])
             ->name('configurarSolicitudes.index');
-        
-        // IMPORTANTE: Rutas específicas ANTES de rutas con parámetros {tipo}
         Route::get('api/tipos-solicitud/categorias', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'getCategorias'])
             ->name('api.tipos-solicitud.categorias');
-        
         Route::get('api/tipos-solicitud', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'index'])
             ->name('api.tipos-solicitud.index');
         Route::post('api/tipos-solicitud', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'store'])
@@ -143,25 +114,36 @@ Route::middleware(['auth'])->group(function () {
             ->name('api.tipos-solicitud.update');
         Route::delete('api/tipos-solicitud/{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'destroy'])
             ->name('api.tipos-solicitud.destroy');
+        Route::post('api/tipos-solicitud/{tipo}/plantillas', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'guardarPlantillas'])
+            ->name('api.tipos-solicitud.plantillas');
 
-        // Ruta para obtener lista de áreas (usado en wizards)
-        Route::get('areas', function() {
-            return response()->json(App\Models\Area::orderBy('nombre')->get(['id', 'nombre']));
-        })->name('api.areas');
-
-        // Rutas para historia de usuario dependencias
+        // ========================================
+        // 👥 EQUIPOS Y ÁREAS
+        // ========================================
+        Route::prefix('equipos-areas')->name('equipos-areas.')->group(function () {
+            // Equipos
+            Route::resource('equipos', App\Http\Controllers\Admin\EquiposController::class);
+            Route::get('equipos-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getEquiposAreaSelect'])->name('equipos-select');
+            Route::get('usuarios-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getUsuariosAreaSelect'])->name('usuarios-area-select');
+            Route::post('guardar-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'guardarEquipo'])->name('guardar-equipo');
+            
+            // Áreas (Dependencias)
+            Route::resource('dependencias', App\Http\Controllers\Admin\DependenciasController::class);
+            Route::post('guardar-dependencia', [App\Http\Controllers\Admin\DependenciasController::class, 'guardarDependencia'])->name('guardar-dependencia');
+            Route::get('dependencias/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'show'])->name('dependencias-show');
+            Route::post('editar-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'update'])->name('editar-dependencia');
+            Route::post('alternar-estado-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'alternarEstadoDependencia'])->name('alternar-estado-dependencia');
+            Route::delete('eliminar-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'eliminarDependencia'])->name('eliminar-dependencia');
+            Route::get('dependencias-select', [App\Http\Controllers\Admin\DependenciasController::class, 'getDependenciasSelect'])->name('dependencias-select');
+            
+            // Organigrama
+            // Route::get('organigrama', [App\Http\Controllers\Admin\OrganigramaController::class, 'index'])->name('organigrama');
+        });
+        
+        // Alias para compatibilidad
+        Route::get('equipos-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getEquiposAreaSelect'])->name('equipos-area.select');
+        Route::resource('equipos', App\Http\Controllers\Admin\EquiposController::class);
         Route::resource('dependencias', App\Http\Controllers\Admin\DependenciasController::class);
-
-        // Rutas para historial de actividades del sistema
-        Route::get('activity-logs', [App\Http\Controllers\Admin\ActivityLogController::class, 'index'])
-            ->name('activity-logs.index');
-        Route::get('activity-logs/activities', [App\Http\Controllers\Admin\ActivityLogController::class, 'getActivities'])
-            ->name('activity-logs.activities');
-        Route::get('activity-logs/stats', [App\Http\Controllers\Admin\ActivityLogController::class, 'getStats'])
-            ->name('activity-logs.stats');
-
-
-        // Rutas para gestion de dependencias
         Route::post('guardar-dependencia', [App\Http\Controllers\Admin\DependenciasController::class, 'guardarDependencia'])->name('guardar-dependencia');
         Route::get('dependencias/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'show'])->name('dependencias.show');
         Route::post('editar-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'update'])->name('editar-dependencia');
@@ -169,9 +151,141 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('eliminar-dependencia/{dependencia}', [App\Http\Controllers\Admin\DependenciasController::class, 'eliminarDependencia'])->name('eliminar-dependencia');
         Route::get('dependencias-select', [App\Http\Controllers\Admin\DependenciasController::class, 'getDependenciasSelect'])->name('dependencias.select');
        
-        // Rutas para gestion de equipos
-        Route::resource('equipos', App\Http\Controllers\Admin\EquiposController::class);
-        Route::get('usuarios-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getUsuariosAreaSelect'])->name('usuarios-area.select');
-        Route::post('guardar-equipo', [App\Http\Controllers\Admin\EquiposController::class, 'guardarEquipo'])->name('guardar-equipo');
+        // ========================================
+        // ⚙️ CONFIGURACIÓN
+        // ========================================
+        Route::prefix('configuracion')->name('configuracion.')->group(function () {
+            // Flujos y Estados
+            Route::get('flujos-estados', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'index'])
+                ->name('flujos-estados');
+            
+            // Documentos (con sub-rutas)
+            Route::prefix('documentos')->name('documentos.')->group(function () {
+                Route::get('plantillas', function () {
+                    return view('admin.configuracion.plantillas');
+                })->name('plantillas');
+                
+                Route::get('consecutivos', function () {
+                    return view('admin.configuracion.consecutivos');
+                })->name('consecutivos');
+            });
+            
+            // Parámetros Generales (con sub-rutas)
+            Route::prefix('parametros')->name('parametros.')->group(function () {
+                Route::get('categorias', function () {
+                    return view('admin.configuracion.categorias');
+                })->name('categorias');
+                
+                Route::get('festivos', function () {
+                    return view('admin.configuracion.festivos');
+                })->name('festivos');
+            });
+            
+            // Alias para compatibilidad con código existente
+            Route::get('categorias', function () {
+                return view('admin.configuracion.categorias');
+            })->name('categorias');
+            Route::get('estados', function () {
+                return view('admin.configuracion.estados');
+            })->name('estados');
+            Route::get('plantillas', function () {
+                return view('admin.configuracion.plantillas');
+            })->name('plantillas');
+            Route::get('consecutivos', function () {
+                return view('admin.configuracion.consecutivos');
+            })->name('consecutivos');
+            Route::get('festivos', function () {
+                return view('admin.configuracion.festivos');
+            })->name('festivos');
+            Route::get('flujos-aprobacion', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'index'])
+                ->name('flujos-aprobacion');
+        });
+        
+        // API de Flujos de Aprobación
+        Route::prefix('api/configuracion')->name('api.configuracion.')->group(function () {
+            Route::get('estados', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'getEstados'])->name('estados');
+            Route::get('flujos-transiciones', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'getTransiciones'])->name('flujos.transiciones.index');
+            Route::post('flujos-transiciones', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'store'])->name('flujos.transiciones.store');
+            Route::get('flujos-transiciones/{id}', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'show'])->name('flujos.transiciones.show');
+            Route::put('flujos-transiciones/{id}', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'update'])->name('flujos.transiciones.update');
+            Route::delete('flujos-transiciones/{id}', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'destroy'])->name('flujos.transiciones.destroy');
+            Route::get('diagrama-flujo', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'getDiagramaFlujo'])->name('flujos.diagrama');
+            Route::post('flujos-transiciones/validar', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'validarTransicion'])->name('flujos.validar');
+
+            // Plantillas de Documentos
+            Route::get('plantillas', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'index'])->name('plantillas.index');
+            Route::get('plantillas/{id}', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'show'])->name('plantillas.show');
+        });
+        
+        // ========================================
+        // 🔒 USUARIOS Y ROLES
+        // ========================================
+        Route::prefix('usuarios')->name('usuarios.')->group(function () {
+            // CRUD de usuarios
+            Route::get('/', [App\Http\Controllers\Admin\UserController::class, 'index'])->name('index');
+            Route::get('create', [App\Http\Controllers\Admin\UserController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Admin\UserController::class, 'store'])->name('store');
+            Route::get('{usuario}', [App\Http\Controllers\Admin\UserController::class, 'show'])->name('show');
+            Route::get('{usuario}/edit', [App\Http\Controllers\Admin\UserController::class, 'edit'])->name('edit');
+            Route::put('{usuario}', [App\Http\Controllers\Admin\UserController::class, 'update'])->name('update');
+            Route::delete('{usuario}', [App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('destroy');
+            
+            // Acciones adicionales
+            Route::patch('{usuario}/toggle-estado', [App\Http\Controllers\Admin\UserController::class, 'toggleEstado'])->name('toggle-estado');
+            Route::get('{usuario}/detalle', [App\Http\Controllers\Admin\UserController::class, 'getDetalle'])->name('detalle');
+            Route::get('{usuario}/actividad', [App\Http\Controllers\Admin\UserController::class, 'getActividad'])->name('actividad');
+            
+            // Exportación
+            Route::post('exportar', [App\Http\Controllers\Admin\UserController::class, 'exportarMasivo'])->name('exportar');
+        });
+        
+        // APIs de Usuarios y Roles
+        Route::prefix('api')->name('api.')->group(function () {
+            // Usuarios
+            Route::get('usuarios', [App\Http\Controllers\Admin\UserController::class, 'getUsuariosForSelect'])->name('usuarios');
+            Route::get('usuarios/{usuario}', [App\Http\Controllers\Admin\UserController::class, 'show'])->name('usuarios.show');
+            Route::post('usuarios/{usuario}/restablecer-password', [App\Http\Controllers\Admin\UserController::class, 'restablecerPassword'])->name('usuarios.restablecer-password');
+            Route::post('usuarios/{usuario}/actualizar-roles', [App\Http\Controllers\Admin\UserController::class, 'actualizarRoles'])->name('usuarios.actualizar-roles');
+            Route::post('usuarios/cambiar-estado-masivo', [App\Http\Controllers\Admin\UserController::class, 'cambiarEstadoMasivo'])->name('usuarios.cambiar-estado-masivo');
+            Route::post('usuarios/asignar-rol-masivo', [App\Http\Controllers\Admin\UserController::class, 'asignarRolMasivo'])->name('usuarios.asignar-rol-masivo');
+            
+            // Roles
+            Route::get('roles/validate-slug', [App\Http\Controllers\Admin\RoleController::class, 'validateSlug'])->name('roles.validate-slug');
+            Route::get('roles', [App\Http\Controllers\Admin\RoleController::class, 'index'])->name('roles.index');
+            Route::post('roles', [App\Http\Controllers\Admin\RoleController::class, 'store'])->name('roles.store');
+            Route::get('roles/{role}', [App\Http\Controllers\Admin\RoleController::class, 'show'])->name('roles.show');
+            Route::put('roles/{role}', [App\Http\Controllers\Admin\RoleController::class, 'update'])->name('roles.update');
+            Route::delete('roles/{role}', [App\Http\Controllers\Admin\RoleController::class, 'destroy'])->name('roles.destroy');
+            Route::post('roles/{role}/permisos', [App\Http\Controllers\Admin\RoleController::class, 'updatePermisos'])->name('roles.permisos');
+            Route::post('roles/{role}/clonar', [App\Http\Controllers\Admin\RoleController::class, 'clonar'])->name('roles.clonar');
+            
+            // Permisos
+            Route::get('permisos', [App\Http\Controllers\Admin\RoleController::class, 'getPermisos'])->name('permisos');
+            
+            // Áreas y Equipos
+            Route::get('areas', [App\Http\Controllers\Admin\UserController::class, 'getAreas'])->name('areas');
+            Route::get('equipos', [App\Http\Controllers\Admin\UserController::class, 'getEquipos'])->name('equipos');
+        });
+        
+        // ========================================
+        // 🧾 AUDITORÍA Y MONITOREO
+        // ========================================
+        Route::prefix('auditoria')->name('auditoria.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('index');
+            Route::get('activities', [App\Http\Controllers\Admin\ActivityLogController::class, 'getActivities'])->name('activities');
+            Route::get('stats', [App\Http\Controllers\Admin\ActivityLogController::class, 'getStats'])->name('stats');
+        });
+        
+        // Alias para compatibilidad
+        Route::get('activity-logs', [App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('activity-logs/activities', [App\Http\Controllers\Admin\ActivityLogController::class, 'getActivities'])->name('activity-logs.activities');
+        Route::get('activity-logs/stats', [App\Http\Controllers\Admin\ActivityLogController::class, 'getStats'])->name('activity-logs.stats');
+        
+        // ========================================
+        // 📊 REPORTES
+        // ========================================
+        // Route::prefix('reportes')->name('reportes.')->group(function () {
+        //     Route::get('/', [App\Http\Controllers\Admin\ReportesController::class, 'index'])->name('index');
+        // });
     });
 });

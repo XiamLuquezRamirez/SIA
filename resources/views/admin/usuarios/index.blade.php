@@ -1350,8 +1350,38 @@
                             </label>
                             <input type="text" name="nombre" id="rolNombre" required
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                placeholder="Ej: Analista de Proyectos">
+                                placeholder="Ej: Analista de Proyectos"
+                                oninput="generarSlugRol()">
                             <span class="error-message text-red-500 text-xs hidden"></span>
+                        </div>
+
+                        <!-- Slug (identificador único) -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Slug (Identificador Único) <span class="text-red-500">*</span>
+                                <button type="button" onclick="regenerarSlugRol()" 
+                                    class="ml-2 text-xs text-purple-600 hover:text-purple-800"
+                                    title="Regenerar desde el nombre">
+                                    <svg class="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                </button>
+                            </label>
+                            <input type="text" name="slug" id="rolSlug" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
+                                placeholder="ej: analista-de-proyectos"
+                                pattern="[-a-z0-9]+"
+                                title="Solo letras minúsculas, números y guiones">
+                            <p class="text-xs text-gray-500 mt-1">
+                                <span class="inline-flex items-center">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Se genera automáticamente del nombre. Debe ser único en el sistema.
+                                </span>
+                            </p>
+                            <span class="error-message text-red-500 text-xs hidden"></span>
+                            <div id="slugAvailability" class="text-xs mt-1 hidden"></div>
                         </div>
 
                         <!-- Descripción -->
@@ -1524,7 +1554,29 @@
                             </label>
                             <input type="text" name="nombre" id="clonarNombre" required
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                placeholder="Ej: Analista Senior">
+                                placeholder="Ej: Analista Senior"
+                                oninput="generarSlugClonar()">
+                            <span class="error-message text-red-500 text-xs hidden"></span>
+                        </div>
+
+                        <!-- Slug -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Slug (Identificador Único) <span class="text-red-500">*</span>
+                                <button type="button" onclick="regenerarSlugClonar()" 
+                                    class="ml-2 text-xs text-green-600 hover:text-green-800"
+                                    title="Regenerar desde el nombre">
+                                    <svg class="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                </button>
+                            </label>
+                            <input type="text" name="slug" id="clonarSlug" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-mono text-sm"
+                                placeholder="ej: analista-senior"
+                                pattern="[-a-z0-9]+"
+                                title="Solo letras minúsculas, números y guiones">
+                            <p class="text-xs text-gray-500 mt-1">Se genera automáticamente del nombre</p>
                             <span class="error-message text-red-500 text-xs hidden"></span>
                         </div>
 

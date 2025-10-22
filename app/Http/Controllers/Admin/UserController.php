@@ -47,7 +47,6 @@ class UserController extends Controller
                 $query->where('tipo_usuario', $request->tipo);
             }
 
-           
 
             // Filtro por área
             if ($request->has('area_id') && $request->area_id) {

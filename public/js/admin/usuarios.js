@@ -1009,7 +1009,7 @@ async function editarUsuario(id) {
         await llenarFormularioConDatosUsuario(data.user);
 
         // Deshabilitar campo de cédula (no se puede cambiar)
-        document.getElementById('cedula').disabled = true;
+        document.getElementById('cedula').readOnly = true;
         document.getElementById('cedula').classList.add('bg-gray-100', 'cursor-not-allowed');
 
         // Mostrar advertencias si es coordinador o líder
@@ -4469,6 +4469,15 @@ async function abrirModalCrearRol() {
     document.getElementById('rolActivo').checked = true;
     document.getElementById('warningRolSistema').classList.add('hidden');
     document.getElementById('rolNombre').disabled = false;
+    document.getElementById('rolSlug').disabled = false;
+    
+    // Limpiar estado de edición manual del slug
+    const slugInput = document.getElementById('rolSlug');
+    if (slugInput) {
+        delete slugInput.dataset.manuallyEdited;
+    }
+    
+    ocultarMensajeSlug();
     document.getElementById('roleModal').classList.remove('hidden');
 }
 
@@ -4502,6 +4511,7 @@ async function editarRol(idRol) {
 
         document.getElementById('roleModalTitle').textContent = 'Editar Rol';
         document.getElementById('rolNombre').value = rol.name;
+        document.getElementById('rolSlug').value = rol.slug || '';
         document.getElementById('rolDescripcion').value = rol.description || '';
         document.getElementById('rolAreaId').value = rol.area_id || '';
         document.getElementById('rolActivo').checked = rol.activo;
@@ -4509,10 +4519,12 @@ async function editarRol(idRol) {
         if (esRolSistema) {
             document.getElementById('warningRolSistema').classList.remove('hidden');
             document.getElementById('rolNombre').disabled = true;
+            document.getElementById('rolSlug').disabled = true;
             document.getElementById('rolAreaId').disabled = true;
         } else {
             document.getElementById('warningRolSistema').classList.add('hidden');
             document.getElementById('rolNombre').disabled = false;
+            document.getElementById('rolSlug').disabled = false;
             document.getElementById('rolAreaId').disabled = false;
         }
 
@@ -4533,6 +4545,14 @@ async function editarRol(idRol) {
 function cerrarModalRol() {
     document.getElementById('roleModal').classList.add('hidden');
     rolActualEdicion = null;
+    
+    // Limpiar estado de edición manual del slug
+    const slugInput = document.getElementById('rolSlug');
+    if (slugInput) {
+        delete slugInput.dataset.manuallyEdited;
+    }
+    
+    ocultarMensajeSlug();
 }
 
 /**
@@ -4543,6 +4563,7 @@ document.getElementById('roleForm')?.addEventListener('submit', async function(e
 
     const formData = {
         name: document.getElementById('rolNombre').value,
+        slug: document.getElementById('rolSlug').value,
         description: document.getElementById('rolDescripcion').value,
         area_id: document.getElementById('rolAreaId').value || null,
         activo: document.getElementById('rolActivo').checked
@@ -4588,6 +4609,168 @@ document.getElementById('roleForm')?.addEventListener('submit', async function(e
             title: 'Error',
             text: error.message || 'No se pudo guardar el rol'
         });
+    }
+});
+
+/**
+ * Normalizar texto a formato slug
+ * Convierte texto a minúsculas, elimina acentos y caracteres especiales
+ */
+function normalizarSlug(texto) {
+    if (!texto) return '';
+    
+    // Mapa de caracteres con acentos y sus equivalentes sin acentos
+    const acentos = {
+        'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u',
+        'Á': 'a', 'É': 'e', 'Í': 'i', 'Ó': 'o', 'Ú': 'u',
+        'à': 'a', 'è': 'e', 'ì': 'i', 'ò': 'o', 'ù': 'u',
+        'À': 'a', 'È': 'e', 'Ì': 'i', 'Ò': 'o', 'Ù': 'u',
+        'ä': 'a', 'ë': 'e', 'ï': 'i', 'ö': 'o', 'ü': 'u',
+        'Ä': 'a', 'Ë': 'e', 'Ï': 'i', 'Ö': 'o', 'Ü': 'u',
+        'â': 'a', 'ê': 'e', 'î': 'i', 'ô': 'o', 'û': 'u',
+        'Â': 'a', 'Ê': 'e', 'Î': 'i', 'Ô': 'o', 'Û': 'u',
+        'ã': 'a', 'õ': 'o', 'ñ': 'n',
+        'Ã': 'a', 'Õ': 'o', 'Ñ': 'n',
+        'ç': 'c', 'Ç': 'c'
+    };
+    
+    // Convertir a minúsculas
+    let slug = texto.toLowerCase();
+    
+    // Reemplazar caracteres con acentos
+    slug = slug.split('').map(char => acentos[char] || char).join('');
+    
+    // Reemplazar espacios y caracteres especiales por guiones
+    slug = slug
+        .replace(/[^a-z0-9]+/g, '-')  // Reemplazar caracteres no alfanuméricos por guiones
+        .replace(/^-+|-+$/g, '')       // Eliminar guiones al inicio y final
+        .replace(/-+/g, '-');          // Reemplazar múltiples guiones por uno solo
+    
+    return slug;
+}
+
+/**
+ * Generar slug automáticamente desde el nombre del rol
+ */
+function generarSlugRol() {
+    const nombreInput = document.getElementById('rolNombre');
+    const slugInput = document.getElementById('rolSlug');
+    
+    if (!nombreInput || !slugInput) return;
+    
+    // Solo generar si el slug está vacío o no ha sido modificado manualmente
+    if (!slugInput.dataset.manuallyEdited) {
+        const slug = normalizarSlug(nombreInput.value);
+        slugInput.value = slug;
+        
+        // Validar disponibilidad del slug si no está vacío
+        if (slug) {
+            validarDisponibilidadSlug(slug);
+        } else {
+            ocultarMensajeSlug();
+        }
+    }
+}
+
+/**
+ * Regenerar slug manualmente desde el nombre
+ */
+function regenerarSlugRol() {
+    const nombreInput = document.getElementById('rolNombre');
+    const slugInput = document.getElementById('rolSlug');
+    
+    if (!nombreInput || !slugInput) return;
+    
+    const slug = normalizarSlug(nombreInput.value);
+    slugInput.value = slug;
+    delete slugInput.dataset.manuallyEdited;
+    
+    if (slug) {
+        validarDisponibilidadSlug(slug);
+    } else {
+        ocultarMensajeSlug();
+    }
+}
+
+/**
+ * Validar disponibilidad del slug en la base de datos
+ */
+let validacionSlugTimeout = null;
+async function validarDisponibilidadSlug(slug) {
+    // Cancelar validación anterior si existe
+    if (validacionSlugTimeout) {
+        clearTimeout(validacionSlugTimeout);
+    }
+    
+    // Esperar 500ms después de que el usuario termine de escribir
+    validacionSlugTimeout = setTimeout(async () => {
+        try {
+            const slugAvailabilityDiv = document.getElementById('slugAvailability');
+            if (!slugAvailabilityDiv) return;
+            
+            slugAvailabilityDiv.classList.remove('hidden');
+            slugAvailabilityDiv.innerHTML = '<span class="text-gray-500">Verificando disponibilidad...</span>';
+            
+            // Construir URL de validación
+            const url = rolActualEdicion 
+                ? `/admin/api/roles/validate-slug?slug=${encodeURIComponent(slug)}&ignore_id=${rolActualEdicion.id}`
+                : `/admin/api/roles/validate-slug?slug=${encodeURIComponent(slug)}`;
+            
+            const response = await fetch(url, {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.available) {
+                slugAvailabilityDiv.innerHTML = `
+                    <span class="text-green-600 flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        Disponible
+                    </span>
+                `;
+            } else {
+                slugAvailabilityDiv.innerHTML = `
+                    <span class="text-red-600 flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                        </svg>
+                        No disponible (ya existe)
+                    </span>
+                `;
+            }
+        } catch (error) {
+            console.error('Error al validar slug:', error);
+            ocultarMensajeSlug();
+        }
+    }, 500);
+}
+
+/**
+ * Ocultar mensaje de disponibilidad del slug
+ */
+function ocultarMensajeSlug() {
+    const slugAvailabilityDiv = document.getElementById('slugAvailability');
+    if (slugAvailabilityDiv) {
+        slugAvailabilityDiv.classList.add('hidden');
+        slugAvailabilityDiv.innerHTML = '';
+    }
+}
+
+// Detectar edición manual del slug
+document.getElementById('rolSlug')?.addEventListener('input', function() {
+    this.dataset.manuallyEdited = 'true';
+    const slug = normalizarSlug(this.value);
+    this.value = slug;
+    
+    if (slug) {
+        validarDisponibilidadSlug(slug);
+    } else {
+        ocultarMensajeSlug();
     }
 });
 
@@ -4892,7 +5075,50 @@ async function clonarRol(idRol) {
  */
 function cerrarModalClonarRol() {
     document.getElementById('clonarRolModal').classList.add('hidden');
+    
+    // Limpiar estado de edición manual del slug
+    const slugInput = document.getElementById('clonarSlug');
+    if (slugInput) {
+        delete slugInput.dataset.manuallyEdited;
+    }
 }
+
+/**
+ * Generar slug automáticamente desde el nombre en formulario de clonar
+ */
+function generarSlugClonar() {
+    const nombreInput = document.getElementById('clonarNombre');
+    const slugInput = document.getElementById('clonarSlug');
+    
+    if (!nombreInput || !slugInput) return;
+    
+    // Solo generar si el slug está vacío o no ha sido modificado manualmente
+    if (!slugInput.dataset.manuallyEdited) {
+        const slug = normalizarSlug(nombreInput.value);
+        slugInput.value = slug;
+    }
+}
+
+/**
+ * Regenerar slug manualmente desde el nombre en formulario de clonar
+ */
+function regenerarSlugClonar() {
+    const nombreInput = document.getElementById('clonarNombre');
+    const slugInput = document.getElementById('clonarSlug');
+    
+    if (!nombreInput || !slugInput) return;
+    
+    const slug = normalizarSlug(nombreInput.value);
+    slugInput.value = slug;
+    delete slugInput.dataset.manuallyEdited;
+}
+
+// Detectar edición manual del slug en formulario de clonar
+document.getElementById('clonarSlug')?.addEventListener('input', function() {
+    this.dataset.manuallyEdited = 'true';
+    const slug = normalizarSlug(this.value);
+    this.value = slug;
+});
 
 /**
  * Manejar submit del formulario de clonar rol
@@ -4903,6 +5129,7 @@ document.getElementById('clonarRolForm')?.addEventListener('submit', async funct
     const idRolOriginal = this.dataset.rolId;
     const formData = {
         name: document.getElementById('clonarNombre').value,
+        slug: document.getElementById('clonarSlug').value,
         description: document.getElementById('clonarDescripcion').value,
         area_id: document.getElementById('clonarAreaId').value || null,
         clonar_permisos: document.getElementById('clonarPermisos').checked,

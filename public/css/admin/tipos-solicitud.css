@@ -479,3 +479,37 @@ button {
     background: #555;
 }
 
+/* ========================================
+   VISTA PREVIA DE PLANTILLAS
+   ======================================== */
+
+/* Modal de vista previa más ancho */
+.swal-wide {
+    width: 90% !important;
+    max-width: 1200px !important;
+}
+
+.swal-html-container-custom {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Scroll personalizado para vista previa */
+.swal-html-container-custom::-webkit-scrollbar {
+    width: 10px;
+}
+
+.swal-html-container-custom::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.swal-html-container-custom::-webkit-scrollbar-thumb {
+    background: #3B82F6;
+    border-radius: 10px;
+}
+
+.swal-html-container-custom::-webkit-scrollbar-thumb:hover {
+    background: #2563eb;
+}
+
