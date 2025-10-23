@@ -4,7 +4,6 @@
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">Organigrama de Áreas y Equipos</h1>
-                <p class="text-gray-600 text-sm">Ver el organigrama de áreas y equipos del sistema</p>
             </div>
         </div>
         <hr>

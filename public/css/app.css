@@ -40,3 +40,42 @@
     display: flex !important;
 }
 /* You can add your custom styles here */
+
+.my-div {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.my-div-value {
+    width: 40%;
+    height: 100px;
+    padding: 10px;
+    border-radius: 5px;
+    display: block;
+}
+
+.my-div-value-blue {
+    background-color: #adefff;
+    border: 1px solid #468aaa;
+}
+
+.my-div-value-green {
+    background-color: #b5e1a5;
+    border: 1px solid #4caf50;
+}
+
+.text-primary {
+    color: #468aaa;
+    width: 100%;
+    text-align: center;
+    display: block;
+}
+
+.text-success {
+    color: #29722c;
+    width: 100%;
+    text-align: center;
+}

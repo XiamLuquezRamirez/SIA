@@ -269,6 +269,7 @@ class DependenciasController extends Controller
                     'title' => "Coordinador del Área",
                     'tags' => ['coordinador'],
                     'img' => $area->coordinador->foto_url ? Storage::url($area->coordinador->foto_url) : Storage::url('default.png'),
+                    'tareas_activas_completadas' => [2,4],
                 ];
             }else{
                 $id_coordinador = "sin_coordinador_".$area->id;
@@ -303,6 +304,7 @@ class DependenciasController extends Controller
                         'title' => "Lider del Equipo",
                         'tags' => ['lider'],
                         'img' => $equipo->lider->foto_url ? Storage::url($equipo->lider->foto_url) : Storage::url('default.png'),
+                        'tareas_activas_completadas' => [2,4],
                     ];
                 }else{
                     $id_lider = "sin_lider_".$equipo->id;
@@ -326,6 +328,7 @@ class DependenciasController extends Controller
                         'title' => $funcionario->cargo,
                         'img' => $funcionario->foto_url ? Storage::url($funcionario->foto_url) : Storage::url('default.png'),
                         'tags' => ['funcionario'],
+                        'tareas_activas_completadas' => [2,4],
                     ];
 
                     $id_lider = 'funcionario_'.$funcionario->id;

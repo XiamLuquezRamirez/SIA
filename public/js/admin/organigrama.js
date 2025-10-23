@@ -63,10 +63,40 @@ function generarOrganigrama(data) {
         '<text style="font-size: 14px;" fill="#919191" x="80" y="70">{val}</text>';
 
 
+    OrgChart.elements.myDiv = function (data, editElement, minWidth, readOnly) {
+        var id = OrgChart.elements.generateId();
+        var value = data[editElement.binding];
+        if (value == undefined) value = '';
+        if (!value) {
+            return {
+                html: ''
+            };
+        }
+        var rOnlyAttr = readOnly ? 'readonly' : '';
+        var rDisabledAttr = readOnly ? 'disabled' : '';
+        return {
+            html: `<div style="margin-top: 30px;" class="my-div boc-form-field" for="${id}">
+                        <div class="my-div-value my-div-value-blue" ${rDisabledAttr} ${rOnlyAttr} id="${id}" name="${id}" style="width: 100%;height: 100px;">
+                            <strong class="text-primary">Tareas Activas</strong>
+                            <p class="text-primary" style="font-size: 40px; margin-top: 10px;">${value[0]}</p>
+                        </div>
+                        <div class="my-div-value my-div-value-green" ${rDisabledAttr} ${rOnlyAttr} id="${id}" name="${id}" style="width: 100%;height: 100px;">
+                            <strong class="text-success">Tareas Completadas</strong>
+                            <p class="text-success" style="font-size: 40px; margin-top: 10px;">${value[1]}</p>
+                        </div>
+                    </div>`,
+            id: id,
+            value: value
+        };  
+    };
+
     let options = getOptions();
     let chart = new OrgChart(document.getElementById("tree"), {
         template: 'olivia',
-        zoom: 0.5,
+        enableZoom: true,
+        scaleInitial: 0.1,
+        scaleMin: 0.1,
+        scaleMax: 1,
         siblingSeparation: 100, // separación entre nodos del mismo nivel
         levelSeparation: 100,
         subtreeSeparation: 120,
@@ -77,6 +107,10 @@ function generarOrganigrama(data) {
         template: "olivia",
         enableDragDrop: false,
         nodeMouseClick: OrgChart.action.edit,
+        toolbar: {
+            zoom: true,
+            fit: true,
+        },
         nodeMenu: {
             details: { text: "Detalles" },
         },
@@ -98,7 +132,7 @@ function generarOrganigrama(data) {
             elements: [
                 { type: 'textbox', label: 'Nombre', binding: 'name' },
                 { type: 'textbox', label: 'Cargo', binding: 'title' },
-                { type: 'textbox', label: 'Descripción', binding: 'description' }
+                { type: 'myDiv', label: 'Email', binding: 'tareas_activas_completadas' },
             ],
         },
         nodeBinding: {
@@ -138,6 +172,12 @@ function generarOrganigrama(data) {
 
     chart.load(data);
 
+    chart.on('init', function () {
+       setTimeout(function () {
+        chart.fit();
+       }, 500);
+    });
+
     function getOptions() {
         const searchParams = new URLSearchParams(window.location.search);
         let fit = searchParams.get('fit');
@@ -147,6 +187,7 @@ function generarOrganigrama(data) {
         }
         return { scaleInitial };
     }
+    
 }
 
 async function getOrganigramaData() {
