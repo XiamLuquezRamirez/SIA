@@ -150,7 +150,11 @@ Route::middleware(['auth'])->group(function () {
             
             // Organigrama
             Route::get('organigrama', [App\Http\Controllers\Admin\DependenciasController::class, 'organigrama'])->name('dependencias.organigrama');
+            Route::get('organigrama-data', [App\Http\Controllers\Admin\DependenciasController::class, 'getOrganigramaData'])->name('dependencias.organigrama-data');
         });
+
+        Route::get('equipos-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getEquiposAreaSelect'])->name('equipos-select');
+        Route::get('usuarios-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getUsuariosAreaSelect'])->name('usuarios-area.select');
     
         // ========================================
         // ⚙️ CONFIGURACIÓN

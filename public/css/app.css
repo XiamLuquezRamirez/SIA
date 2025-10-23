@@ -1,3 +1,5 @@
 /* Custom CSS for SIA OAPM */
-
+.boc-ai-button {
+    display: none !important;
+}
 /* You can add your custom styles here */

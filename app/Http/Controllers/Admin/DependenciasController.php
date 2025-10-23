@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Dependencia;
 use Illuminate\Http\Request;
 use App\Models\User;
-
+use Illuminate\Support\Facades\Storage;
+use App\Models\Equipo;
 class DependenciasController extends Controller
 {
     public function index(Request $request)
@@ -235,5 +236,87 @@ class DependenciasController extends Controller
     public function organigrama()
     {
         return view('admin.dependencias.organigrama');
+    }
+
+    public function getOrganigramaData()
+    {
+        /*
+            [
+                { id: "directors", name: "ÁREA", tags: ["area"], title: "Planeación Estratégica y Desarrollo" },
+                { id: 44, pid: "directors", name: "Billie Rose", title: "Dev Team Lead", img: "https://cdn.balkan.app/shared/5.jpg" },
+                { id: "e1", pid: 44, name: "EQUIPO 1", tags: ["area"], title: "Planeación Estratégica" },
+                { id: 55, pid: "e1", tags: ["lider"], name: "Billie Rose", title: "Dev Team Lead", img: "https://cdn.balkan.app/shared/5.jpg" },
+                { id: 10, pid: 55, name: "Jordan Harris", title: "JS Developer", img: "https://cdn.balkan.app/shared/6.jpg" },
+                { id: 11, pid: 10, name: "Will Woods", title: "JS Developer", img: "https://cdn.balkan.app/shared/7.jpg" },
+                { id: 12, pid: 11, name: "Skylar Parrish", title: "node.js Developer", img: "https://cdn.balkan.app/shared/8.jpg" },
+                { id: 13, pid: 12, name: "Ashton Koch", title: "C# Developer", img: "https://cdn.balkan.app/shared/9.jpg" },
+                { id: 14, pid: 13, name: "Bret Fraser", title: "Sales", img: "https://cdn.balkan.app/shared/13.jpg" },
+                { id: 15, pid: 14, name: "Steff Haley", title: "Sales", img: "https://cdn.balkan.app/shared/14.jpg" },
+                { id: "e2", pid: 44, name: "EQUIPO 2", tags: ["area"], title: "Planeación Estratégica" },
+                { id: 551, pid: "e2", tags: ["lider"], name: "Billie Rose", title: "Dev Team Lead", img: "https://cdn.balkan.app/shared/5.jpg" },
+                { id: 101, pid: 551, name: "Jordan Harris", title: "JS Developer", img: "https://cdn.balkan.app/shared/6.jpg" },
+                { id: 111, pid: 101, name: "Will Woods", title: "JS Developer", img: "https://cdn.balkan.app/shared/7.jpg" },
+                { id: 121, pid: 111, name: "Skylar Parrish", title: "node.js Developer", img: "https://cdn.balkan.app/shared/8.jpg" },
+                { id: 131, pid: 121, name: "Ashton Koch", title: "C# Developer", img: "https://cdn.balkan.app/shared/9.jpg" },
+                { id: 141, pid: 131, name: "Bret Fraser", title: "Sales", img: "https://cdn.balkan.app/shared/13.jpg" },
+                { id: 151, pid: 141, name: "Steff Haley", title: "Sales", img: "https://cdn.balkan.app/shared/14.jpg" }
+            ] 
+        */
+
+        $areas = Dependencia::with('coordinador')->get();
+
+        $data[] = [
+            'id' => "ceo",
+            'name' => "CEO",
+            'tags' => ['area'],
+            'title' => "Oficina Central",
+        ];
+
+        foreach ($areas as $area) {
+            $data[] = [
+                'id' => 'area_'.$area->id,
+                'pid' => "ceo",
+                'name' => "ÁREA",
+                'tags' => ['area'],
+                'title' => $area->nombre,
+            ];
+
+            //agregar coordinador de cada area
+            $id_coordinador = null;
+            if ($area->coordinador) {
+                $id_coordinador = 'coordinador_'.$area->coordinador->id;
+                $data[] = [
+                    'id' => $id_coordinador,
+                    'pid' => 'area_'.$area->id,
+                    'name' => explode(" ", $area->coordinador->nombre)[0]." ".explode(" ", $area->coordinador->apellidos)[0],
+                    'title' => $area->coordinador->cargo,
+                    'tags' => ['coordinador'],
+                    'img' => $area->coordinador->foto_url ? Storage::url($area->coordinador->foto_url) : Storage::url('default.png'),
+                ];
+            }else{
+                $id_coordinador = "sin_coordinador_".$area->id;
+                $data[] = [
+                    'id' => $id_coordinador,
+                    'pid' => 'area_'.$area->id,
+                    'name' => "Sin Coordinador",
+                    'title' => "Sin Coordinador",
+                    'tags' => ['coordinador'],
+                    'img' => Storage::url('default.png'),
+                ];
+            }
+
+            $equipos_area = Equipo::with('lider')->where('area_id', $area->id)->get();
+            foreach ($equipos_area as $equipo) {
+                $data[] = [
+                    'id' => 'equipo_'.$equipo->id,
+                    'pid' => $id_coordinador,
+                    'name' => "EQUIPO",
+                    'title' => $equipo->nombre,
+                    'tags' => ['equipo'],
+                ];
+            }
+        }
+
+        return response()->json($data);
     }
 }
