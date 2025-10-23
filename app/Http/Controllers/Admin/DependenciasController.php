@@ -240,35 +240,12 @@ class DependenciasController extends Controller
 
     public function getOrganigramaData()
     {
-        /*
-            [
-                { id: "directors", name: "ÁREA", tags: ["area"], title: "Planeación Estratégica y Desarrollo" },
-                { id: 44, pid: "directors", name: "Billie Rose", title: "Dev Team Lead", img: "https://cdn.balkan.app/shared/5.jpg" },
-                { id: "e1", pid: 44, name: "EQUIPO 1", tags: ["area"], title: "Planeación Estratégica" },
-                { id: 55, pid: "e1", tags: ["lider"], name: "Billie Rose", title: "Dev Team Lead", img: "https://cdn.balkan.app/shared/5.jpg" },
-                { id: 10, pid: 55, name: "Jordan Harris", title: "JS Developer", img: "https://cdn.balkan.app/shared/6.jpg" },
-                { id: 11, pid: 10, name: "Will Woods", title: "JS Developer", img: "https://cdn.balkan.app/shared/7.jpg" },
-                { id: 12, pid: 11, name: "Skylar Parrish", title: "node.js Developer", img: "https://cdn.balkan.app/shared/8.jpg" },
-                { id: 13, pid: 12, name: "Ashton Koch", title: "C# Developer", img: "https://cdn.balkan.app/shared/9.jpg" },
-                { id: 14, pid: 13, name: "Bret Fraser", title: "Sales", img: "https://cdn.balkan.app/shared/13.jpg" },
-                { id: 15, pid: 14, name: "Steff Haley", title: "Sales", img: "https://cdn.balkan.app/shared/14.jpg" },
-                { id: "e2", pid: 44, name: "EQUIPO 2", tags: ["area"], title: "Planeación Estratégica" },
-                { id: 551, pid: "e2", tags: ["lider"], name: "Billie Rose", title: "Dev Team Lead", img: "https://cdn.balkan.app/shared/5.jpg" },
-                { id: 101, pid: 551, name: "Jordan Harris", title: "JS Developer", img: "https://cdn.balkan.app/shared/6.jpg" },
-                { id: 111, pid: 101, name: "Will Woods", title: "JS Developer", img: "https://cdn.balkan.app/shared/7.jpg" },
-                { id: 121, pid: 111, name: "Skylar Parrish", title: "node.js Developer", img: "https://cdn.balkan.app/shared/8.jpg" },
-                { id: 131, pid: 121, name: "Ashton Koch", title: "C# Developer", img: "https://cdn.balkan.app/shared/9.jpg" },
-                { id: 141, pid: 131, name: "Bret Fraser", title: "Sales", img: "https://cdn.balkan.app/shared/13.jpg" },
-                { id: 151, pid: 141, name: "Steff Haley", title: "Sales", img: "https://cdn.balkan.app/shared/14.jpg" }
-            ] 
-        */
-
         $areas = Dependencia::with('coordinador')->get();
 
         $data[] = [
             'id' => "ceo",
             'name' => "CEO",
-            'tags' => ['area'],
+            'tags' => ['ceo'],
             'title' => "Oficina Central",
         ];
 
@@ -289,7 +266,7 @@ class DependenciasController extends Controller
                     'id' => $id_coordinador,
                     'pid' => 'area_'.$area->id,
                     'name' => explode(" ", $area->coordinador->nombre)[0]." ".explode(" ", $area->coordinador->apellidos)[0],
-                    'title' => $area->coordinador->cargo,
+                    'title' => "Coordinador del Área",
                     'tags' => ['coordinador'],
                     'img' => $area->coordinador->foto_url ? Storage::url($area->coordinador->foto_url) : Storage::url('default.png'),
                 ];
@@ -298,8 +275,8 @@ class DependenciasController extends Controller
                 $data[] = [
                     'id' => $id_coordinador,
                     'pid' => 'area_'.$area->id,
-                    'name' => "Sin Coordinador",
-                    'title' => "Sin Coordinador",
+                    'name' => "Sin Asignar",
+                    'title' => "Coordinador del Área",
                     'tags' => ['coordinador'],
                     'img' => Storage::url('default.png'),
                 ];
@@ -314,6 +291,45 @@ class DependenciasController extends Controller
                     'title' => $equipo->nombre,
                     'tags' => ['equipo'],
                 ];
+
+                //agregar lider de cada equipo
+                $id_lider = null;
+                if ($equipo->lider) {
+                    $id_lider = 'lider_'.$equipo->lider->id;
+                    $data[] = [
+                        'id' => $id_lider,
+                        'pid' => 'equipo_'.$equipo->id,
+                        'name' => explode(" ", $equipo->lider->nombre)[0]." ".explode(" ", $equipo->lider->apellidos)[0],
+                        'title' => "Lider del Equipo",
+                        'tags' => ['lider'],
+                        'img' => $equipo->lider->foto_url ? Storage::url($equipo->lider->foto_url) : Storage::url('default.png'),
+                    ];
+                }else{
+                    $id_lider = "sin_lider_".$equipo->id;
+                    $data[] = [
+                        'id' => $id_lider,
+                        'pid' => 'equipo_'.$equipo->id,
+                        'name' => "Sin Asignar",
+                        'title' => "Lider del Equipo",
+                        'tags' => ['lider'],
+                        'img' => Storage::url('default.png'),
+                    ];
+                }
+
+                //agregar funcionarios de cada equipo
+                $funcionarios_equipo = User::where('equipo_id', $equipo->id)->get();
+                foreach ($funcionarios_equipo as $funcionario) {
+                    $data[] = [
+                        'id' => 'funcionario_'.$funcionario->id,
+                        'pid' => $id_lider,
+                        'name' => explode(" ", $funcionario->nombre)[0]." ".explode(" ", $funcionario->apellidos)[0],
+                        'title' => $funcionario->cargo,
+                        'img' => $funcionario->foto_url ? Storage::url($funcionario->foto_url) : Storage::url('default.png'),
+                        'tags' => ['funcionario'],
+                    ];
+
+                    $id_lider = 'funcionario_'.$funcionario->id;
+                }
             }
         }
 

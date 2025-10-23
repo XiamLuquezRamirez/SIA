@@ -2,4 +2,41 @@
 .boc-ai-button {
     display: none !important;
 }
+
+.boc-img-button {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.boc-img-button svg {
+    position: relative;
+    top: 0px !important;
+}
+
+.boc-edit-form-instruments {
+    margin: 42px 10px 0 10px;
+    text-align: center;
+    min-height: 70px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.boc-link {
+    display: none !important;
+}
+
+.boc-form-fieldset button{
+    display: none !important;
+}
+
+#tree hr {
+    margin-bottom: 5px;
+}
+
+.boc-chart-menu > :first-child {
+    display: flex !important;
+}
 /* You can add your custom styles here */

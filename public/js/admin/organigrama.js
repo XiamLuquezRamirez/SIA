@@ -1,51 +1,75 @@
 function generarOrganigrama(data) {
- 
-    OrgChart.templates.area = Object.assign({}, OrgChart.templates.olivia);
+    OrgChart.templates.ceo = Object.assign({}, OrgChart.templates.olivia);
+    OrgChart.templates.ceo.node =
+        '<rect x="0" y="0" width="270" height="120" rx="10" ry="10" fill="#8bc34a" stroke="#3e591f" stroke-width="2"></rect>';
+    OrgChart.templates.ceo.field_0 =
+        '<text style="font-size: 18px; font-weight: bold;" fill="#ffffff" x="135" y="40" text-anchor="middle">{val}</text>';
+    OrgChart.templates.ceo.field_1 =
+        '<text style="font-size: 17px;" fill="#ffffff" x="125" y="70" text-anchor="middle">{val}</text>';
 
-    // Cambiamos colores (azul)
+
+
+    OrgChart.templates.area = Object.assign({}, OrgChart.templates.olivia);
     OrgChart.templates.area.node =
         '<rect x="0" y="0" width="250" height="120" rx="10" ry="10" fill="#007bff" stroke="#0056b3" stroke-width="2"></rect>';
     OrgChart.templates.area.field_0 =
         '<text style="font-size: 18px; font-weight: bold;" fill="#ffffff" x="125" y="40" text-anchor="middle">{val}</text>';
     OrgChart.templates.area.field_1 =
-        '<text style="font-size: 14px;" fill="#e0e0e0" x="125" y="70" text-anchor="middle">{val}</text>';
+        '<text style="font-size: 16px;" fill="#e0e0e0" x="125" y="70" text-anchor="middle">{val}</text>';
+
 
     OrgChart.templates.equipos = Object.assign({}, OrgChart.templates.olivia);
     OrgChart.templates.equipos.node =
-        '<rect x="0" y="0" width="250" height="120" rx="10" ry="10" fill="#ff8eec" stroke="#99508d" stroke-width="2"></rect>';
+        '<rect x="0" y="0" width="270" height="120" rx="10" ry="10" fill="#ff8eec" stroke="#99508d" stroke-width="2"></rect>';
     OrgChart.templates.equipos.field_0 =
-        '<text style="font-size: 18px; font-weight: bold;" fill="#99508d" x="125" y="40" text-anchor="middle">{val}</text>';
+        '<text style="font-size: 18px; font-weight: bold;" fill="#99508d" x="135" y="40" text-anchor="middle">{val}</text>';
     OrgChart.templates.equipos.field_1 =
-        '<text style="font-size: 14px;" fill="#99508d" x="125" y="70" text-anchor="middle">{val}</text>';
+        '<text style="font-size: 17px;" fill="#99508d" x="125" y="70" text-anchor="middle">{val}</text>';
+
+
 
     OrgChart.templates.lider = Object.assign({}, OrgChart.templates.olivia);
     OrgChart.templates.lider.node =
-        '<rect x="0" y="0" width="250" height="120" rx="10" ry="10" fill="#ff9800" stroke="#995b00" stroke-width="2"></rect>';
+        '<rect x="0" y="0" width="270" height="120" rx="10" ry="10" fill="#ff9800" stroke="#995b00" stroke-width="2"></rect>';
+    OrgChart.templates.lider.img_0 =
+        '<clipPath id="{randId}"><rect x="10" y="20" rx="50" ry="50" width="60" height="60"></rect></clipPath>' +
+        '<image preserveAspectRatio="xMidYMid slice" clip-path="url(#{randId})" xlink:href="{val}" x="10" y="20" width="60" height="60"></image>';
     OrgChart.templates.lider.field_0 =
-        '<text style="font-size: 18px; font-weight: bold;" fill="#ffffff" x="145" y="40" text-anchor="middle">{val}</text>';
+        '<text style="font-size: 18px; font-weight: bold;" fill="#ffffff" x="80" y="40">{val}</text>';
     OrgChart.templates.lider.field_1 =
-        '<text style="font-size: 14px;" fill="#e0e0e0" x="150" y="70" text-anchor="middle">{val}</text>';
+        '<text style="font-size: 14px;" fill="#e0e0e0" x="80" y="70">{val}</text>';
+
 
     OrgChart.templates.coordinador = Object.assign({}, OrgChart.templates.olivia);
     OrgChart.templates.coordinador.node =
-        '<rect x="0" y="0" width="250" height="120" rx="10" ry="10" fill="#ae58cf" stroke="#501f63" stroke-width="2"></rect>';
-    
+        '<rect x="0" y="0" width="270" height="120" rx="10" ry="10" fill="#ae58cf" stroke="#501f63" stroke-width="2"></rect>';
     OrgChart.templates.coordinador.img_0 =
     '<clipPath id="{randId}"><rect x="10" y="20" rx="50" ry="50" width="60" height="60"></rect></clipPath>' +
     '<image preserveAspectRatio="xMidYMid slice" clip-path="url(#{randId})" xlink:href="{val}" x="10" y="20" width="60" height="60"></image>';
-
     OrgChart.templates.coordinador.field_0 =
         '<text style="font-size: 18px; font-weight: bold;" fill="#ffffff" x="80" y="40">{val}</text>';
     OrgChart.templates.coordinador.field_1 =
         '<text style="font-size: 14px;" fill="#e0e0e0" x="80" y="70">{val}</text>';
 
+    OrgChart.templates.funcionario = Object.assign({}, OrgChart.templates.olivia);
+    OrgChart.templates.funcionario.node =
+        '<rect x="0" y="0" width="270" height="120" rx="10" ry="10" fill="#e5e7eb" stroke="#919191" stroke-width="2"></rect>';
+    OrgChart.templates.funcionario.img_0 =
+    '<clipPath id="{randId}"><rect x="10" y="20" rx="50" ry="50" width="60" height="60"></rect></clipPath>' +
+    '<image preserveAspectRatio="xMidYMid slice" clip-path="url(#{randId})" xlink:href="{val}" x="10" y="20" width="60" height="60"></image>';
+    OrgChart.templates.funcionario.field_0 =
+        '<text style="font-size: 18px; font-weight: bold;" fill="#919191" x="80" y="40">{val}</text>';
+    OrgChart.templates.funcionario.field_1 =
+        '<text style="font-size: 14px;" fill="#919191" x="80" y="70">{val}</text>';
+
 
     let options = getOptions();
     let chart = new OrgChart(document.getElementById("tree"), {
         template: 'olivia',
+        zoom: 0.5,
         siblingSeparation: 100, // separación entre nodos del mismo nivel
-        levelSeparation: 150,
-        subtreeSeparation: 150,
+        levelSeparation: 100,
+        subtreeSeparation: 120,
         mouseScrool: OrgChart.scroll,
         scaleInitial: options.scaleInitial,
         enableAI: true,
@@ -54,7 +78,28 @@ function generarOrganigrama(data) {
         enableDragDrop: false,
         nodeMouseClick: OrgChart.action.edit,
         nodeMenu: {
-            details: { text: "Detalles" }
+            details: { text: "Detalles" },
+        },
+        menu: {
+            png_export: {text: "Exportar a PNG"}
+        },
+        editForm: {
+            buttons: {
+                pdf: {
+                    icon: OrgChart.icon.pdf(24,24,'#fff'),
+                    text: 'Exportar PDF'
+                },
+                edit: null,
+                remove: null,
+                share: null    
+            },
+           
+            generateElementsFromFields: false,
+            elements: [
+                { type: 'textbox', label: 'Nombre', binding: 'name' },
+                { type: 'textbox', label: 'Cargo', binding: 'title' },
+                { type: 'textbox', label: 'Descripción', binding: 'description' }
+            ],
         },
         nodeBinding: {
             imgs: "img",
@@ -64,6 +109,9 @@ function generarOrganigrama(data) {
             img_0: "img",
         },
         tags: {
+            "ceo": {
+                template: "ceo",
+            },
             "assistant": {
                 template: "ula",
             },
@@ -72,12 +120,18 @@ function generarOrganigrama(data) {
             },
             "lider": {
                 template: "lider",
+                subTreeConfig: {
+                    columns: 1
+                }
             },
             "area": {
                 template: "area",
             },
             "equipo": {
                 template: "equipos",
+            },
+            "funcionario": {
+                template: "funcionario",
             }
         }
     });
