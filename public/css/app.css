@@ -79,3 +79,7 @@
     width: 100%;
     text-align: center;
 }
+
+#icono.error {
+    border-color: #dc2626 !important;
+}

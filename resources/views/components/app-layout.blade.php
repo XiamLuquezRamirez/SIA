@@ -376,8 +376,8 @@
                             </button>
                             <ul x-show="openParams" x-transition class="pl-8 mt-1 space-y-1">
                                 <li>
-                                    <a href="{{ route('admin.configuracion.parametros.categorias') }}"
-                                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.parametros.categorias') || request()->routeIs('admin.configuracion.categorias') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600' }} text-sm">
+                                    <a href="{{ route('admin.configuracion.parametros.categorias.index') }}"
+                                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.parametros.categorias.index') || request()->routeIs('admin.configuracion.categorias.index') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600' }} text-sm">
                                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1H8a3 3 0 00-3 3v1.5a1.5 1.5 0 01-3 0V6z" clip-rule="evenodd"></path>
                                             <path d="M6 12a2 2 0 012-2h8a2 2 0 012 2v2a2 2 0 01-2 2H2h2a2 2 0 002-2v-2z"></path>

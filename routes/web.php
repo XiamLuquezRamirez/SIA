@@ -153,6 +153,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('organigrama-data', [App\Http\Controllers\Admin\DependenciasController::class, 'getOrganigramaData'])->name('dependencias.organigrama-data');
         });
 
+
         Route::get('equipos-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getEquiposAreaSelect'])->name('equipos-select');
         Route::get('usuarios-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getUsuariosAreaSelect'])->name('usuarios-area.select');
     
@@ -177,9 +178,11 @@ Route::middleware(['auth'])->group(function () {
             
             // Parámetros Generales (con sub-rutas)
             Route::prefix('parametros')->name('parametros.')->group(function () {
-                Route::get('categorias', function () {
-                    return view('admin.configuracion.categorias');
-                })->name('categorias');
+                // ========================================
+                // 📁 CATEGORÍAS
+                // ========================================
+                Route::resource('categorias', App\Http\Controllers\Admin\CategoriaController::class);
+                Route::post('categorias/guardar', [App\Http\Controllers\Admin\CategoriaController::class, 'guardarCategoria'])->name('categorias.guardar');
                 
                 Route::get('festivos', function () {
                     return view('admin.configuracion.festivos');
