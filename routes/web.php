@@ -183,7 +183,13 @@ Route::middleware(['auth'])->group(function () {
                 // ========================================
                 Route::resource('categorias', App\Http\Controllers\Admin\CategoriaController::class);
                 Route::post('categorias/guardar', [App\Http\Controllers\Admin\CategoriaController::class, 'guardarCategoria'])->name('categorias.guardar');
-                
+                Route::get('categorias/consultar/{categoria}', [App\Http\Controllers\Admin\CategoriaController::class, 'consultarCategoria'])->name('categorias.consultar');
+                Route::post('categorias/editar/{categoria}', [App\Http\Controllers\Admin\CategoriaController::class, 'editarCategoria'])->name('categorias.editar');
+                Route::post('categorias/alternar-estado-categoria/{categoria}', [App\Http\Controllers\Admin\CategoriaController::class, 'alternarEstadoCategoria'])->name('categorias.alternar-estado-categoria');
+                Route::get('categorias/eliminar/{categoria}', [App\Http\Controllers\Admin\CategoriaController::class, 'eliminarCategoria'])->name('categorias.eliminar');
+                // ========================================
+                // 📁 FESTIVOS
+                // ========================================
                 Route::get('festivos', function () {
                     return view('admin.configuracion.festivos');
                 })->name('festivos');

@@ -262,7 +262,6 @@ function renderizarCategorias(categorias) {
                     </button>
                     <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                         <div class="py-1">
-                            <a href="#" onclick="verCategoria(${categoria.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ver Detalle</a>
                             <a href="#" onclick="editarCategoria(${categoria.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
                              <a href="#" onclick="eliminarCategoria(${categoria.id}); return false;" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</a>
                         </div>
@@ -389,7 +388,7 @@ function abrirModalCrearCategoria() {
 
     //cambiar el evento del formulario a POST
     const form = document.getElementById('categoriaForm');
-    //form.removeEventListener('submit', manejarEnvioFormularioEditarCategoria);
+    form.removeEventListener('submit', manejarEnvioFormularioEditarCategoria);
     form.addEventListener('submit', manejarEnvioFormulario);
 
     //cambiar el texto del botón
@@ -423,8 +422,6 @@ function cerrarModalCategoria() {
     formChanged = false;
     document.getElementById('submitButton').classList.remove('hidden');
 }
-
-
 
 
 // ========================================
@@ -473,7 +470,7 @@ async function manejarEnvioFormulario(e) {
 
         if (response.ok) {
             // Éxito
-            mostrarToast('Categoría creada exitosamente', 'success');
+            mostrarToast(data.message, data.type);
             cerrarModalCategoria();
 
             // Recargar lista de categorías
@@ -610,4 +607,414 @@ document.getElementById('icono_picker').appendChild(picker)
 function cambiarColor(color) {
     document.getElementById('color').value = color;
     document.getElementById('icono').style.backgroundColor = color;
+}
+
+// ========================================
+// EDITAR CATEGORÍA
+// ========================================
+let editingCategoriaId = null;
+let originalCategoriaData = null;
+
+async function editarCategoria(categoriaId) {
+    editingCategoriaId = categoriaId;
+    document.getElementById('modalTitle').textContent = 'Editar Categoría';
+    document.getElementById('categoriaModal').classList.remove('hidden');
+    document.getElementById('submitButton').classList.remove('hidden');
+    currentTab = 1;
+    formChanged = false;
+
+    // Mostrar Swal de cargando
+    mostrarSwalCargando('Cargando datos de la categoría, por favor espere...');
+
+    // Cargar datos del área
+    try {
+        const response = await fetch(`/admin/configuracion/parametros/categorias/consultar/${categoriaId}`);
+        if (!response.ok) throw new Error('Error al cargar categoría');
+
+        const data = await response.json();
+        originalCategoriaData = JSON.parse(JSON.stringify(data.categoria)); // Deep clone
+
+        // Actualizar título con nombre del área
+        document.getElementById('modalTitle').textContent = `Editar Categoría: ${data.categoria.nombre}`;
+
+        // Llenar formulario con datos
+        await llenarFormularioConDatosCategoria(data.categoria);
+
+        // Cambiar el evento del formulario a PUT
+        const form = document.getElementById('categoriaForm');
+        form.removeEventListener('submit', manejarEnvioFormulario);
+        form.addEventListener('submit', manejarEnvioFormularioEditarCategoria);
+
+        // Cambiar texto del botón
+        document.getElementById('submitButton').textContent = 'Guardar Cambios';
+        limpiarTodosLosErrores();
+
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al cargar datos de la categoría', 'error');
+        cerrarModalCategoria();
+    }
+}
+
+async function llenarFormularioConDatosCategoria(categoria) {
+    Swal.close();
+    // Información de la Categoría
+    document.getElementById('nombre').value = categoria.nombre || '';
+    document.getElementById('descripcion').value = categoria.descripcion || '';
+    document.getElementById('icono').innerHTML = categoria.icono || '';
+    document.getElementById('color').value = categoria.color || '#ffffff';
+    document.getElementById('icono').style.backgroundColor = categoria.color || '#ffffff';
+    document.getElementById('activo').checked = categoria.activo ? true : false;
+
+    //activo a boolean
+    document.getElementById('activo').checked = categoria.activo ? true : false;
+}
+
+function mostrarSwalCargando(mensaje) {
+    Swal.fire({
+        title: mensaje,
+        icon: 'info',
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        allowClose: false,
+        allowEscapeKey: false,
+        progressBar: true,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+}
+
+// ========================================
+// MANEJAR ENVÍO DE FORMULARIO DE EDICIÓN
+// ========================================
+
+async function manejarEnvioFormularioEditarCategoria(e) {
+    e.preventDefault();
+
+    // Validación final
+    if (!validarFormularioFinal()) {
+        return;
+    }
+
+    const submitButton = document.getElementById('submitButton');
+    const originalText = submitButton.innerHTML;
+
+    try {
+        submitButton.disabled = true;
+        submitButton.classList.add('loading');
+        submitButton.innerHTML = '<span class="opacity-0">Guardando...</span>';
+        mostrarSwalCargando('Guardando cambios, por favor espere...');
+
+        // Preparar FormData
+        const formData = new FormData();
+        // Agregar datos del formulario
+        formData.append('nombre', document.getElementById('nombre').value);
+        formData.append('descripcion', document.getElementById('descripcion').value);
+        formData.append('icono', document.getElementById('icono').innerHTML);
+        formData.append('color', document.getElementById('color').value);
+        // Agregar activo
+        const activo = document.getElementById('activo').checked;
+        formData.append('activo', activo ? '1' : '0');
+
+        // Enviar petición
+        const response = await fetch(`/admin/configuracion/parametros/categorias/editar/${editingCategoriaId}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        Swal.close();
+        if (response.ok) {
+            // Éxito
+            mostrarToast(data.message, 'success');
+            cerrarModalCategoria();
+
+            // Recargar lista después de un momento
+            setTimeout(() => {
+                consultarNuevasCategorias();
+            }, 500);
+
+        } else if (response.status === 422) {
+            // Errores de validación o confirmaciones requeridas
+            if (data.requires_confirmation) {
+                handleConfirmationRequired(data);
+            } else {
+                mostrarToast('Por favor corrija los errores en el formulario', 'error');
+            }
+
+        } else {
+            mostrarToast(data.message || 'Error al actualizar área', 'error');
+        }
+
+    } catch (error) {
+        mostrarToast(error.message || 'Error al actualizar área', 'error');
+
+    } finally {
+        submitButton.disabled = false;
+        submitButton.classList.remove('loading');
+        submitButton.innerHTML = originalText;
+    }
+}
+
+async function consultarNuevasCategorias() {
+    var posicion_scroll = window.scrollY;
+    await cargarCategorias();
+    window.scrollTo(0, posicion_scroll);
+}
+
+// ========================================
+// ACTIVAR/DESHABILITAR CATEGORÍA
+// ========================================
+
+let currentToggleCategoria = null;
+let currentToggleCategoriaId = null;
+async function alternarEstadoCategoria(categoriaId, checked) {
+    currentToggleCategoriaId = categoriaId;
+    // Cargar datos de la categoría primero
+    try {
+        const response = await fetch(`/admin/configuracion/parametros/categorias/consultar/${categoriaId}`);
+        if (!response.ok) throw new Error('Error al cargar categoría');
+
+        const data = await response.json();
+        currentToggleCategoria = data.categoria;
+
+        // Abrir modal de confirmación
+        if (checked) {
+            abrirModalActivar();
+        } else {
+            abrirModalDesactivar();
+        }
+
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al cargar información de la categoría', 'error');
+
+        // Revertir el toggle si hubo error
+        const toggle = document.getElementById(`check_categoria_${currentToggleCategoriaId}`);
+        if (toggle) {
+            checked = toggle.checked;
+            toggle.checked = !checked;
+        }
+    }
+}
+
+// ========================================
+// ACTIVAR CATEGORÍA
+// ========================================
+function abrirModalActivar() {
+    Swal.fire({
+        title: '¿Estás seguro de querer activar la categoría ('+ currentToggleCategoria.nombre + ')?',
+        icon: 'warning',
+        showConfirmButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'Activar',
+        denyButtonText: 'Cancelar',
+        showDenyButton: true,
+        showCancelButton: false,
+        confirmButtonColor: '#28a745',
+        denyButtonColor: '#dc3545',
+        allowOutsideClick: false,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            var toggle = document.getElementById(`check_categoria_${currentToggleCategoriaId}`);
+            var checked = toggle.checked;
+            cambiarEstadoCategoria(currentToggleCategoriaId, checked);
+        }else if (result.isDenied) {
+            const toggle = document.getElementById(`check_categoria_${currentToggleCategoriaId}`);
+            if (toggle) {
+                checked = toggle.checked;
+                toggle.checked = !checked;
+            }
+        }
+    });
+}
+
+// ========================================
+// DESHABILITAR CATEGORÍA
+// ========================================
+
+async function abrirModalDesactivar() {
+    Swal.fire({
+        title: '¿Estás seguro de querer desactivar la categoría ('+ currentToggleCategoria.nombre + ')?',
+        icon: 'warning',
+        html: currentToggleCategoria.tipos_solicitud.length > 0 ? '<div class="message-danger bg-red-200 border border-red-400 text-red-800 p-2 rounded-md text-left">Esta categoría tiene tipos de solicitudes asociados, al desactivar la categoria: <br><br><ul class="list-disc list-inside text-left"><li>Los tipos asociados seguirán activos</li><li>No aparecerá en el sistema (cuando se va a crear un tipo de solicitud) hasta que se active la categoría nuevamente.</ul></div>' : '',
+        showCancelButton: true,
+        confirmButtonText: 'Desactivar',
+        denyButtonText: 'Cancelar',
+        showDenyButton: true,
+        showCancelButton: false,
+        confirmButtonColor: '#28a745',
+        denyButtonColor: '#dc3545',
+        allowOutsideClick: false,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            var toggle = document.getElementById(`check_categoria_${currentToggleCategoriaId}`);
+            var checked = toggle.checked;
+            cambiarEstadoCategoria(currentToggleCategoriaId, checked);
+        }else if (result.isDenied) {
+            const toggle = document.getElementById(`check_categoria_${currentToggleCategoriaId}`);
+            if (toggle) {
+                checked = toggle.checked;
+                toggle.checked = !checked;
+            }
+        }
+    });
+}
+
+// ========================================
+// CAMBIAR ESTADO DE CATEGORÍA
+// ========================================
+async function cambiarEstadoCategoria(categoriaId, checked) {
+    mostrarSwalCargando('Activando la categoría, por favor espere...');
+    try {
+        const formData = new FormData();
+        formData.append('activo', checked ? '1' : '0');
+        const response = await fetch(`/admin/configuracion/parametros/categorias/alternar-estado-categoria/${categoriaId}`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        Swal.close();
+        if (response.ok) {
+            // Éxito
+            mostrarToast(data.message, data.type);
+            setTimeout(() => {
+                consultarNuevasCategorias();
+            }, 500);
+        } else {
+            const toggle = document.getElementById(`check_categoria_${currentToggleCategoriaId}`);
+            if (toggle) {
+                checked = toggle.checked;
+                toggle.checked = !checked;
+            }
+            mostrarToast(data.message || 'Error al activar la categoría', 'error');
+        }
+    } catch (error) {
+        const toggle = document.getElementById(`check_categoria_${currentToggleCategoriaId}`);
+        if (toggle) {
+            checked = toggle.checked;
+            toggle.checked = !checked;
+        }
+        console.error('Error:', error);
+        mostrarToast('Error al activar la categoría', 'error');
+    }
+}
+
+var categoriaEliminar = null;
+async function eliminarCategoria(categoriaId) {
+    mostrarSwalCargando('Consultando datos para eliminar el área, por favor espere...');
+    try {
+        const response = await fetch(`/admin/configuracion/parametros/categorias/consultar/${categoriaId}`, {
+            method: 'GET',
+        });
+        if (!response.ok) throw new Error('Error al eliminar categoría');
+        const data = await response.json();
+        categoriaEliminar = data.categoria;
+
+        var html = '';
+        if (categoriaEliminar.tipos_solicitud.length > 0) {
+
+            var lista_tipos_solicitud = '';
+            for (let i = 0; i < categoriaEliminar.tipos_solicitud.length; i++) {
+                lista_tipos_solicitud += '<li>' + categoriaEliminar.tipos_solicitud[i].nombre + '</li>';
+            }
+
+            html += `<div class="message-danger bg-red-200 border border-red-400 text-red-800 p-2 rounded-md text-left">
+                        <strong>Esta categoría tiene los siguientes tipos de solicitudes asociados:</strong><br>
+                        <ul class="list-disc list-inside text-left">`
+                        + lista_tipos_solicitud +
+                        `</ul>
+                        <br<br> 
+                        <strong>Para eliminar esta categoría:</strong> 
+                        <br>
+                        <ul class="list-disc list-inside text-left">
+                            <li>Reasigne los tipos de solicitudes a otra categoría</li>
+                            <li>O elimine los tipos de solicitudes mostrados arriba antes de eliminar la categoría
+                        </ul>
+                    </div>`;
+
+            Swal.fire({
+                html: html,
+                icon: 'warning',
+                showConfirmButton: true,
+                showCancelButton: false,
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#28a745',
+                allowOutsideClick: false,
+            });
+
+            return;
+        } 
+        
+    
+        Swal.fire({
+            title: '¿Estás seguro de querer eliminar la categoría ('+ categoriaEliminar.nombre + ')?',
+            html: '<p style="color:rgb(179, 2, 10); font-weight: bold;">Esta acción no se puede deshacer</p><p style="color:rgb(10, 10, 10); font-weight: bold;">Por favor ingrese el nombre de la dependencia para confirmar la eliminación</p>',
+            icon: 'warning',
+            showConfirmButton: true,
+            showCancelButton: true,
+            confirmButtonText: 'Eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#dc3545',
+            allowOutsideClick: false,
+            input: 'text',
+            inputPlaceholder: 'Ingrese el nombre de la categoría',
+            inputValidator: (value) => {
+                if (value !== categoriaEliminar.nombre) {
+                    return 'El nombre ingresado no es correcto';
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                confirmarEliminacionCategoria();
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al eliminar categoría', 'error');
+    }
+}
+
+async function confirmarEliminacionCategoria() {
+    try {
+        mostrarSwalCargando('Eliminando categoría, por favor espere...');
+        const response = await fetch(`/admin/configuracion/parametros/categorias/eliminar/${categoriaEliminar.id}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            }
+        });
+        Swal.close();
+        if (!response.ok) throw new Error('Error al eliminar categoría');
+        const data = await response.json();
+        if (response.ok) {
+            mostrarToast(data.message, data.type);
+            if (data.type == 'success') {
+                setTimeout(() => {
+                    cargarCategorias();
+                }, 500);
+            }
+        } else {
+            mostrarToast(data.message || 'Error al eliminar categoría', 'error');
+        }
+    } catch (error) {
+        Swal.close();
+        console.error('Error:', error);
+        mostrarToast('Error al eliminar categoría', 'error');
+    }
 }
