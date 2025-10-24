@@ -190,9 +190,12 @@ Route::middleware(['auth'])->group(function () {
                 // ========================================
                 // 📁 FESTIVOS
                 // ========================================
-                Route::get('festivos', function () {
-                    return view('admin.configuracion.festivos');
-                })->name('festivos');
+                Route::resource('festivos', App\Http\Controllers\Admin\FestivosController::class);
+                Route::post('festivos/guardar', [App\Http\Controllers\Admin\FestivosController::class, 'guardarFestivo'])->name('festivos.guardar');
+                Route::get('festivos/consultar/{id_festivo}', [App\Http\Controllers\Admin\FestivosController::class, 'consultarFestivo'])->name('festivos.consultar');
+                Route::get('festivos/consultar-disponibilidad/{fecha}', [App\Http\Controllers\Admin\FestivosController::class, 'consultarDisponibilidadFestivo'])->name('festivos.consultar-disponibilidad');
+                Route::post('festivos/editar/{id_festivo}', [App\Http\Controllers\Admin\FestivosController::class, 'editarFestivo'])->name('festivos.editar');
+                Route::post('festivos/alternar-aplicacion-sla-festivo/{id_festivo}', [App\Http\Controllers\Admin\FestivosController::class, 'alternarAplicacionSLAFestivo'])->name('festivos.alternar-aplicacion-sla-festivo');
             });
             
             // Alias para compatibilidad con código existente

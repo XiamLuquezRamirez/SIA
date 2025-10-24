@@ -83,3 +83,11 @@
 #icono.error {
     border-color: #dc2626 !important;
 }
+
+#BtnviewTab_tabla.active {
+    background-color: #ffffff;
+}
+
+#BtnviewTab_calendario.active {
+    background-color: #ffffff;
+}
