@@ -92,6 +92,18 @@
     background-color: #ffffff;
 }
 
+#BtnviewTab_informacion_general.active {
+    background-color: #ffffff;
+}
+
+#BtnviewTab_horarios_atencion.active {
+    background-color: #ffffff;
+}
+
+#BtnviewTab_archivos.active {
+    background-color: #ffffff;
+}
+
 .fc-event {
     cursor: pointer;
 }

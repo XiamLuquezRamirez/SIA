@@ -178,6 +178,9 @@ Route::middleware(['auth'])->group(function () {
             
             // Parámetros Generales (con sub-rutas)
             Route::prefix('parametros')->name('parametros.')->group(function () {
+                // Configuración General
+                Route::resource('configuracion-general', App\Http\Controllers\Admin\ConfiguracionGeneralController::class);
+
                 // ========================================
                 // 📁 CATEGORÍAS
                 // ========================================
