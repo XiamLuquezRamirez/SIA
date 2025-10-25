@@ -1,30 +1,3 @@
-const container = document.getElementById('calendar');
-const selectYear = document.getElementById('filterYear');
-
-document.addEventListener('DOMContentLoaded', function () {
-    var calendarEl = document.getElementById('calendar');
-    for (let month = 0; month < 12; month++) {
-        var div_month = document.createElement('div');
-        div_month.id = `calendar-${month}`;
-        div_month.style.border = '1px solid #ddd';
-        div_month.style.borderRadius = '10px';
-        div_month.style.padding = '10px';
-        div_month.style.background = '#fff';
-        div_month.style.height = '150px';
-        div_month.style.width = '500px';
-
-        container.appendChild(div_month);
-        var calendar = new FullCalendar.Calendar(div_month, {
-            initialView: 'dayGridMonth',
-            headerToolbar: { left: '', center: 'title', right: '' },
-            height: 'auto',
-            locale: 'es',
-            initialDate: new Date(selectYear.value, month, 1)
-        });
-        calendar.render();
-    }
-});
-
 // ========================================
 // MANEJO DE RESPUESTAS Y SESIÓN
 // ========================================
@@ -130,7 +103,7 @@ async function manejarRespuestaFetch(response) {
 let currentPage = 1;
 let currentFilters = {
     search: '',
-    year: '',
+    year: new Date().getFullYear(),
     tipo: '',
     estado: '',
 };
@@ -160,6 +133,11 @@ function configurarEscuchadoresEventos() {
         currentFilters.year = e.target.value;
         currentPage = 1;
         cargarFestivos();
+        if(tabVistaActual === 'calendario') {
+            mostrarSwalCargando('Cargando calendario, por favor espere...');
+            mostrarCargadorEsqueletoCalendario();
+            cargarCalendario();
+        }
     });
 
     document.getElementById('filterTipo').addEventListener('change', function(e) {
@@ -240,16 +218,6 @@ function renderizarFestivos(festivos) {
         `;
         return;
     }
-    
-
-    // Debug: verificar datos de fotos
-    var totalFestivosSLA = 0;
-    for (let i = 0; i < festivos.length; i++) {
-        if (festivos[i].aplica_sla) {
-            totalFestivosSLA++;
-        }
-    }
-    document.getElementById('totalFestivosSLA').textContent = totalFestivosSLA;
 
     tbody.innerHTML = festivos.map(festivo => `
         <tr class="hover:bg-gray-50 ${selectedFestivos.includes(festivo.id.toString()) ? 'bg-blue-50' : ''}">
@@ -300,7 +268,7 @@ function renderizarFestivos(festivos) {
                     <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                         <div class="py-1">
                             <a href="#" onclick="editarFestivo(${festivo.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
-                             <a href="#" onclick="eliminarFestivo(${festivo.id}); return false;" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</a>
+                             <a href="#" onclick="eliminarFestivo(${festivo.id}, '${festivo.nombre}'); return false;" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</a>
                         </div>
                     </div>
                 </div>
@@ -315,6 +283,7 @@ function renderizarPaginacion(data) {
     document.getElementById('showingTo').textContent = data.to || 0;
     document.getElementById('totalFestivos').textContent = data.total || 0;
     document.getElementById('totalFestivosCard').textContent = data.total || 0;
+    document.getElementById('totalFestivosSLA').textContent = data.totalAplicanSLA || 0;
 
     const pagination = document.getElementById('pagination');
     let html = '';
@@ -409,13 +378,12 @@ function limpiarFiltros() {
     currentFilters = {
         search: '',
         estado: '',
-        year: '',
+        year: new Date().getFullYear(),
         tipo: '',
     };
 
     document.getElementById('searchInput').value = '';
-    document.getElementById('filterEstado').value = '';
-    document.getElementById('filterYear').value = '';
+    document.getElementById('filterYear').value = new Date().getFullYear();
     document.getElementById('filterTipo').value = '';
     currentPage = 1;
     cargarFestivos();
@@ -446,28 +414,46 @@ function abrirModalCrearFestivo() {
     });
 }
 
+// ========================================
+// CONSULTAR DISPONIBILIDAD DE FESTIVO
+// ========================================
+
+document.getElementById('fecha').addEventListener('change', function() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        consultarDisponibilidadFestivo();
+    }, 500);
+});
+
 async function consultarDisponibilidadFestivo() {
-    const fecha = document.getElementById('fecha').value;
-    const response = await fetch(`/admin/configuracion/parametros/festivos/consultar-disponibilidad/${fecha}`);
-    const data = await response.json();
-    if (!data.disponible) {
-        Swal.fire({
-            html: `<div class="message-error bg-red-100 p-2 rounded-md" style="text-align: left;">
-                        <h3 class="font-bold text-red-500">Ya hay un festivo registrado para esta fecha: </h3>
-                        <br>
-                        <p class="font-bold text-red-500">Nombre: <span style="font-weight: bold; color:rgb(17, 17, 17);">${data.festivo.nombre}</span></p>    
-                        <p class="font-bold text-red-500">Fecha: <span style="font-weight: bold; color:rgb(17, 17, 17);">${data.festivo.fecha}</span></p>
-                        <p class="font-bold text-red-500">Tipo: <span style="font-weight: bold; color:rgb(17, 17, 17);">${data.festivo.tipo}</span></p>
-                        <p class="font-bold text-red-500">Descripción: <span style="font-weight: bold; color:rgb(17, 17, 17);">${data.festivo.descripcion}</span></p>
-                        <br>
-                        <h3 style="text-align: left;" class="font-bold text-red-500">Al continuar, se sobreescribirá el festivo existente, con los datos proporcionados.</h3>
-                    </div>`,
-            icon: 'error',
-            showConfirmButton: true,
-            confirmButtonText: 'Ok, entendido',
-            allowOutsideClick: false,
-            allowEscapeKey: false,       
-        });
+    try {
+        mostrarSwalCargando('Consultando disponibilidad de festivo, por favor espere...');
+        const fecha = document.getElementById('fecha').value;
+        const response = await fetch(`/admin/configuracion/parametros/festivos/consultar-disponibilidad/${fecha}`);
+        Swal.close();
+        const data = await response.json();
+        if (!data.disponible) {
+            Swal.fire({
+                html: `<div class="message-error bg-red-100 p-2 rounded-md" style="text-align: left;">
+                            <h3 class="font-bold text-red-500">Ya hay un festivo registrado para esta fecha: </h3>
+                            <br>
+                            <p class="font-bold text-red-500">Nombre: <span style="font-weight: bold; color:rgb(17, 17, 17);">${data.festivo.nombre}</span></p>    
+                            <p class="font-bold text-red-500">Fecha: <span style="font-weight: bold; color:rgb(17, 17, 17);">${data.festivo.fecha}</span></p>
+                            <p class="font-bold text-red-500">Tipo: <span style="font-weight: bold; color:rgb(17, 17, 17);">${data.festivo.tipo}</span></p>
+                            <p class="font-bold text-red-500">Descripción: <span style="font-weight: bold; color:rgb(17, 17, 17);">${data.festivo.descripcion}</span></p>
+                            <br>
+                            <h3 style="text-align: left;" class="font-bold text-red-500">Al continuar, se sobreescribirá el festivo existente, con los datos proporcionados.</h3>
+                        </div>`,
+                icon: 'error',
+                showConfirmButton: true,
+                confirmButtonText: 'Ok, entendido',
+                allowOutsideClick: false,
+                allowEscapeKey: false,       
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al consultar disponibilidad de festivo', 'error');
     }
 }
 
@@ -538,6 +524,7 @@ async function manejarEnvioFormulario(e) {
                 setTimeout(() => {
                     currentPage = 1;
                     cargarFestivos();
+                    cargarCalendario();
                 }, 500);
             }
         } else if (response.status === 422) {
@@ -758,6 +745,7 @@ async function manejarEnvioFormularioEditarFestivo(e) {
             // Recargar lista después de un momento
             setTimeout(() => {
                 consultarNuevosFestivos();
+                cargarCalendario();
             }, 500);
 
         } else if (response.status === 422) {
@@ -946,6 +934,12 @@ async function cargarFestivosApi(anio) {
         festivosApi = festivosApi.filter((festivo, index, self) =>
             index === self.findIndex((t) => t.date === festivo.date)
         );
+
+        festivosApi.forEach(festivo => {
+           festivo.type = 'Nacional';
+           festivo.aplica_sla = true;
+        });
+        
         await renderizarFestivosApi(festivosApi);
         document.getElementById('submitButtonImportarFestivos').classList.remove('hidden');
     } catch (error) {
@@ -978,6 +972,19 @@ function renderizarFestivosApi(festivos) {
                 </td>
                 <td style="text-align: center;">
                     <span>${dias_semana[dia_semana]}</span>
+                </td>
+                <td style="text-align: center;">
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" onchange="cambiarTipoFestivoImportar(this, '${festivo.date}')">
+                        <option value="Nacional">Nacional</option>
+                        <option value="Departamental">Departamental</option>
+                        <option value="Municipal">Municipal</option>
+                    </select>
+                </td>
+                <td style="text-align: center;">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input id="check_festivo_importar_${festivo.date}" type="checkbox" class="sr-only peer" ${festivo.aplica_sla ? 'checked' : ''} onchange="cambiarAplicacionSLAFestivoImportar(this, '${festivo.date}')">
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
                 </td>
             </tr>
         `;
@@ -1036,3 +1043,348 @@ function seleccionarTodosFestivosImportar(checkbox) {
         festivosSeleccionados = [];
     }
 }
+
+// ========================================
+// CONSULTAR DISPONIBILIDAD DE FESTIVOS DE IMPORTACIÓN
+// ========================================
+async function consultarDisponibilidadImportarFestivos(e) {
+    e.preventDefault();
+    if (festivosSeleccionados.length === 0) {
+        Swal.fire({
+            icon: 'error',
+            title: 'No hay festivos seleccionados para la importación',
+            showConfirmButton: true,
+            confirmButtonText: 'Ok, continuar',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+        });
+        return false;
+    }
+    mostrarSwalCargando('Consultando disponibilidad de festivos seleccionados para la importación, por favor espere...');
+    try {
+        const festivos = festivosSeleccionados;
+        const response = await fetch(`/admin/configuracion/parametros/festivos/consultar-disponibilidad-importar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify({ festivos: festivos })
+        });
+        const data = await response.json();
+        if (response.ok) {
+            // Éxito
+            if (data.festivos_ya_existentes.length > 0) {
+                var html = '<div class="message-error bg-red-100 p-2 rounded-md" style="text-align: left;">';
+                html += '<h3 class="font-bold text-red-500">Los siguientes festivos ya existen en la base de datos:</h3>';
+                html += '<ul>';
+                data.festivos_ya_existentes.forEach(festivo => {
+                    html += `<li>${festivo.nombre} -> <strong>${festivo.fecha_formateada}</strong></li>`;
+                });
+                html += '<br>';
+                html += '<h3 class="font-bold text-red-500">Al continuar, se sobreescribirán los festivos existentes, con los datos proporcionados.</h3>';
+                html += '</ul>';
+                html += '</div>';
+
+                Swal.fire({
+                    html: html,
+                    icon: 'error',
+                    showConfirmButton: true,
+                    confirmButtonText: 'Continuar',
+                    cancelButtonText: 'Cancelar',
+                    showCancelButton: true,
+                    cancelButtonColor: '#dc3545',
+                    confirmButtonColor: '#28a745',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        importarFestivos();
+                    } else {
+                       return false;
+                    }
+                });
+            } else {
+                importarFestivos();
+            }
+        } else {
+            // Error
+            mostrarToast(data.message || 'Error al consultar disponibilidad de festivos de importación', 'error');
+        }
+    } catch (error) {
+        Swal.close();
+        console.error('Error:', error);
+        mostrarToast('Error al consultar disponibilidad de festivos de importación', 'error');
+    }
+}
+
+// ========================================
+// IMPORTAR FESTIVOS
+// ========================================
+async function importarFestivos() {
+    mostrarSwalCargando('Importando festivos, por favor espere...');
+    try {
+        const festivos = festivosSeleccionados;
+        const response = await fetch(`/admin/configuracion/parametros/festivos/importar-festivos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify({ festivos: festivos })
+        });
+        const data = await response.json();
+        if (response.ok) {
+            // Éxito
+            mostrarToast(data.message, data.type);
+            cerrarModalImportarFestivo();
+            setTimeout(() => {
+                consultarNuevosFestivos();
+                cargarCalendario();
+            }, 500);
+        } else {
+            mostrarToast(data.message || 'Error al importar festivos', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarToast('Error al importar festivos', 'error');
+    }
+}
+
+// ========================================
+// CAMBIAR TIPO DE FESTIVO DE IMPORTACIÓN
+// ========================================
+function cambiarTipoFestivoImportar(select, date) {
+    var festivo = festivosApi.find(f => f.date === date);
+    festivo.type = select.value;
+}
+
+// ========================================
+// CAMBIAR APLICACIÓN DE SLA DE FESTIVO DE IMPORTACIÓN
+// ========================================
+function cambiarAplicacionSLAFestivoImportar(checkbox, date) {
+    var festivo = festivosApi.find(f => f.date === date);
+    festivo.aplica_sla = checkbox.checked;
+}
+
+// ========================================
+// CONFIRMAR IMPORTACIÓN DE FESTIVOS
+// ========================================
+function eliminarFestivo(id_festivo, nombre_festivo) {
+    Swal.fire({
+        title: '¿Estás seguro de  eliminar el festivo (' + nombre_festivo + ')?',
+        text: 'Esta acción no se puede deshacer',
+        icon: 'warning',
+        showConfirmButton: true,
+            showCancelButton: true,
+            confirmButtonText: 'Eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#dc3545',
+            allowOutsideClick: false,
+            input: 'text',
+            inputPlaceholder: 'Ingrese el nombre del festivo para confirmar',
+            inputValidator: (value) => {
+                if (value !== nombre_festivo) {
+                    return 'El nombre ingresado no es correcto';
+                }
+            }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            confirmarEliminacionFestivo(id_festivo);
+        }
+    });
+}
+
+async function confirmarEliminacionFestivo(id_festivo) {
+    mostrarSwalCargando('Eliminando festivo, por favor espere...');
+    const response = await fetch(`/admin/configuracion/parametros/festivos/eliminar/${id_festivo}`);
+    Swal.close();
+    if (!response.ok) {
+        mostrarToast('Error al eliminar festivo', 'error');
+        return;
+    }
+    const data = await response.json();
+    if (data.type == 'success') {
+        Swal.fire({
+            title: data.message,
+            icon: data.type,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            timer: 1500,
+        });
+        setTimeout(() => {
+            consultarNuevosFestivos();
+            cargarCalendario();
+        }, 1500);
+    } else {
+        mostrarToast(data.message, data.type);
+    }
+}
+
+function cambiarTabVista(nombreTab) {
+    tabVistaActual = nombreTab;
+    
+    // Actualizar UI de tabs
+    document.querySelectorAll('.view-tab-button').forEach(btn => {
+        btn.classList.remove('border-blue-600', 'text-blue-600');
+        btn.classList.add('border-transparent', 'text-gray-500');
+        btn.classList.remove('active');
+    });
+    
+    const botonActivo = document.getElementById(`BtnviewTab_${nombreTab}`);
+    if (botonActivo) {
+        botonActivo.classList.add('border-blue-600', 'text-blue-600');
+        botonActivo.classList.remove('border-transparent', 'text-gray-500');
+        botonActivo.classList.add('active');
+    }
+    
+    // Ocultar todos los contenidos
+    document.querySelectorAll('.view-tab-content').forEach(contenido => {
+        contenido.classList.add('hidden');
+    });
+    
+    // Mostrar contenido activo
+    const contenidoActivo = document.getElementById(`viewTab_${nombreTab}`);
+    if (contenidoActivo) {
+        contenidoActivo.classList.remove('hidden');
+    }
+
+    if (nombreTab === 'calendario') {
+        mostrarSwalCargando('Cargando calendario, por favor espere...');
+        mostrarCargadorEsqueletoCalendario();
+        cargarCalendario();
+    }
+}
+
+function mostrarCargadorEsqueletoCalendario() {
+    const tbody = document.getElementById('calendar');
+    tbody.innerHTML = `
+        <tr class="skeleton-row">
+            <td colspan="7" class="px-6 py-4">
+                <div class="animate-pulse space-y-4">
+                    ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(() => `
+                        <div class="flex space-x-4">
+                            <div class="rounded-full bg-gray-200 h-10 w-10"></div>
+                            <div class="flex-1 space-y-2 py-1">
+                                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+
+
+async function cargarCalendario() {
+    const container = document.getElementById('calendar');
+    const selectYear = document.getElementById('filterYear');
+
+    const response = await fetch(`/admin/configuracion/parametros/festivos/ver-todos-festivos`);
+    const data = await response.json();
+    container.innerHTML = '';
+    var festivos = data.festivos;
+
+    //filtrar los festivos por el año seleccionado
+    festivos.forEach(f => {
+        f.date = new Date(f.fecha+'T00:00:00');
+    });
+
+    festivos = festivos.filter(f => f.date.getFullYear() == selectYear.value);
+    Swal.close();
+    for (let month = 0; month < 12; month++) {
+        var div_month = document.createElement('div');
+        div_month.classList.add('col-span-1');
+        div_month.id = `calendar-${month}`;
+        div_month.style.border = '1px solid #ddd';
+        div_month.style.borderRadius = '10px';
+        div_month.style.padding = '10px';
+        div_month.style.background = '#fff';
+        div_month.style.height = '150px';
+        div_month.style.width = '100%';
+
+        var festivos_mes = festivos.filter(f => f.date.getMonth() === month);
+        console.log(festivos_mes);
+
+        var eventos = festivos_mes.map(f => {
+            return {
+                title: "",
+                start: f.fecha,
+                end: f.fecha,
+                color: 'red',
+                textColor: 'white',
+                extendedProps: {
+                    data: f
+                }
+            }
+        });
+
+
+        container.appendChild(div_month);
+        var calendar = new FullCalendar.Calendar(div_month, {
+            initialView: 'dayGridMonth',
+            headerToolbar: { left: '', center: 'title', right: '' },
+            height: 'auto',
+            locale: 'es',
+            timeZone: 'local',
+            initialDate: new Date(selectYear.value, month, 1),
+            events: eventos,
+            eventClick: function(info) {
+                // Evita que el navegador siga el enlace (si lo tuviera)
+                info.jsEvent.preventDefault();
+        
+                // Puedes acceder a los datos así:
+                var evento = info.event._def.extendedProps.data;
+        
+                // Ejemplo: mostrar un alert
+                var scroll = window.scrollY;
+                editarFestivo(evento.id);
+                setTimeout(() => {
+                    window.scrollTo(0, scroll);
+                }, 500);
+            },
+            dateClick: function(info) {
+                const eventoEnElDia = festivos.filter(f => f.fecha == info.dateStr)[0];
+                if (eventoEnElDia === undefined) {
+                    abrirModalCrearFestivo();
+                    document.getElementById('fecha').value = info.dateStr;
+                }else{
+                    editarFestivo(eventoEnElDia.id);
+                }
+            },
+            dayCellDidMount: function(info) {
+                // revisa si hay un evento en esa fecha
+                const hayEvento = eventos.filter(e => e.start.startsWith(info.date.toISOString().split('T')[0]))[0];
+                console.log(hayEvento);
+                if (hayEvento !== undefined) {
+                  // agrega color o clase personalizada
+                  info.el.style.backgroundColor = '#ffe8a1'; // amarillo suave
+                  info.el.classList.add('dia-con-evento');
+
+                    tippy(info.el, {
+                        content: `<div style="text-align: left;">
+                                    <p><strong>Nombre:</strong> <span>${hayEvento.extendedProps.data.nombre}</span></p>    
+                                    <p><strong>Fecha:</strong> <span>${hayEvento.extendedProps.data.fecha_formateada}</span></p>
+                                    <p><strong>Tipo:</strong> <span>${hayEvento.extendedProps.data.tipo}</span></p>
+                                    <p><strong>Aplican a SLA:</strong> <span>${hayEvento.extendedProps.data.aplica_sla ? 'Sí' : 'No'}</span></p><br>
+                                    <p class="text-center"><i>Haga click para editar el festivo</i></p>
+                                </div>`,
+                        allowHTML: true,
+                        placement: 'top',
+                        theme: 'festivo',      // usamos el tema CSS creado arriba
+                        animation: 'scale',    // animación de aparición
+                        arrow: true,           // flechita 
+                    });
+                }
+            }
+        });
+        calendar.render();
+    }
+};

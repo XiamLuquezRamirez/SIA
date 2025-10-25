@@ -190,12 +190,16 @@ Route::middleware(['auth'])->group(function () {
                 // ========================================
                 // 📁 FESTIVOS
                 // ========================================
+                Route::get('festivos/ver-todos-festivos', [App\Http\Controllers\Admin\FestivosController::class, 'consultarTodosFestivos'])->name('festivos.consultar-todos-festivos');
                 Route::resource('festivos', App\Http\Controllers\Admin\FestivosController::class);
                 Route::post('festivos/guardar', [App\Http\Controllers\Admin\FestivosController::class, 'guardarFestivo'])->name('festivos.guardar');
                 Route::get('festivos/consultar/{id_festivo}', [App\Http\Controllers\Admin\FestivosController::class, 'consultarFestivo'])->name('festivos.consultar');
                 Route::get('festivos/consultar-disponibilidad/{fecha}', [App\Http\Controllers\Admin\FestivosController::class, 'consultarDisponibilidadFestivo'])->name('festivos.consultar-disponibilidad');
                 Route::post('festivos/editar/{id_festivo}', [App\Http\Controllers\Admin\FestivosController::class, 'editarFestivo'])->name('festivos.editar');
                 Route::post('festivos/alternar-aplicacion-sla-festivo/{id_festivo}', [App\Http\Controllers\Admin\FestivosController::class, 'alternarAplicacionSLAFestivo'])->name('festivos.alternar-aplicacion-sla-festivo');
+                Route::post('festivos/consultar-disponibilidad-importar', [App\Http\Controllers\Admin\FestivosController::class, 'consultarDisponibilidadImportarFestivos'])->name('festivos.consultar-disponibilidad-importar');
+                Route::post('festivos/importar-festivos', [App\Http\Controllers\Admin\FestivosController::class, 'importarFestivos'])->name('festivos.importar-festivos');
+                Route::get('festivos/eliminar/{id_festivo}', [App\Http\Controllers\Admin\FestivosController::class, 'eliminarFestivo'])->name('festivos.eliminar');
             });
             
             // Alias para compatibilidad con código existente

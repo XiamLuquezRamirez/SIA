@@ -91,3 +91,7 @@
 #BtnviewTab_calendario.active {
     background-color: #ffffff;
 }
+
+.fc-event {
+    cursor: pointer;
+}

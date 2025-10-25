@@ -58,7 +58,20 @@ class FestivosController extends Controller
             // Paginación
             $perPage = $request->get('per_page', 15);
             $festivos = $query->paginate($perPage);
-            return response()->json($festivos);
+
+
+            //añadir el total de aplican a sla
+            $totalAplicanSLA = Festivos::where('aplica_sla', true)->where('fecha', 'LIKE', "%{$request->year}%")->count();
+            $festivos->totalAplicanSLA = $totalAplicanSLA;
+
+            return response()->json([
+                'data' => $festivos->items(),
+                'current_page' => $festivos->currentPage(),
+                'last_page' => $festivos->lastPage(),
+                'per_page' => $festivos->perPage(),
+                'total' => $festivos->total(),
+                'totalAplicanSLA' => $totalAplicanSLA,
+            ]);
         }
 
         return view('admin.festivos.index');
@@ -204,5 +217,73 @@ class FestivosController extends Controller
                 'type' => 'success'
             ], 201);
         }
+    }
+
+
+    public function consultarDisponibilidadImportarFestivos(Request $request)
+    {
+        $festivos = $request->input('festivos');
+
+        $festivosYaExisten = [];
+        foreach ($festivos as $festivo) {
+            $festivoExistente = Festivos::where('fecha', $festivo['date'])->first();
+            if ($festivoExistente) {
+                $festivosYaExisten[] = $festivoExistente;
+            }
+        }
+
+        return response()->json([
+            'festivos_ya_existentes' => $festivosYaExisten
+        ], 200);
+    }
+
+    public function importarFestivos(Request $request)
+    {
+        $festivos = $request->input('festivos');
+        foreach ($festivos as $festivo) {
+            // Verificar si ya hay un festivo registrado para esta fecha
+            $festivoExistente = Festivos::where('fecha', $festivo['date'])->first();
+            if ($festivoExistente) {
+                // Eliminar el festivo existente
+                $festivoExistente->delete();
+            }
+
+            $slug = Str::slug($festivo['localName']);
+            $dia_semana = Carbon::parse($festivo['date'])->locale('es')->dayName;
+
+            $festivo = Festivos::create([
+                'nombre' => $festivo['localName'],
+                'descripcion' => $festivo['localName'],
+                'fecha' => $festivo['date'],
+                'tipo' => $festivo['type'],
+                'aplica_sla' => $festivo['aplica_sla'],
+                'dia_semana' => $dia_semana,
+                'slug' => $slug,
+            ]);
+        }
+
+
+        return response()->json([
+            'message' => 'Festivos importados exitosamente',
+            'type' => 'success'
+        ], 201);
+    }
+
+    public function eliminarFestivo($id_festivo)
+    {
+        $festivo = Festivos::find($id_festivo);
+        $festivo->delete();
+        return response()->json([
+            'message' => 'Festivo eliminado exitosamente',
+            'type' => 'success'
+        ], 201);
+    }
+
+    public function consultarTodosFestivos()
+    {
+        $festivos = Festivos::orderBy('fecha', 'asc')->get();
+        return response()->json([
+            'festivos' => $festivos
+        ], 200);
     }
 }

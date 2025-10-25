@@ -31,7 +31,7 @@
                         <div class="p-2">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
-                                    <svg fill="#63279b" width="40px" height="40px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-name="Layer 1">
+                                    <svg fill="#63279b" width="20px" height="20px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-name="Layer 1">
                                         <path d="M12,19a1,1,0,1,0-1-1A1,1,0,0,0,12,19Zm5,0a1,1,0,1,0-1-1A1,1,0,0,0,17,19Zm0-4a1,1,0,1,0-1-1A1,1,0,0,0,17,15Zm-5,0a1,1,0,1,0-1-1A1,1,0,0,0,12,15ZM19,3H18V2a1,1,0,0,0-2,0V3H8V2A1,1,0,0,0,6,2V3H5A3,3,0,0,0,2,6V20a3,3,0,0,0,3,3H19a3,3,0,0,0,3-3V6A3,3,0,0,0,19,3Zm1,17a1,1,0,0,1-1,1H5a1,1,0,0,1-1-1V11H20ZM20,9H4V6A1,1,0,0,1,5,5H6V6A1,1,0,0,0,8,6V5h8V6a1,1,0,0,0,2,0V5h1a1,1,0,0,1,1,1ZM7,15a1,1,0,1,0-1-1A1,1,0,0,0,7,15Zm0,4a1,1,0,1,0-1-1A1,1,0,0,0,7,19Z"/>
                                     </svg>
                                 </div>
@@ -54,8 +54,8 @@
 
                 <!-- Búsqueda -->
                 <div class="md:col-span-1">
-                    <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-1">Buscar por nombre o descripción o dia de semana</label>
-                    <input type="text" id="searchInput" placeholder="Buscar por nombre o descripción o dia de semana..."
+                    <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-1">Nombre, descripción o dia</label>
+                    <input type="text" id="searchInput" placeholder="Nombre o descripción o dia de semana..."
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 </div>
 
@@ -185,7 +185,7 @@
                 <!-- Tab: Calendario -->
                 <div id="viewTab_calendario" class="hidden view-tab-content">
                     <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                        <div id="calendar"></div>
+                        <div id="calendar" class="grid grid-cols-2 gap-4" style="min-height: 500px;"></div>
                     </div>
                 </div>
             </div>
@@ -241,7 +241,7 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-1">
                                         Fecha <span class="text-red-500">*</span>
                                     </label>
-                                    <input onchange="consultarDisponibilidadFestivo()" type="date" name="fecha" id="fecha" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <input type="date" name="fecha" id="fecha" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                     <span class="error-message text-red-500 text-xs hidden"></span>
                                 </div>
 
@@ -339,7 +339,7 @@
                                             <th class="px-6 py-3 text-left" style="text-align: center; width: 10%;">
                                                 <input type="checkbox" id="selectAllImportar" onchange="seleccionarTodosFestivosImportar(this)" class="rounded border-gray-300">
                                             </th>
-                                            <th class="px-6 py-3 text-left" style="text-align: left; width: 40%;">
+                                            <th class="px-6 py-3 text-left" style="text-align: left; width: 20%;">
                                                 <span>Festivo</span>
                                             </th>
                                             <th class="px-6 py-3 text-left" style="text-align: center; width: 20%;">
@@ -347,6 +347,12 @@
                                             </th>
                                             <th class="px-6 py-3 text-left" style="text-align: center; width: 20%;">
                                                 <span>Dia de la semana</span>
+                                            </th>
+                                            <th class="px-6 py-3 text-left" style="text-align: center; width: 20%;">
+                                                <span>Tipo</span>
+                                            </th>
+                                            <th class="px-6 py-3 text-left" style="text-align: center; width: 20%;">
+                                                <span>Aplicación de SLA</span>
                                             </th>
                                         </tr>
                                     </thead>
@@ -362,7 +368,7 @@
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between" style="border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;">
                     <div class="flex-1"></div>
                     <div class="flex gap-2">
-                        <button type="submit" id="submitButtonImportarFestivos"
+                        <button type="submit" onclick="consultarDisponibilidadImportarFestivos(event)" id="submitButtonImportarFestivos"
                             class=" px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                             Importar Festivos
                         </button>
@@ -378,11 +384,15 @@
 
     @push('styles')
     <link rel="stylesheet" href="{{ asset('css/admin/usuarios-modal.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
+    <link rel="stylesheet" href="{{ asset('css/admin/tippy.css') }}">
     @endpush
 
     @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
     <script src="{{ asset('js/admin/festivos.js') }}"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
     @endpush
 
 </x-app-layout>
