@@ -39,3 +39,14 @@
   .dia-con-evento {
     background-color: red !important;
   }
+
+  .help-icon {
+    fill: #2F88FF;
+    cursor: pointer;
+    transition: fill 0.3s ease, transform 0.3s ease;
+  }
+
+  .help-icon:hover {
+    fill: #1e66b3;
+    transform: scale(1.1);
+  }

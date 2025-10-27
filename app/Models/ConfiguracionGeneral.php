@@ -26,8 +26,10 @@ class ConfiguracionGeneral extends Model
         'slogan',
 
         // Horarios
-        'horario_lunes_viernes_desde',
-        'horario_lunes_viernes_hasta',
+        'horario_lunes_viernes_desde_jornada_manana',
+        'horario_lunes_viernes_hasta_jornada_manana',
+        'horario_lunes_viernes_desde_jornada_tarde',
+        'horario_lunes_viernes_hasta_jornada_tarde',
         'habilitar_sabados',
         'horario_sabado_desde',
         'horario_sabado_hasta',
@@ -95,18 +97,4 @@ class ConfiguracionGeneral extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
-
-    public function getLogoUrlAttribute($value)
-    {
-        if (! $value) {
-            return null;
-        }
-
-        // Si guardas rutas relativas en storage/app/public:
-        if (strpos($value, 'http') === 0) {
-            return $value; // ya es URL absoluta
-        }
-
-        return asset('storage/' . ltrim($value, '/'));
-    }
 }

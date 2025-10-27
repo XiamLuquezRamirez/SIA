@@ -268,7 +268,7 @@ class DependenciasController extends Controller
                     'name' => explode(" ", $area->coordinador->nombre)[0]." ".explode(" ", $area->coordinador->apellidos)[0],
                     'title' => "Coordinador del Área",
                     'tags' => ['coordinador'],
-                    'img' => $area->coordinador->foto_url ? Storage::url($area->coordinador->foto_url) : Storage::url('default.png'),
+                    'img' => $area->coordinador->foto_url ? '/storage/usuarios/'.$area->coordinador->foto_url : '/storage/usuarios/default.png',
                     'tareas_activas_completadas' => [2,4],
                 ];
             }else{
@@ -279,7 +279,7 @@ class DependenciasController extends Controller
                     'name' => "Sin Asignar",
                     'title' => "Coordinador del Área",
                     'tags' => ['coordinador'],
-                    'img' => Storage::url('default.png'),
+                    'img' => '/storage/usuarios/default.png',
                 ];
             }
 
@@ -303,7 +303,7 @@ class DependenciasController extends Controller
                         'name' => explode(" ", $equipo->lider->nombre)[0]." ".explode(" ", $equipo->lider->apellidos)[0],
                         'title' => "Lider del Equipo",
                         'tags' => ['lider'],
-                        'img' => $equipo->lider->foto_url ? Storage::url($equipo->lider->foto_url) : Storage::url('default.png'),
+                        'img' => $equipo->lider->foto_url ? '/storage/usuarios/'.$equipo->lider->foto_url : '/storage/usuarios/default.png',
                         'tareas_activas_completadas' => [2,4],
                     ];
                 }else{
@@ -314,7 +314,7 @@ class DependenciasController extends Controller
                         'name' => "Sin Asignar",
                         'title' => "Lider del Equipo",
                         'tags' => ['lider'],
-                        'img' => Storage::url('default.png'),
+                        'img' => '/storage/usuarios/default.png',
                     ];
                 }
 
@@ -326,7 +326,7 @@ class DependenciasController extends Controller
                         'pid' => $id_lider,
                         'name' => explode(" ", $funcionario->nombre)[0]." ".explode(" ", $funcionario->apellidos)[0],
                         'title' => $funcionario->cargo,
-                        'img' => $funcionario->foto_url ? Storage::url($funcionario->foto_url) : Storage::url('default.png'),
+                        'img' => $funcionario->foto_url ? '/storage/usuarios/'.$funcionario->foto_url : '/storage/usuarios/default.png',
                         'tags' => ['funcionario'],
                         'tareas_activas_completadas' => [2,4],
                     ];

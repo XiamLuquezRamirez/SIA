@@ -179,8 +179,9 @@ Route::middleware(['auth'])->group(function () {
             // Parámetros Generales (con sub-rutas)
             Route::prefix('parametros')->name('parametros.')->group(function () {
                 // Configuración General
+                Route::get('configuracion-general/valores-por-defecto', [App\Http\Controllers\Admin\ConfiguracionGeneralController::class, 'consultarValoresPorDefecto'])->name('configuracion-general.valores-por-defecto');
                 Route::resource('configuracion-general', App\Http\Controllers\Admin\ConfiguracionGeneralController::class);
-
+                Route::post('configuracion-general/guardar', [App\Http\Controllers\Admin\ConfiguracionGeneralController::class, 'guardarConfiguracionGeneral'])->name('configuracion-general.guardar');
                 // ========================================
                 // 📁 CATEGORÍAS
                 // ========================================

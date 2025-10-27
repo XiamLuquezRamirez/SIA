@@ -7,14 +7,14 @@
                 <p class="text-gray-600 text-sm">Administrar configuración general del sistema</p>
             </div>
             <div class="flex items-center gap-2">
-                <button onclick="abrirModalImportarFestivos()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                <button onclick="guardarDatosConfiguracionGeneral()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
                     <svg width="20px" height="20px" viewBox="0 0 15 15" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
                         <path d="M0 1.5C0 0.671573 0.671573 0 1.5 0H10.0858C10.4836 0 10.8651 0.158035 11.1464 0.43934L14.5607 3.85355C14.842 4.13486 15 4.51639 15 4.91421V13.5C15 14.3284 14.3284 15 13.5 15H11V11.5C11 10.6716 10.3284 10 9.5 10H5.5C4.67157 10 4 10.6716 4 11.5V15H1.5C0.671573 15 0 14.3284 0 13.5V1.5Z" fill="#ffffff"/>
                         <path d="M5 15H10V11.5C10 11.2239 9.77614 11 9.5 11H5.5C5.22386 11 5 11.2239 5 11.5V15Z" fill="#ffffff"/>
                     </svg>
                     Guardar Cambios
                 </button>
-                <button onclick="abrirModalCrearFestivo()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                <button onclick="manejarRestaurarValoresPorDefecto()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
                     <svg width="25px" height="25px" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M5.88468 17C7.32466 19.1128 9.75033 20.5 12.5 20.5C16.9183 20.5 20.5 16.9183 20.5 12.5C20.5 8.08172 16.9183 4.5 12.5 4.5C8.08172 4.5 4.5 8.08172 4.5 12.5V13.5M12.5 8V12.5L15.5 15.5" stroke="#ffffff" stroke-width="1.2"/>
                         <path d="M7 11L4.5 13.5L2 11" stroke="#ffffff" stroke-width="1.2"/>
@@ -143,6 +143,7 @@
                         <input type="email" name="email_contacto" id="email_contacto"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="Ej: info@ministeriosalud.gov.co">
+                        <span class="error-message text-red-500 text-xs hidden"></span> 
                     </div>
                     <!-- Sitio Web -->
                     <div class="md:col-span-1">
@@ -166,90 +167,296 @@
                     </div>
                 </div>
             </div>
-            <div id="viewTab_horarios_atencion" class="view-tab-content">
+            <div id="viewTab_horarios_atencion" class="hidden view-tab-content">
                 <div class="flex justify-between items-center mb-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="width: 100%;">
-                    <div class="md:col-span-2">
-                        <p class="block text-sm font-medium text-gray-700 mb-1" style="font-size: 20px;">
-                            <i> Define el horario de atención de la entidad </i>
-                        </p>
-                    </div>
-                    <div class="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-200 pb-4 rounded-lg p-4" style="width: 100%;">
-                        <!-- Horario de Atención -->
-                        <div class="md:col-span-2 mb-1">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Horario de Atención lunes a viernes<span class="text-red-500">*</span>
-                            </label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="width: 100%;">
+                        <div class="md:col-span-2">
+                            <p class="block text-sm font-medium text-gray-700 mb-1" style="font-size: 20px;">
+                                <i> Define el horario de atención de la entidad </i>
+                            </p>
                         </div>
-                        <div class="md:col-span-1 mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Desde <span class="text-red-500">*</span>
-                            </label>
-                            <input type="time" name="horario_lunes_viernes_desde" id="horario_lunes_viernes_desde" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        </div>
-                        <div class="md:col-span-1 mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Hasta <span class="text-red-500">*</span>
-                            </label>
-                            <input type="time" name="horario_lunes_viernes_hasta" id="horario_lunes_viernes_hasta" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        </div>
-                    </div>
-                    <div class="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-200 pb-4 rounded-lg p-4" style="width: 100%;">
-                        <div class="col-span-2 mb-1">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                ¿Desea habilitar los sábados? <span class="text-red-500">*</span>
-                            </label>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input checked id="habilitar_sabados" type="checkbox" class="sr-only peer" onchange="mostrarHorarioSabado()">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                            </label>
-                        </div>
-                        <div id="horario_sabado" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div class="md:col-span-1">
+                        <div class="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-200 pb-4 rounded-lg p-4" style="width: 100%;">
+                            <!-- Horario de Atención -->
+                            <div class="md:col-span-2 mb-1">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Desde <span class="text-red-500">*</span>
+                                    Horario de Atención lunes a viernes<span class="text-red-500">*</span>
                                 </label>
-                                <input type="time" name="horario_lunes_viernes_desde" id="horario_lunes_viernes_desde" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                             </div>
-                            <div class="md:col-span-1">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Hasta <span class="text-red-500">*</span>
-                                </label>
-                                <input type="time" name="horario_lunes_viernes_hasta" id="horario_lunes_viernes_hasta" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <div class="md:col-span-1 mb-1 grid grid-cols-2 md:grid-cols-2 gap-4 border border-gray-200 pb-4 rounded-lg p-4">
+                                <div class="md:col-span-1 mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Desde (Jornada Mañana) <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="time" name="horario_lunes_viernes_desde_jornada_manana" id="horario_lunes_viernes_desde_jornada_manana" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <span class="error-message text-red-500 text-xs hidden"></span>
+                                </div>
+                                <div class="md:col-span-1 mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Hasta (Jornada Mañana) <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="time" name="horario_lunes_viernes_hasta_jornada_manana" id="horario_lunes_viernes_hasta_jornada_manana" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <span class="error-message text-red-500 text-xs hidden"></span>
+                                </div>
+                            </div>
+                            <div class="md:col-span-1 mb-1 grid grid-cols-2 md:grid-cols-2 gap-4 border border-gray-200 pb-4 rounded-lg p-4">
+                                <div class="md:col-span-1 mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Desde (Jornada Tarde) <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="time" name="horario_lunes_viernes_desde_jornada_tarde" id="horario_lunes_viernes_desde_jornada_tarde" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <span class="error-message text-red-500 text-xs hidden"></span>
+                                </div>
+                                <div class="md:col-span-1 mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Hasta (Jornada Tarde) <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="time" name="horario_lunes_viernes_hasta_jornada_tarde" id="horario_lunes_viernes_hasta_jornada_tarde" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <span class="error-message text-red-500 text-xs hidden"></span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-span-1 grid grid-cols-1 md:grid-cols-1 gap-4 border border-gray-200 pb-4 rounded-lg p-4" style="width: 100%;">
-                        <div class="md:col-span-1 mb-4 mt-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                ¿Desea enviar recordatorios de solicitudes vencidas? <span class="text-red-500">*</span>
-                            </label>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input checked id="habilitar_recordatorio_vencidas" type="checkbox" class="sr-only peer" onchange="mostrarHoraRecordatorioVencidas()">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                            </label>
-                            <div id="hora_recordatorio_vencidas">
+                        <div class="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-200 pb-4 rounded-lg p-4" style="width: 100%;">
+                            <div class="col-span-2 mb-1">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Hora de envío recordatorio de solicitudes vencidas <span class="text-red-500">*</span>
+                                    ¿Desea habilitar los sábados? <span class="text-red-500">*</span>
                                 </label>
-                                <input type="time" name="hora_recordatorio_vencidas" id="hora_recordatorio_vencidas" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="habilitar_sabados" type="checkbox" class="sr-only peer" onchange="mostrarHorarioSabado()">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                            <div id="horario_sabado" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div class="md:col-span-1">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Desde <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="time" name="horario_sabado_desde" id="horario_sabado_desde" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <span class="error-message text-red-500 text-xs hidden"></span>
+                                </div>
+                                <div class="md:col-span-1">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Hasta <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="time" name="horario_sabado_hasta" id="horario_sabado_hasta" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <span class="error-message text-red-500 text-xs hidden"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-1 grid grid-cols-1 md:grid-cols-1 gap-4 border border-gray-200 pb-4 rounded-lg p-4" style="width: 100%;">
+                            <div class="md:col-span-1 mb-4 mt-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    ¿Desea enviar recordatorios de solicitudes vencidas? <span class="text-red-500">*</span>
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="habilitar_recordatorio_vencidas" type="checkbox" class="sr-only peer" onchange="mostrarHoraRecordatorioVencidas()">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                                <div id="div_hora_recordatorio_vencidas">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Hora de envío recordatorio de solicitudes vencidas <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="time" name="hora_recordatorio_vencidas" id="hora_recordatorio_vencidas" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <span class="error-message text-red-500 text-xs hidden"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-1 grid grid-cols-1 md:grid-cols-1 gap-4 border border-gray-200 pb-4 rounded-lg p-4" style="width: 100%;">
+                            <div class="md:col-span-1 mb-4 mt-4" id="hora_recordatorio_vencidas">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    ¿Enviar recordatorio de alertas amarillas? <span class="text-red-500">*</span>
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="habilitar_recordatorio_alertas_amarillas" type="checkbox" class="sr-only peer" onchange="mostrarHoraRecordatorioAlertasAmarillas()">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                                <div id="div_hora_recordatorio_alertas_amarillas">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Hora de envío recordatorio de solicitudes vencidas <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="time" name="hora_recordatorio_alertas_amarillas" id="hora_recordatorio_alertas_amarillas" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <span class="error-message text-red-500 text-xs hidden"></span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-span-1 grid grid-cols-1 md:grid-cols-1 gap-4 border border-gray-200 pb-4 rounded-lg p-4" style="width: 100%;">
-                        <div class="md:col-span-1 mb-4 mt-4" id="hora_recordatorio_vencidas">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                ¿Enviar recordatorio de alertas amarillas? <span class="text-red-500">*</span>
-                            </label>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input checked id="habilitar_recordatorio_alertas_amarillas" type="checkbox" class="sr-only peer" onchange="mostrarHoraRecordatorioAlertasAmarillas()">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                            </label>
-                            <div id="hora_recordatorio_alertas_amarillas">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Hora de envío recordatorio de solicitudes vencidas <span class="text-red-500">*</span>
+                </div>
+            </div>
+            <div id="viewTab_archivos" class="hidden view-tab-content">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="width: 100%;">
+                        <div class="md:col-span-2">
+                            <p class="block text-sm font-medium text-gray-700 mb-1" style="font-size: 20px;">
+                                <i> Define los formatos de archivos permitidos </i>
+                            </p>
+                        </div>
+                        <div class="col-span-2 grid grid-cols-2 md:grid-cols-2 gap-4 border border-gray-200 pb-4 rounded-lg p-4" style="width: 100%;">
+                            <div class="md:col-span-1 mb-1">
+                                <label class="block text-sm flex items-center gap-2 font-medium text-gray-700 mb-1">
+                                    Tamaño máximo de archivo (MB)
+                                    <span class="text-red-500">*</span>
+                                    <svg id="helpIcon_tamano_maximo_archivo" class="help-icon" width="16px" height="16px" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect width="48" height="48" fill="white" fill-opacity="0.01"/>
+                                        <path d="M24 44C29.5228 44 34.5228 41.7614 38.1421 38.1421C41.7614 34.5228 44 29.5228 44 24C44 18.4772 41.7614 13.4772 38.1421 9.85786C34.5228 6.23858 29.5228 4 24 4C18.4772 4 13.4772 6.23858 9.85786 9.85786C6.23858 13.4772 4 18.4772 4 24C4 29.5228 6.23858 34.5228 9.85786 38.1421C13.4772 41.7614 18.4772 44 24 44Z" fill="#2F88FF" stroke="#000000" stroke-width="4" stroke-linejoin="round"/>
+                                        <path d="M24 28.6249V24.6249C27.3137 24.6249 30 21.9386 30 18.6249C30 15.3112 27.3137 12.6249 24 12.6249C20.6863 12.6249 18 15.3112 18 18.6249" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M24 37.6249C25.3807 37.6249 26.5 36.5056 26.5 35.1249C26.5 33.7442 25.3807 32.6249 24 32.6249C22.6193 32.6249 21.5 33.7442 21.5 35.1249C21.5 36.5056 22.6193 37.6249 24 37.6249Z" fill="white"/>
+                                    </svg> 
                                 </label>
-                                <input type="time" name="hora_recordatorio_alertas_amarillas" id="hora_recordatorio_alertas_amarillas" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <input type="number" name="tam_max_archivo_mb" id="tam_max_archivo_mb" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <span class="error-message text-red-500 text-xs hidden"></span>
+                            </div>
+                            <div class="md:col-span-1 mb-4">
+                                <label class="block flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                                    Tamaño máximo total de la solicitud (MB)
+                                    <span class="text-red-500">*</span>
+                                    <svg id="helpIcon_tamano_maximo_total" class="help-icon" width="16px" height="16px" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect width="48" height="48" fill="white" fill-opacity="0.01"/>
+                                        <path d="M24 44C29.5228 44 34.5228 41.7614 38.1421 38.1421C41.7614 34.5228 44 29.5228 44 24C44 18.4772 41.7614 13.4772 38.1421 9.85786C34.5228 6.23858 29.5228 4 24 4C18.4772 4 13.4772 6.23858 9.85786 9.85786C6.23858 13.4772 4 18.4772 4 24C4 29.5228 6.23858 34.5228 9.85786 38.1421C13.4772 41.7614 18.4772 44 24 44Z" fill="#2F88FF" stroke="#000000" stroke-width="4" stroke-linejoin="round"/>
+                                        <path d="M24 28.6249V24.6249C27.3137 24.6249 30 21.9386 30 18.6249C30 15.3112 27.3137 12.6249 24 12.6249C20.6863 12.6249 18 15.3112 18 18.6249" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path fill-rule="evenodd" clip-rule="evenodd" d="M24 37.6249C25.3807 37.6249 26.5 36.5056 26.5 35.1249C26.5 33.7442 25.3807 32.6249 24 32.6249C22.6193 32.6249 21.5 33.7442 21.5 35.1249C21.5 36.5056 22.6193 37.6249 24 37.6249Z" fill="white"/>
+                                    </svg> 
+                                </label>
+                                <input type="number" name="tam_max_total_mb" id="tam_max_total_mb" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <span class="error-message text-red-500 text-xs hidden"></span>
+                            </div>
+                        </div>
+                        <!-- Formatos de archivos permitidos -->
+                        <div class="col-span-2 grid grid-cols-6 gap-4 border border-gray-200 pb-4 rounded-lg p-4" style="width: 100%;">
+                            <!-- Horario de Atención -->
+                            <div class="md:col-span-6 mb-1">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Formatos de archivos permitidos<span class="text-red-500">*</span>
+                                </label>
+                            </div>
+                            <div class="md:col-span-1 flex items-center justify-center gap-2 border border-gray-200 pb-4 rounded-lg p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    PDF
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="formato_pdf" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                            <div class="md:col-span-1 flex items-center justify-center gap-2 border border-gray-200 pb-4 rounded-lg p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    DOC
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="formato_doc" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                            <div class="md:col-span-1 flex items-center justify-center gap-2 border border-gray-200 pb-4 rounded-lg p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    DOCX
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="formato_docx" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                            <div class="md:col-span-1 flex items-center justify-center gap-2 border border-gray-200 pb-4 rounded-lg p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    XLS
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="formato_xls" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                            <div class="md:col-span-1 flex items-center justify-center gap-2 border border-gray-200 pb-4 rounded-lg p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    XLSX
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="formato_xlsx" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-span-2 grid grid-cols-6 gap-4 border border-gray-200 pb-4 rounded-lg p-4" style="width: 100%;">
+                            <div class="md:col-span-6 mb-1">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Formatos de imágenes permitidos<span class="text-red-500">*</span>
+                                </label>
+                            </div>
+                            <div class="md:col-span-1 flex items-center justify-center gap-2 border border-gray-200 pb-4 rounded-lg p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    JPG
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="formato_jpg" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                            <div class="md:col-span-1 flex items-center justify-center gap-2 border border-gray-200 pb-4 rounded-lg p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    PNG
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="formato_png" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                            <div class="md:col-span-1 flex items-center justify-center gap-2 border border-gray-200 pb-4 rounded-lg p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    GIF
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="formato_gif" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                            <div class="md:col-span-1 flex items-center justify-center gap-2 border border-gray-200 pb-4 rounded-lg p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    BMP
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="formato_bmp" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                            <div class="md:col-span-1 flex items-center justify-center gap-2 border border-gray-200 pb-4 rounded-lg p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    TIFF
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="formato_tiff" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-span-2 grid grid-cols-6 gap-4 border border-gray-200 pb-4 rounded-lg p-4" style="width: 100%;">
+                            <div class="md:col-span-6 mb-1">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Otros formatos permitidos<span class="text-red-500">*</span>
+                                </label>
+                            </div>
+                            <div class="md:col-span-1 flex items-center justify-center gap-2 border border-gray-200 pb-4 rounded-lg p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    ZIP
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="formato_zip" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                            <div class="md:col-span-1 flex items-center justify-center gap-2 border border-gray-200 pb-4 rounded-lg p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    RAR
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="formato_rar" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
+                            </div>
+                            <div class="md:col-span-1 flex items-center justify-center gap-2 border border-gray-200 pb-4 rounded-lg p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    7Z
+                                </label>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input checked id="formato_7z" type="checkbox" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -260,10 +467,33 @@
 
     @push('styles')
     <link rel="stylesheet" href="{{ asset('css/admin/usuarios-modal.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
     <link rel="stylesheet" href="{{ asset('css/admin/tippy.css') }}">
     @endpush
 
     @push('scripts')
     <script src="{{ asset('js/admin/configuracion_general.js') }}"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    @endpush
+
+    @push('scripts')
+    <script>
+        tippy('#helpIcon_tamano_maximo_archivo', {
+            content: `
+                <div class='p-2 rounded-lg shadow-md text-white-700'>
+                    <p class='text-sm text-white-700'>El tamaño máximo de archivo es el tamaño máximo que puede tener un archivo para ser subido al sistema, por ejemplo 40MB.</p>
+                </div>`,
+            allowHTML: true,
+         });
+
+        tippy('#helpIcon_tamano_maximo_total', {
+            content: `
+                <div class='p-2 rounded-lg shadow-md text-white-700'>
+                    <p class='text-sm text-white-700'>El tamaño máximo total de la solicitud es el tamaño máximo que puede tener una solicitud para ser subida al sistema, esta suma el tamaño de todos los archivos que se suben a la solicitud y los campos de la solicitud, por ejemplo 100MB.</p>
+                </div>`,
+            allowHTML: true,
+         });
+    </script>
     @endpush
 </x-app-layout>
