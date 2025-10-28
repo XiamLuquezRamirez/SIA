@@ -269,7 +269,7 @@
                     <ul x-show="open" x-transition class="pl-10 mt-2 space-y-1">
                         <li>
                             <a href="{{ route('admin.equipos-areas.dependencias.index') }}"
-                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos-areas.dependencias.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos-areas.dependencias.index') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path>
                                 </svg>
@@ -287,7 +287,7 @@
                         </li>
                         <li>
                             <a href="{{ route('admin.equipos-areas.dependencias.organigrama') }}"
-                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-gray-700">
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos-areas.dependencias.organigrama') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm11 1H6v8l4-2 4 2V6z" clip-rule="evenodd"></path>
                                 </svg>

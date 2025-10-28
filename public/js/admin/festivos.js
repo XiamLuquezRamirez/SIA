@@ -1318,8 +1318,7 @@ async function cargarCalendario() {
                 title: "",
                 start: f.fecha,
                 end: f.fecha,
-                color: 'red',
-                textColor: 'white',
+                color: 'transparent',
                 extendedProps: {
                     data: f
                 }
@@ -1366,7 +1365,14 @@ async function cargarCalendario() {
                 if (hayEvento !== undefined) {
                   // agrega color o clase personalizada
                   info.el.style.backgroundColor = '#ffe8a1'; // amarillo suave
-                  info.el.classList.add('dia-con-evento');
+                  
+                  if(hayEvento.extendedProps.data.tipo == 'Nacional') {
+                    info.el.style.backgroundColor = '#ff8e8e';
+                  } else if(hayEvento.extendedProps.data.tipo == 'Departamental') {
+                    info.el.style.backgroundColor = '#a1e2ff';
+                  } else {
+                    info.el.style.backgroundColor = '#91ff96';
+                  }
 
                     tippy(info.el, {
                         content: `<div style="text-align: left;">
@@ -1378,7 +1384,7 @@ async function cargarCalendario() {
                                 </div>`,
                         allowHTML: true,
                         placement: 'top',
-                        theme: 'festivo',      // usamos el tema CSS creado arriba
+                        theme: hayEvento.extendedProps.data.tipo == 'Nacional' ? 'festivo-nacional' : hayEvento.extendedProps.data.tipo == 'Departamental' ? 'festivo-departamental' : 'festivo-local',      // usamos el tema CSS creado arriba
                         animation: 'scale',    // animación de aparición
                         arrow: true,           // flechita 
                     });

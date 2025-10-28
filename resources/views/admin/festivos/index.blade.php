@@ -185,6 +185,25 @@
                 <!-- Tab: Calendario -->
                 <div id="viewTab_calendario" class="hidden view-tab-content">
                     <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r" style="border-top-left-radius: 20px; border-top-right-radius: 20px;">
+                            <h3 class="text-xl font-semibold">Descripcion de colores de los festivos</h3>
+                            <br>
+                            <table class="table-auto w-full">
+                                <thead>
+                                    <tr style="display: flex; align-items: center; gap: 10px;">
+                                        <th style="border: 1px solid #000; display: flex; align-items: center; gap: 10px; padding-right: 10px;">
+                                            <div class="w-8 h-8" style="background-color: #ff8e8e;"></div> Festivo Nacional
+                                        </th>
+                                        <th style="border: 1px solid #000; display: flex; align-items: center; gap: 10px; padding-right: 10px;">
+                                            <div class="w-8 h-8" style="background-color: #a1e2ff;"></div> Festivo Departamental
+                                        </th>
+                                        <th style="border: 1px solid #000; display: flex; align-items: center; gap: 10px; padding-right: 10px;">
+                                            <div class="w-8 h-8" style="background-color: #91ff96;"></div> Festivo Municipal
+                                        </th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
                         <div id="calendar" class="grid grid-cols-2 gap-4" style="min-height: 500px;"></div>
                     </div>
                 </div>
@@ -223,7 +242,7 @@
                                     </label>
                                     <input type="text" name="nombre" id="nombre"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        placeholder="Ej: Área de Salud">
+                                        placeholder="Ej: Fiesta de la Patria">
                                     <span class="error-message text-red-500 text-xs hidden"></span>
                                 </div>
 
@@ -232,7 +251,7 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-1">
                                         Descripción <span class="text-red-500">*</span>
                                     </label>
-                                    <textarea name="descripcion" id="descripcion" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ej: Área de Salud"></textarea>
+                                    <textarea name="descripcion" id="descripcion" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ej: Se celebra el 20 de mayo de cada año en todo el país"></textarea>
                                     <span class="error-message text-red-500 text-xs hidden"></span>
                                 </div>
 
