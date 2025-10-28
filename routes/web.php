@@ -94,6 +94,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('{tipo}/toggle', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'toggleEstado'])->name('toggle');
                 Route::delete('{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'destroy'])->name('destroy');
                 Route::post('{tipo}/plantillas', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'guardarPlantillas'])->name('plantillas');
+                Route::post('{tipo}/campos-rapidos', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'guardarCamposRapidos'])->name('campos-rapidos');
+                Route::get('getByCodigo/{codigo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'getByCodigo'])->name('getByCodigo');
             });
         });
         
@@ -116,6 +118,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('api.tipos-solicitud.destroy');
         Route::post('api/tipos-solicitud/{tipo}/plantillas', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'guardarPlantillas'])
             ->name('api.tipos-solicitud.plantillas');
+        Route::post('api/tipos-solicitud/{tipo}/clonar', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'clonar'])
+            ->name('api.tipos-solicitud.clonar');
 
         // ========================================
         // 👥 EQUIPOS Y ÁREAS
@@ -161,10 +165,10 @@ Route::middleware(['auth'])->group(function () {
             
             // Documentos (con sub-rutas)
             Route::prefix('documentos')->name('documentos.')->group(function () {
-                Route::get('plantillas', function () {
-                    return view('admin.configuracion.plantillas');
-                })->name('plantillas');
-                
+                Route::get('plantillas', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'index'])->name('plantillas');
+                Route::get('plantillas/crear', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'create'])->name('plantillas.crear');
+                Route::get('plantillas/{id}/editar', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'edit'])->name('plantillas.editar');
+
                 Route::get('consecutivos', function () {
                     return view('admin.configuracion.consecutivos');
                 })->name('consecutivos');
@@ -188,9 +192,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('estados', function () {
                 return view('admin.configuracion.estados');
             })->name('estados');
-            Route::get('plantillas', function () {
-                return view('admin.configuracion.plantillas');
-            })->name('plantillas');
+            Route::get('plantillas', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'index'])->name('plantillas');
             Route::get('consecutivos', function () {
                 return view('admin.configuracion.consecutivos');
             })->name('consecutivos');
@@ -199,8 +201,12 @@ Route::middleware(['auth'])->group(function () {
             })->name('festivos');
             Route::get('flujos-aprobacion', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'index'])
                 ->name('flujos-aprobacion');
+
+            // Biblioteca de Campos Personalizados
+            Route::get('campos-personalizados', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'index'])
+                ->name('campos-personalizados.index');
         });
-        
+
         // API de Flujos de Aprobación
         Route::prefix('api/configuracion')->name('api.configuracion.')->group(function () {
             Route::get('estados', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'getEstados'])->name('estados');
@@ -212,9 +218,48 @@ Route::middleware(['auth'])->group(function () {
             Route::get('diagrama-flujo', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'getDiagramaFlujo'])->name('flujos.diagrama');
             Route::post('flujos-transiciones/validar', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'validarTransicion'])->name('flujos.validar');
 
-            // Plantillas de Documentos
-            Route::get('plantillas', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'index'])->name('plantillas.index');
-            Route::get('plantillas/{id}', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'show'])->name('plantillas.show');
+            // Plantillas de Documentos - API
+            Route::prefix('plantillas-documentos')->name('plantillas-documentos.')->group(function () {
+                // Rutas de listado y búsqueda
+                Route::get('/', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'index'])->name('index');
+                Route::get('{id}', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'show'])->name('show');
+
+                // Operaciones CRUD
+                Route::post('/', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'store'])->name('store');
+                Route::put('{id}', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'update'])->name('update');
+                Route::delete('{id}', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'destroy'])->name('destroy');
+
+                // Operaciones adicionales
+                Route::post('{id}/duplicar', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'duplicar'])->name('duplicar');
+                Route::patch('{id}/toggle', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'toggleEstado'])->name('toggle');
+                Route::get('{id}/uso', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'verUso'])->name('uso');
+
+                // Preview y generación de PDF
+                Route::post('{id}/preview', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'previewPDF'])->name('preview');
+
+                // Importar/Exportar
+                Route::post('exportar', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'exportar'])->name('exportar');
+                Route::post('importar', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'importar'])->name('importar');
+            });
+
+            // Campos Personalizados - API
+            Route::prefix('campos-personalizados')->name('campos-personalizados.')->group(function () {
+                // Rutas específicas ANTES de las rutas con parámetros
+                Route::get('categorias', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'getCategorias'])->name('categorias');
+                Route::post('generar-slug', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'generarSlug'])->name('generar-slug');
+
+                // Rutas generales
+                Route::get('/', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'index'])->name('index');
+                Route::post('/', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'store'])->name('store');
+
+                // Rutas con parámetros {id} al final
+                Route::get('{id}', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'show'])->name('show');
+                Route::put('{id}', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'update'])->name('update');
+                Route::delete('{id}', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'destroy'])->name('destroy');
+                Route::patch('{id}/toggle', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'toggleEstado'])->name('toggle');
+                Route::post('{id}/duplicar', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'duplicar'])->name('duplicar');
+                Route::get('{id}/uso', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'verUso'])->name('uso');
+            });
         });
         
         // ========================================

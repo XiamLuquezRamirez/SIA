@@ -221,10 +221,11 @@ class FlujosAprobacionController extends Controller
      */
     public function show($id)
     {
+        dd($id);
         try {
             $transicion = TransicionFlujo::with(['estadoOrigen', 'estadoDestino', 'tipoSolicitud', 'usuarioReasignar'])
                 ->findOrFail($id);
-
+            
             return response()->json([
                 'success' => true,
                 'transicion' => $transicion

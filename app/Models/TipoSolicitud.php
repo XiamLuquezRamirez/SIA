@@ -118,10 +118,45 @@ class TipoSolicitud extends Model
 
     /**
      * Relación con solicitudes (cuando se implemente)
+     * Comentado temporalmente hasta que exista el modelo Solicitud
      */
-    public function solicitudes()
+    // public function solicitudes()
+    // {
+    //     return $this->hasMany(Solicitud::class, 'tipo_solicitud_id');
+    // }
+
+    /**
+     * Relación con campos personalizados
+     */
+    public function camposPersonalizados()
     {
-        return $this->hasMany(Solicitud::class, 'tipo_solicitud_id');
+        return $this->belongsToMany(CampoPersonalizado::class, 'campos_tipo_solicitud')
+            ->withPivot([
+                'nombre_override',
+                'etiqueta_override',
+                'variable_override',
+                'descripcion_override',
+                'placeholder_override',
+                'valor_defecto_override',
+                'obligatorio',
+                'solo_lectura',
+                'oculto',
+                'ancho',
+                'orden',
+                'seccion',
+                'mostrar_si',
+                'tipo_origen'
+            ])
+            ->withTimestamps();
+    }
+
+    /**
+     * Relación con transiciones de flujo personalizadas
+     */
+    public function transicionesFlujo()
+    {
+        return $this->hasMany(TransicionFlujo::class, 'tipo_solicitud_id')
+            ->orderBy('orden');
     }
 
     /**
@@ -141,7 +176,7 @@ class TipoSolicitud extends Model
         if (is_numeric($categoria)) {
             return $query->where('categoria_id', $categoria);
         }
-        
+
         // Buscar categoría por slug y filtrar
         return $query->whereHas('categoria', function ($q) use ($categoria) {
             $q->where('slug', $categoria);
@@ -233,9 +268,9 @@ class TipoSolicitud extends Model
      */
     public function tieneDocumentosRequeridos()
     {
-        return $this->requiere_documentos && 
-               is_array($this->documentos_requeridos) && 
-               count($this->documentos_requeridos) > 0;
+        return $this->requiere_documentos &&
+            is_array($this->documentos_requeridos) &&
+            count($this->documentos_requeridos) > 0;
     }
 
     /**
@@ -244,5 +279,61 @@ class TipoSolicitud extends Model
     public function getDocumentosRequeridosCountAttribute()
     {
         return is_array($this->documentos_requeridos) ? count($this->documentos_requeridos) : 0;
+    }
+
+    /**
+     * Verificar si tiene solicitudes radicadas
+     * Retorna true si tiene al menos una solicitud, false si no tiene o si la tabla no existe
+     */
+    public function tieneSolicitudesRadicadas()
+    {
+        try {
+            // Verificar si la tabla solicitudes existe
+            if (!\Schema::hasTable('solicitudes')) {
+                return false;
+            }
+
+            // Consultar directamente la tabla sin usar relación Eloquent
+            $count = \DB::table('solicitudes')
+                ->where('tipo_solicitud_id', $this->id)
+                ->count();
+
+            return $count > 0;
+        } catch (\Exception $e) {
+            // Si hay algún error (tabla no existe, etc.)
+            \Log::warning('Error al verificar solicitudes radicadas', [
+                'tipo_solicitud_id' => $this->id,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Verificar si se pueden editar los campos del formulario
+     * Solo se pueden editar si NO tiene solicitudes radicadas
+     */
+    public function puedeEditarCampos()
+    {
+        return !$this->tieneSolicitudesRadicadas();
+    }
+
+    /**
+     * Obtener conteo de solicitudes
+     */
+    public function getSolicitudesCountAttribute()
+    {
+        try {
+            if (!\Schema::hasTable('solicitudes')) {
+                return 0;
+            }
+
+            // Consultar directamente la tabla sin usar relación Eloquent
+            return \DB::table('solicitudes')
+                ->where('tipo_solicitud_id', $this->id)
+                ->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
     }
 }

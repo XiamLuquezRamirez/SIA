@@ -3,7 +3,6 @@
         <!-- Logo y Título -->
         <div class="text-center mb-8">
             <img src="{{ asset('images/logo.png') }}" alt="Logo" >
-            <p class="text-sm text-gray-500">Alcaldía de Valledupar</p>
         </div>
 
         <!-- Card de Login -->
@@ -105,21 +104,13 @@
             </form>
 
             <!-- Registro (opcional) -->
-            <div class="mt-6 text-center">
-                <p class="text-sm text-gray-600">
-                    ¿No tienes cuenta?
-                    <a href="#" class="text-green-600 hover:text-green-700 font-semibold">
-                        Regístrate aquí
-                    </a>
-                </p>
-            </div>
         </div>
 
         <!-- Información de Prueba (SOLO DESARROLLO) -->
         <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <p class="text-xs text-yellow-800 font-semibold mb-2">Credenciales de Prueba:</p>
             <p class="text-xs text-yellow-700">Email: admin@alcaldia.gov.co</p>
-            <p class="text-xs text-yellow-700">Password: Admin2025!</p>
+            <p class="text-xs text-yellow-700">Password: admin123</p>
         </div>
     </div>
 </x-guest-layout>

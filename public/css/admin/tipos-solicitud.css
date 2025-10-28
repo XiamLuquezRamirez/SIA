@@ -513,3 +513,294 @@ button {
     background: #2563eb;
 }
 
+/* ========================================
+   MODAL CONFIGURAR FORMULARIO
+   ======================================== */
+
+/* Modal fullscreen */
+#modalConfigurarFormulario {
+    z-index: 9999;
+}
+
+#modalConfigurarFormulario .relative {
+    animation: slideInModal 0.3s ease;
+}
+
+@keyframes slideInModal {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Campos disponibles - Estilo de card arrastrable */
+.campo-disponible {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 0.5rem;
+    cursor: grab;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.campo-disponible:hover {
+    border-color: #3B82F6;
+    background: #EFF6FF;
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.campo-disponible:active {
+    cursor: grabbing;
+    transform: scale(0.98);
+}
+
+.campo-disponible span:first-child {
+    flex-shrink: 0;
+}
+
+.campo-disponible span:last-child {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+/* Área de drop - Estados */
+#area-formulario-drop {
+    transition: all 0.3s ease;
+}
+
+#area-formulario-drop.drag-over {
+    border-color: #3B82F6;
+    background-color: #EFF6FF;
+    border-style: solid;
+}
+
+/* Campo en el formulario */
+.campo-formulario-item {
+    background: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    cursor: move;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.campo-formulario-item:hover {
+    border-color: #3B82F6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.campo-formulario-item.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+}
+
+.campo-formulario-item.selected {
+    border-color: #3B82F6;
+    background: #EFF6FF;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.campo-formulario-item .drag-handle {
+    cursor: grab;
+    color: #9CA3AF;
+    transition: color 0.2s;
+}
+
+.campo-formulario-item:hover .drag-handle {
+    color: #3B82F6;
+}
+
+.campo-formulario-item .drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Botones de acción del campo */
+.campo-formulario-item .btn-config,
+.campo-formulario-item .btn-duplicate,
+.campo-formulario-item .btn-delete {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.campo-formulario-item:hover .btn-config,
+.campo-formulario-item:hover .btn-duplicate,
+.campo-formulario-item:hover .btn-delete {
+    opacity: 1;
+}
+
+/* Badge de campo configurado */
+.badge-configurado {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: #10B981;
+    color: white;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-sin-configurar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: #F59E0B;
+    color: white;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Panel de configuración */
+#panel-config-campo {
+    max-height: calc(100vh - 180px);
+}
+
+#config-campo-contenido {
+    animation: fadeInRight 0.3s ease;
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Formulario de configuración */
+#config-campo-contenido input[type="text"],
+#config-campo-contenido input[type="number"],
+#config-campo-contenido textarea,
+#config-campo-contenido select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #D1D5DB;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+#config-campo-contenido input:focus,
+#config-campo-contenido textarea:focus,
+#config-campo-contenido select:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+#config-campo-contenido label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+/* Botón guardar configuración */
+#config-campo-contenido button[type="button"] {
+    width: 100%;
+    padding: 0.625rem 1rem;
+    background: #3B82F6;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#config-campo-contenido button[type="button"]:hover {
+    background: #2563EB;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Opciones dinámicas (para select, radio, checkbox) */
+.opcion-item {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.opcion-item input {
+    flex: 1;
+}
+
+.opcion-item button {
+    flex-shrink: 0;
+    padding: 0.5rem;
+    background: #EF4444;
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.opcion-item button:hover {
+    background: #DC2626;
+}
+
+/* Botón agregar opción */
+.btn-agregar-opcion {
+    width: 100%;
+    padding: 0.5rem;
+    background: #E5E7EB;
+    color: #374151;
+    border: 1px dashed #9CA3AF;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.btn-agregar-opcion:hover {
+    background: #D1D5DB;
+    border-color: #6B7280;
+}
+
+/* Animación de entrada de campos */
+.campo-formulario-item {
+    animation: slideInField 0.3s ease;
+}
+
+@keyframes slideInField {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    #modalConfigurarFormulario .grid-cols-12 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+
+    #modalConfigurarFormulario .col-span-3,
+    #modalConfigurarFormulario .col-span-6 {
+        grid-column: span 1 / span 1;
+    }
+}
+
