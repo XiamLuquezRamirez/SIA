@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Dependencia;
 use Illuminate\Http\Request;
-
+use App\Models\User;
+use Illuminate\Support\Facades\Storage;
+use App\Models\Equipo;
 class DependenciasController extends Controller
 {
     public function index(Request $request)
@@ -46,6 +48,19 @@ class DependenciasController extends Controller
         return view('admin.dependencias.index');
     }
 
+    public function getUsuarios()
+    {
+        $usuarios = User::with('roles')
+        ->where('tipo_usuario', 'interno')
+        ->where('activo', true)
+        ->orderBy('nombre', 'asc')
+        ->get();
+
+        return response()->json([
+            'usuarios' => $usuarios
+        ]);
+    }
+
     public function guardarDependencia(Request $request)
     {
         $validated = $request->validate([
@@ -70,7 +85,7 @@ class DependenciasController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Dependencia creada exitosamente',
+            'message' => 'Área creada exitosamente',
             'dependencia' => $dependencia
         ], 201);
     }
@@ -133,7 +148,7 @@ class DependenciasController extends Controller
 
 
         if (!empty($cambios)) {
-            \Log::info('Dependencia actualizada exitosamente, cambios realizados: ', [
+            \Log::info('Área actualizada exitosamente, cambios realizados: ', [
                 'dependencia_id' => $dependencia->id,
                 'usuario_que_actualiza' => auth()->id(),
                 'cambios' => $cambios,
@@ -141,7 +156,7 @@ class DependenciasController extends Controller
         }
 
         return response()->json([
-            'message' => 'Dependencia actualizada exitosamente',
+            'message' => 'Área actualizada exitosamente',
             'dependencia' => $dependencia->load(['coordinador']),
             'cambios_realizados' => $cambios,
         ]);
@@ -174,7 +189,7 @@ class DependenciasController extends Controller
 
         // Registrar cambios en log para auditoría
 
-        \Log::info('Dependencia actualizada exitosamente, cambios realizados: ', [
+        \Log::info('Área actualizada exitosamente, cambios realizados: ', [
             'dependencia_id' => $dependencia->id,
             'usuario_que_actualiza' => auth()->id(),
             'cambios' => [
@@ -184,7 +199,7 @@ class DependenciasController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Estado de la dependencia cambiado exitosamente',
+            'message' => 'Estado del área cambiado exitosamente',
         ]);
     }
 
@@ -195,18 +210,18 @@ class DependenciasController extends Controller
         if ($dependencia) {
             $dependencia->delete();
 
-            \Log::info('Dependencia eliminada exitosamente: ', [
+            \Log::info('Área eliminada exitosamente: ', [
                 'dependencia_id' => $dependencia->id,
                 'usuario_que_elimina' => auth()->id(),
             ]);
 
             return response()->json([
-                'message' => 'Dependencia eliminada exitosamente',
+                'message' => 'Área eliminada exitosamente',
                 'icon' => 'success',
             ]);
         } else {
             return response()->json([
-                'message' => 'Dependencia no encontrada',
+                'message' => 'Área no encontrada',
                 'icon' => 'error',
             ]);
         }
@@ -216,5 +231,111 @@ class DependenciasController extends Controller
     {
         $dependencias = Dependencia::select('id', 'nombre')->where('activo', true)->orderBy('nombre', 'asc')->get();
         return response()->json($dependencias);
+    }
+
+    public function organigrama()
+    {
+        return view('admin.dependencias.organigrama');
+    }
+
+    public function getOrganigramaData()
+    {
+        $areas = Dependencia::with('coordinador')->get();
+
+        $data[] = [
+            'id' => "ceo",
+            'name' => "CEO",
+            'tags' => ['ceo'],
+            'title' => "Oficina Central",
+        ];
+
+        foreach ($areas as $area) {
+            $data[] = [
+                'id' => 'area_'.$area->id,
+                'pid' => "ceo",
+                'name' => "ÁREA",
+                'tags' => ['area'],
+                'title' => $area->nombre,
+            ];
+
+            //agregar coordinador de cada area
+            $id_coordinador = null;
+            if ($area->coordinador) {
+                $id_coordinador = 'coordinador_'.$area->coordinador->id;
+                $data[] = [
+                    'id' => $id_coordinador,
+                    'pid' => 'area_'.$area->id,
+                    'name' => explode(" ", $area->coordinador->nombre)[0]." ".explode(" ", $area->coordinador->apellidos)[0],
+                    'title' => "Coordinador del Área",
+                    'tags' => ['coordinador'],
+                    'img' => $area->coordinador->foto_url ? '/storage/usuarios/'.$area->coordinador->foto_url : '/storage/usuarios/default.png',
+                    'tareas_activas_completadas' => [2,4],
+                ];
+            }else{
+                $id_coordinador = "sin_coordinador_".$area->id;
+                $data[] = [
+                    'id' => $id_coordinador,
+                    'pid' => 'area_'.$area->id,
+                    'name' => "Sin Asignar",
+                    'title' => "Coordinador del Área",
+                    'tags' => ['coordinador'],
+                    'img' => '/storage/usuarios/default.png',
+                ];
+            }
+
+            $equipos_area = Equipo::with('lider')->where('area_id', $area->id)->get();
+            foreach ($equipos_area as $equipo) {
+                $data[] = [
+                    'id' => 'equipo_'.$equipo->id,
+                    'pid' => $id_coordinador,
+                    'name' => "EQUIPO",
+                    'title' => $equipo->nombre,
+                    'tags' => ['equipo'],
+                ];
+
+                //agregar lider de cada equipo
+                $id_lider = null;
+                if ($equipo->lider) {
+                    $id_lider = 'lider_'.$equipo->lider->id;
+                    $data[] = [
+                        'id' => $id_lider,
+                        'pid' => 'equipo_'.$equipo->id,
+                        'name' => explode(" ", $equipo->lider->nombre)[0]." ".explode(" ", $equipo->lider->apellidos)[0],
+                        'title' => "Lider del Equipo",
+                        'tags' => ['lider'],
+                        'img' => $equipo->lider->foto_url ? '/storage/usuarios/'.$equipo->lider->foto_url : '/storage/usuarios/default.png',
+                        'tareas_activas_completadas' => [2,4],
+                    ];
+                }else{
+                    $id_lider = "sin_lider_".$equipo->id;
+                    $data[] = [
+                        'id' => $id_lider,
+                        'pid' => 'equipo_'.$equipo->id,
+                        'name' => "Sin Asignar",
+                        'title' => "Lider del Equipo",
+                        'tags' => ['lider'],
+                        'img' => '/storage/usuarios/default.png',
+                    ];
+                }
+
+                //agregar funcionarios de cada equipo
+                $funcionarios_equipo = User::where('equipo_id', $equipo->id)->get();
+                foreach ($funcionarios_equipo as $funcionario) {
+                    $data[] = [
+                        'id' => 'funcionario_'.$funcionario->id,
+                        'pid' => $id_lider,
+                        'name' => explode(" ", $funcionario->nombre)[0]." ".explode(" ", $funcionario->apellidos)[0],
+                        'title' => $funcionario->cargo,
+                        'img' => $funcionario->foto_url ? '/storage/usuarios/'.$funcionario->foto_url : '/storage/usuarios/default.png',
+                        'tags' => ['funcionario'],
+                        'tareas_activas_completadas' => [2,4],
+                    ];
+
+                    $id_lider = 'funcionario_'.$funcionario->id;
+                }
+            }
+        }
+
+        return response()->json($data);
     }
 }

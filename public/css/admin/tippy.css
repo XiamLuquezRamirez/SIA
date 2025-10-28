@@ -1,0 +1,52 @@
+.tippy-box[data-theme~='festivo'] {
+    background-color: rgb(255, 228, 228);
+    color: #d31e1e;
+    border: 1px solid #fc3939;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    font-size: 13px;
+    text-align: center;
+  
+    /* IMPORTANT: no deberías forzar transform/transition aquí */
+    /* evita poner transform o transition global en .tippy-box */
+  }
+  
+  /* --- Animación scale (definida explícitamente) --- */
+  @keyframes tippy-scale {
+    0%   { transform: scale(0.5); opacity: 0; }
+    60%  { transform: scale(1.12); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  /* estado inicial (hidden) */
+  .tippy-box[data-animation='scale'][data-state='hidden'] {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  
+  /* estado visible -> usa la animación */
+  .tippy-box[data-animation='scale'][data-state='visible'] {
+    animation: tippy-scale 240ms cubic-bezier(.18,.89,.32,1.28);
+  }
+  
+  /* flecha (opcional ajustar color) */
+  .tippy-box[data-theme~='festivo'] .tippy-arrow {
+    fill: red !important;
+  }
+
+  .dia-con-evento {
+    background-color: red !important;
+  }
+
+  .help-icon {
+    fill: #2F88FF;
+    cursor: pointer;
+    transition: fill 0.3s ease, transform 0.3s ease;
+  }
+
+  .help-icon:hover {
+    fill: #1e66b3;
+    transform: scale(1.1);
+  }

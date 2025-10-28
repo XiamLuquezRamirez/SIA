@@ -12,7 +12,7 @@ class Categoria extends Model
     /**
      * Nombre de la tabla
      */
-    protected $table = 'categorias';
+    protected $table = 'categorias_solicitud';
 
     /**
      * Campos asignables masivamente
