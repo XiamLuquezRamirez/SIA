@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\ConfiguracionRadicados;
 
-class RadicadosConsecutivosController extends Controller
+class ConfiguracionRadicadosController extends Controller
 {
     public function index(Request $request)
     {
@@ -82,6 +82,7 @@ class RadicadosConsecutivosController extends Controller
        $reiniciar_por = $request->reiniciar_por;
        $numero_inicial = $request->numero_inicial;
 
+
         //crear la configuracion del radicado
         $configuracion_radicado = ConfiguracionRadicados::create([
             'tipo_solicitud_id' => $tipo_solicitud_id,
@@ -93,7 +94,7 @@ class RadicadosConsecutivosController extends Controller
             'longitud_consecutivo' => $longitud_consecutivo,
             'separador' => $separador == 'custom' ? $separador_personalizado : $separador,
             'separador_personalizado' => $separador_personalizado,
-            'reiniciar_por' => $reiniciar_por,
+            'reinicia_por' => $reiniciar_por,
             'numero_inicial' => $numero_inicial,
             'consecutivo' => $numero_inicial,
         ]);
