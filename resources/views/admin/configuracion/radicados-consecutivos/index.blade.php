@@ -199,7 +199,7 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Tipo de Solicitud <span class="text-red-500">*</span>
                                 </label>
-                                <select name="tipo_solicitud" id="tipo_solicitud" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <select name="tipo_solicitud" onchange="seleccionarTipoSolicitud(this.value)" id="tipo_solicitud" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                     
                                 </select>
                                 <span class="error-message text-red-500 text-xs hidden"></span>
@@ -248,9 +248,9 @@
                                 <textarea name="descripcion_tipo_solicitud" id="descripcion_tipo_solicitud" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required></textarea>
                             </div>
 
-                            <div class="col-span-3">
+                            <div class="col-span-3" id="mensajeNoConfiguradoTieneSolicitudes" style="display: none;">
                                 <!-- si tiene solicitudes y no esta configurado, mostrar un mensaje -->
-                                <div id="mensajeNoConfigurado">
+                                <div>
                                     <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                                         <h4 class="font-semibold text-yellow-800 mb-2">Tipo de Solicitud no configurado</h4>
                                         <p class="text-sm text-yellow-700">Este tipo de solicitud tiene solicitudes radicadas y no está configurado. Continúe para configurar el radicado.</p>
@@ -258,7 +258,7 @@
                                 </div>
 
                                 <!-- si no tiene solicitudes, mostrar un mensaje -->
-                                <div id="mensajeNoSolicitudes" class="mt-2">
+                                <div class="mt-2">
                                     <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4" style="display: flex; align-items: center; gap: 10px;">
                                         <input style="transform: scale(1.8);" type="checkbox" name="marcar_para_generar_radicados_retroactivos" checked id="marcar_para_generar_radicados_retroactivos" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
                                         <h4  style="margin-bottom: 0;" class="font-semibold text-yellow-800 mb-2">Marcar para generar radicados retroactivos</h4>
@@ -273,15 +273,15 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div class="col-span-1">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Código del radicado <span class="text-red-500">*</span>
+                                    Código del tipo de solicitud <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" name="codigo_radicado" id="codigo_radicado" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                                <input disabled type="text" name="codigo_radicado" id="codigo_radicado" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
                             </div>
                             <div class="col-span-1">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Vista Previa de la estructura del radicado <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" name="vista_previa_radicado" id="vista_previa_radicado" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required readonly>
+                                <input disabled type="text" name="vista_previa_radicado" id="vista_previa_radicado" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required readonly>
                             </div>
                             <!-- Separador -->
                             <div class="col-span-2 grid grid-cols-2 gap-4">
@@ -290,7 +290,7 @@
                                         Separador <span class="text-red-500">*</span>
                                     </label>
                                     <select onchange="cambiarSeparador(this.value)" name="separador" id="separador" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                                        <option value="-">Guión bajo</option>
+                                        <option value="-">Guión medio</option>
                                         <option value="_">Guión bajo</option>
                                         <option value=".">Punto</option>
                                         <option value="/">Diagonal o barra</option>
@@ -309,7 +309,7 @@
                             </div>
 
                             <!-- Agregar Año a la vista previa del radicado -->
-                            <div class="col-span-1 border border-gray-300 rounded-lg p-2">
+                            <div class="col-span-1 border border-gray-300 rounded-lg p-2" style="height: fit-content;">
                                 <div style="display: flex; align-items: center; gap: 20px; width: 100%;">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">
                                         ¿Desea agregar el año a al radicado?
@@ -325,6 +325,93 @@
                                         <option value="2">2 Digitos ({{ date('y') }})</option>
                                         <option selected value="4">4 Digitos ({{ date('Y') }})</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <!-- agregar mes a la vista previa del radicado -->
+                            <div class="col-span-1 border border-gray-300 rounded-lg p-2" style="height: fit-content;">
+                                <div style="display: flex; align-items: center; gap: 20px; width: 100%;">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        ¿Desea agregar el numero del mes a al radicado?
+                                    </label>
+                                    <input style="transform: scale(1.8);" checked onclick="cambiarAgregarMesAVistaPreviaRadicado()" type="checkbox" name="agregar_mes_a_vista_previa_radicado" id="agregar_mes_a_vista_previa_radicado" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                                </div>
+                                <!-- Numero de digitos que desea agregar del año -->
+                                <div id="numero_digitos_mes_container" class="mt-2" style="display: block;">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Número de dígitos que desea agregar del numero del mes
+                                    </label>
+                                    <select onchange="generarVistaPreviaRadicado()" name="numero_digitos_mes" id="numero_digitos_mes" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="1">1 Digito ({{ intval(05) }}) (Mayo)</option>
+                                        <option selected value="2">2 Digitos (05) (Mayo)</option>
+                                    </select>
+                                    <div class="mt-2 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                                        <p class="text-sm text-yellow-700">
+                                            💡 Si incluye mes, puede reiniciar el consecutivo cada mes
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- agregar configuracion de consecutivo -->
+                            <div class="col-span-2 grid grid-cols-3 gap-4 border border-gray-300 rounded-lg p-2">
+                                <div class="col-span-3">
+                                    <label class="block text-sm font-medium text-gray-900">
+                                        Configuración de consecutivo
+                                    </label>
+                                </div>
+                                <div class="col-span-2 mt-1">
+                                    <label class="block text-sm font-medium text-gray-600 mb-1">
+                                        cantidad de digitos del consecutivo
+                                    </label>
+                                    <select onchange="generarVistaPreviaRadicado()" name="cantidad_digitos_consecutivo" id="cantidad_digitos_consecutivo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="3">3 Digitos (001 - 999) Capacidad de 999</option>
+                                        <option value="4">4 Digitos (0001 - 9999) Capacidad de 9999</option>
+                                        <option selected value="5">5 Digitos (00001 - 99999) Capacidad de 99999 ⭐ Recomendado</option>
+                                        <option value="6">6 Digitos (000001 - 999999) Capacidad de 999999</option>
+                                        <option value="7">7 Digitos (0000001 - 9999999) Capacidad de 9999999</option>
+                                        <option value="8">8 Digitos (00000001 - 99999999) Capacidad de 99999999</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-1 mt-1">
+                                    <label class="block text-sm font-medium text-gray-600 mb-1">
+                                        Número Inicial del Consecutivo
+                                    </label>
+                                    <input min="1" type="number" oninput="generarVistaPreviaRadicado()" name="numero_inicial_consecutivo" id="numero_inicial_consecutivo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="1">
+                                    <span class="error-message text-red-500 text-xs hidden"></span>
+                                </div>
+                                <div class="col-span-3 mt-1">
+                                   <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                                        <h3 class="font-bold text-yellow-900">
+                                           Información importante
+                                        </h3>
+                                        <p class="text-sm text-yellow-700">
+                                           Al Colocar el número inicial del consecutivo <span id="numero_inicial_consecutivo_valor" class="font-bold text-yellow-900">1</span>, se podran registrar <span id="numero_de_solicitudes_podran_registrar" class="font-bold text-yellow-900">99998</span> solicitudes para este tipo de solicitud.
+                                        </p>
+                                   </div>
+                                </div>
+                                <div class="col-span-3 mt-1">
+                                    <label class="block text-sm font-medium text-gray-600 mb-1">
+                                        reiniciar consecutivo cada
+                                    </label>
+                                    <select onchange="cambiarReiniciarConsecutivoCada()" name="reiniciar_consecutivo_cada" id="reiniciar_consecutivo_cada" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option selected value="ano">📅 Cada año (1 de enero)</option>
+                                        <option value="mes">📆 Cada mes (dia 1 de cada mes)</option>
+                                        <option value="nunca">♾️ Nunca</option>
+                                    </select>
+                                    <span class="error-message text-red-500 text-xs hidden"></span>
+                                </div>
+                                <div class="col-span-3 mt-1 bg-blue-50 border border-blue-200 rounded-lg p-2" id="ejemploVisualConsecutivoContainer" style="display: none;">
+                                    <label class="block text-sm font-medium text-blue-700 mb-1">
+                                       Ejemplo visual
+                                    </label>
+                                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-2">
+                                        <p class="text-sm text-blue-700" id="ejemploVisualConsecutivo">
+                                            31 Dic 2025: LIC-CONS-2025-00999
+                                            <br>
+                                            01 Ene 2026: LIC-CONS-2026-00001 ← Reinición del consecutivo
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -347,9 +434,9 @@
                             class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                             Siguiente
                         </button>
-                        <button type="submit" id="submitButton"
+                        <button type="button" id="submitButton" onclick="guardarTipoSolicitud(event)"
                             class="hidden px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                            Guardar Usuario
+                            Guardar Tipo de Solicitud
                         </button>
                     </div>
                 </div>

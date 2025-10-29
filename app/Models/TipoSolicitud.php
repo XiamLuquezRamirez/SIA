@@ -76,6 +76,8 @@ class TipoSolicitud extends Model
         'updated_at' => 'datetime',
     ];
 
+    protected $appends = ['solicitudes_count'];
+
     /**
      * Relación con Categoría
      */
@@ -343,6 +345,6 @@ class TipoSolicitud extends Model
      */
     public function configuracionRadicados()
     {
-        return $this->hasOne(RadicadosConsecutivos::class, 'tipo_solicitud_id');
+        return $this->hasOne(ConfiguracionRadicados::class, 'tipo_solicitud_id');
     }
 }

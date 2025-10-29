@@ -174,16 +174,13 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('plantillas', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'index'])->name('plantillas');
                 Route::get('plantillas/crear', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'create'])->name('plantillas.crear');
                 Route::get('plantillas/{id}/editar', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'edit'])->name('plantillas.editar');
-
-                Route::get('consecutivos', function () {
-                    return view('admin.configuracion.consecutivos');
-                })->name('consecutivos');
             });
 
             // Radicados y Consecutivos
             Route::prefix('radicados-consecutivos')->name('radicados-consecutivos.')->group(function () {
                 Route::resource('/', App\Http\Controllers\Admin\RadicadosConsecutivosController::class);
                 Route::get('tipos-solicitud-select', [App\Http\Controllers\Admin\RadicadosConsecutivosController::class, 'getTiposSolicitudes'])->name('get.tipos.solicitudes');
+                Route::post('guardar', [App\Http\Controllers\Admin\RadicadosConsecutivosController::class, 'guardarConfiguracionRadicado'])->name('guardar');
             });
             
             // Parámetros Generales (con sub-rutas)
