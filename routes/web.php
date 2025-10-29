@@ -179,6 +179,12 @@ Route::middleware(['auth'])->group(function () {
                     return view('admin.configuracion.consecutivos');
                 })->name('consecutivos');
             });
+
+            // Radicados y Consecutivos
+            Route::prefix('radicados-consecutivos')->name('radicados-consecutivos.')->group(function () {
+                Route::resource('/', App\Http\Controllers\Admin\RadicadosConsecutivosController::class);
+                Route::get('tipos-solicitud-select', [App\Http\Controllers\Admin\RadicadosConsecutivosController::class, 'getTiposSolicitudes'])->name('get.tipos.solicitudes');
+            });
             
             // Parámetros Generales (con sub-rutas)
             Route::prefix('parametros')->name('parametros.')->group(function () {

@@ -336,4 +336,13 @@ class TipoSolicitud extends Model
             return 0;
         }
     }
+    
+
+    /**
+     * Obtener Configuracion de Radicados
+     */
+    public function configuracionRadicados()
+    {
+        return $this->hasOne(RadicadosConsecutivos::class, 'tipo_solicitud_id');
+    }
 }

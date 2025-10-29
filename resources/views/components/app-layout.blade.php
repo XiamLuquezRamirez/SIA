@@ -322,6 +322,16 @@
                                 <span class="ml-2">Estados</span>
                             </a>
                         </li>
+
+                        <li>
+                            <a href="{{ route('admin.configuracion.radicados-consecutivos.index') }}"
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.radicados-consecutivos.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }} text-sm">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="ml-2">Radicados y Consecutivos</span>
+                            </a>
+                        </li>
                         
                         <!-- Documentos (con submenú) -->
                         <li x-data="{ openDocs: {{ request()->routeIs('admin.configuracion.documentos.*') || request()->routeIs('admin.configuracion.plantillas') || request()->routeIs('admin.configuracion.consecutivos') ? 'true' : 'false' }} }">
@@ -346,15 +356,6 @@
                                             <path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"></path>
                                         </svg>
                                         <span class="ml-2">Plantillas de Documento</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('admin.configuracion.documentos.consecutivos') }}"
-                                        class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.documentos.consecutivos') || request()->routeIs('admin.configuracion.consecutivos') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600' }} text-sm">
-                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-                                        </svg>
-                                        <span class="ml-2">Consecutivos y Radicados</span>
                                     </a>
                                 </li>
                             </ul>
