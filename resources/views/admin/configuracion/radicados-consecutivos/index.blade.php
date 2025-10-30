@@ -294,7 +294,7 @@
                                         <option value="_">Guión bajo</option>
                                         <option value=".">Punto</option>
                                         <option value="/">Diagonal o barra</option>
-                                        <option value="">Sin separador</option>
+                                        <option value="ninguno">Sin separador</option>
                                         <option value="custom">Personalizado</option>
                                     </select>
                                     <span class="error-message text-red-500 text-xs hidden"></span>
@@ -436,7 +436,6 @@
                         </button>
                         <button type="button" id="submitButton" onclick="guardarTipoSolicitud(event)"
                             class="hidden px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                            Guardar Tipo de Solicitud
                         </button>
                     </div>
                 </div>

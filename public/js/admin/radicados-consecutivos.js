@@ -12,30 +12,30 @@ async function manejarRespuestaFetch(response) {
     // Verificar si la respuesta es HTML (indica redirección a login)
     const contentType = response.headers.get('content-type');
     const esHTML = contentType && contentType.includes('text/html');
-    
+
     // Si recibimos HTML en lugar de JSON, probablemente es una redirección al login
     if (esHTML && (response.status === 200 || response.status === 302)) {
         const texto = await response.text();
-        
+
         // Verificar si contiene el formulario de login
         if (texto.includes('login') || texto.includes('csrf') || texto.includes('password')) {
             mostrarToast('Su sesión ha expirado. Redirigiendo al login...', 'error');
-            
+
             setTimeout(() => {
                 window.location.href = '/login';
             }, 2000);
-            
+
             throw new Error('Sesión expirada');
         }
     }
-    
+
     // Errores de autenticación (401, 405, 419)
     if (response.status === 401 || response.status === 419) {
         try {
             const data = await response.json();
-            
+
             mostrarToast('Su sesión ha expirado. Redirigiendo al login...', 'error');
-            
+
             setTimeout(() => {
                 window.location.href = data.redirect || '/login';
             }, 2000);
@@ -46,15 +46,15 @@ async function manejarRespuestaFetch(response) {
                 window.location.href = '/login';
             }, 2000);
         }
-        
+
         throw new Error('Sesión expirada');
     }
-    
+
     // Error 404 en AJAX
     if (response.status === 404) {
         try {
             const data = await response.json();
-            
+
             // Si la respuesta indica redirección al login
             if (data.redirect) {
                 mostrarToast('Redirigiendo al login...', 'info');
@@ -70,12 +70,12 @@ async function manejarRespuestaFetch(response) {
             // Si no es JSON válido, continuar normalmente
         }
     }
-    
+
     // Error 405 en AJAX
     if (response.status === 405) {
         try {
             const data = await response.json();
-            
+
             if (data.redirect) {
                 mostrarToast('Sesión expirada. Redirigiendo al login...', 'error');
                 setTimeout(() => {
@@ -95,7 +95,7 @@ async function manejarRespuestaFetch(response) {
             throw new Error('Error de conexión');
         }
     }
-    
+
     return response;
 }
 
@@ -109,7 +109,7 @@ let selectedTiposSolicitud = [];
 let debounceTimer = null;
 
 // Inicialización
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     cargarTiposSolicitud();
     configurarEscuchadoresEventos();
 });
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Configurar event listeners
 function configurarEscuchadoresEventos() {
     // Búsqueda con debounce
-    document.getElementById('searchInput').addEventListener('input', function(e) {
+    document.getElementById('searchInput').addEventListener('input', function (e) {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             currentFilters.search = e.target.value;
@@ -127,7 +127,7 @@ function configurarEscuchadoresEventos() {
     });
 
     // Filtros
-    document.getElementById('filterEstado').addEventListener('change', function(e) {
+    document.getElementById('filterEstado').addEventListener('change', function (e) {
         currentFilters.estado_configuracion = e.target.value;
         currentPage = 1;
         cargarTiposSolicitud();
@@ -135,7 +135,7 @@ function configurarEscuchadoresEventos() {
 
 
     // Items por página
-    document.getElementById('perPageSelect').addEventListener('change', function(e) {
+    document.getElementById('perPageSelect').addEventListener('change', function (e) {
         currentPage = 1;
         cargarTiposSolicitud();
     });
@@ -169,7 +169,7 @@ async function cargarTiposSolicitud() {
         renderizarTiposSolicitud(data.data);
         renderizarPaginacion(data);
         actualizarIndicadorFiltros();
-        
+
     } catch (error) {
         console.error('Error:', error);
         if (error.message !== 'Sesión expirada' && error.message !== 'No encontrado - Redirigiendo') {
@@ -191,7 +191,7 @@ function renderizarTiposSolicitud(tiposSolicitud) {
         `;
         return;
     }
-    
+
 
     // Debug: verificar datos de fotos
     tbody.innerHTML = tiposSolicitud.map(tipoSolicitud => `
@@ -264,20 +264,25 @@ function renderizarTiposSolicitud(tiposSolicitud) {
                 </span>
             </td>
             <td class="px-6 py-4 text-center">
-                <div class="relative inline-block text-left" x-data="{ open: false }">
-                    <button @click="open = !open" class="text-gray-400 hover:text-gray-600">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
-                        </svg>
-                    </button>
-                    <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                        <div class="py-1">
-                            <a href="#" onclick="verConfiguracionTipoSolicitud(${tipoSolicitud.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ver Detalle</a>
-                            <a href="#" onclick="editarConfiguracionTipoSolicitud(${tipoSolicitud.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
-                             <a href="#" onclick="eliminarConfiguracionTipoSolicitud(${tipoSolicitud.id}); return false;" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</a>
+                ${tipoSolicitud.configuracion_radicados ? `
+                    <div class="relative inline-block text-left" x-data="{ open: false }">
+                        <button @click="open = !open" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                            </svg>
+                        </button>
+                        <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                            <div class="py-1">
+                                <a href="#" onclick="verConfiguracionTipoSolicitud(${tipoSolicitud.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ver Detalle</a>
+                                <a href="#" onclick="editarConfiguracionTipoSolicitud(${tipoSolicitud.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
+                            </div>
                         </div>
                     </div>
-                </div>
+                ` : `
+                    <div class="px-2 py-1 inline-flex text-xs leading-5 font-semibold">
+                        -
+                    </div>
+                `}
             </td>
         </tr>
     `).join('');
@@ -308,11 +313,10 @@ function renderizarPaginacion(data) {
         if (i === 1 || i === data.last_page || (i >= data.current_page - 2 && i <= data.current_page + 2)) {
             html += `
                 <button onclick="cambiarPagina(${i})"
-                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium ${
-                            i === data.current_page
-                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                : 'bg-white text-gray-500 hover:bg-gray-50'
-                        }">
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium ${i === data.current_page
+                    ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                    : 'bg-white text-gray-500 hover:bg-gray-50'
+                }">
                     ${i}
                 </button>
             `;
@@ -345,7 +349,7 @@ function actualizarIndicadorFiltros() {
     let count = 0;
     if (currentFilters.search) count++;
     if (currentFilters.estado_configuracion) count++;
-    
+
     const badge = document.getElementById('filterBadge');
     const countEl = document.getElementById('filterCount');
 
@@ -397,9 +401,11 @@ var tipoAbrirModal = "crear";
 function abrirModalConfigurarRadicado() {
     tipoAbrirModal = "crear";
     document.getElementById('modalTitle').textContent = 'Configurar Radicado';
+    document.getElementById('submitButton').innerHTML = 'Guardar Configuración de Radicado';
     document.getElementById('configurarRadicadoForm').reset();
     document.getElementById('configurarRadicadoModal').classList.remove('hidden');
     document.getElementById('ejemploVisualConsecutivoContainer').style.display = 'block';
+    document.getElementById('numero_inicial_consecutivo').removeAttribute('readonly');
 
     //cargar tipos de solicitud
     cargarTiposSolicitudSelect();
@@ -427,20 +433,20 @@ async function cargarTiposSolicitudSelect() {
             text: tipo.configuracion_radicados ? '✅ ' + tipo.nombre : '⚙️ ' + tipo.nombre
         });
     });
-    
+
     $('#tipo_solicitud').val(null).trigger('change'); // limpia la selección
     $('#tipo_solicitud').empty();
     inicializarSelect(tiposSolicitudSelect);
 }
 
-async function seleccionarTipoSolicitud(id){
+async function seleccionarTipoSolicitud(id) {
     tipoSolicitudSelected = await tiposSolicitud.find(item => item.id == id);
 
-    if(!tipoSolicitudSelected){
+    if (!tipoSolicitudSelected) {
         return;
     }
 
-    if(!tipoSolicitudSelected.configuracion_radicados){
+    if (!tipoSolicitudSelected.configuracion_radicados) {
         document.getElementById('nombre_tipo_solicitud').value = tipoSolicitudSelected.nombre;
         document.getElementById('categoria_tipo_solicitud').value = tipoSolicitudSelected.categoria.nombre;
         document.getElementById('descripcion_tipo_solicitud').value = tipoSolicitudSelected.descripcion;
@@ -449,13 +455,13 @@ async function seleccionarTipoSolicitud(id){
         document.getElementById('codigo_tipo_solicitud').value = tipoSolicitudSelected.codigo;
         document.getElementById('codigo_radicado').value = tipoSolicitudSelected.codigo;
 
-        if(tipoSolicitudSelected.total_solicitudes_historicas > 0){
+        if (tipoSolicitudSelected.total_solicitudes_historicas > 0) {
             document.getElementById('mensajeNoConfiguradoTieneSolicitudes').style.display = 'block';
-        }else{
+        } else {
             document.getElementById('mensajeNoConfiguradoTieneSolicitudes').style.display = 'none';
         }
-    }else{
-        if(tipoAbrirModal == "crear"){
+    } else {
+        if (tipoAbrirModal == "crear") {
             Swal.fire({
                 title: 'Tipo de solicitud configurado',
                 text: 'El tipo de solicitud ya tiene una configuración de radicado',
@@ -467,37 +473,39 @@ async function seleccionarTipoSolicitud(id){
 }
 
 
-
-function inicializarSelect(datos) {
-    $('#tipo_solicitud').select2({
+async function inicializarSelect(datos) {
+    await $('#tipo_solicitud').select2({
         placeholder: 'Seleccione una opción',
         data: datos,
-        allowClear: true
+        allowClear: true,
+        width: '100%'
     });
+
+    return 1;
 }
 
 
 // Cerrar modal con confirmación
 async function cerrarModalConConfirmacion() {
-        const confirmado = await Swal.fire({
-            title: '¿Descartar cambios?',
-            text: '¿Estás seguro de que deseas salir?',
-            confirmButtonText: 'Sí, descartar',
-            cancelButtonText: 'Continuar editando',
-            showCancelButton: true,
-            showConfirmButton: true,
-            confirmButtonColor: '#dc2626',
-            cancelButtonColor: '#2563eb'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                return true;
-            }
-            return false;
-        });
-
-        if (confirmado) {
-            cerrarModal();
+    const confirmado = await Swal.fire({
+        title: '¿Descartar cambios?',
+        text: '¿Estás seguro de que deseas salir?',
+        confirmButtonText: 'Sí, descartar',
+        cancelButtonText: 'Continuar editando',
+        showCancelButton: true,
+        showConfirmButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#2563eb'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            return true;
         }
+        return false;
+    });
+
+    if (confirmado) {
+        cerrarModal();
+    }
 }
 
 function cerrarModal() {
@@ -575,7 +583,9 @@ function mostrarTab(tabNumber) {
         submitButton.classList.remove('hidden');
 
         //generar vista previa del radicado
-        generarVistaPreviaRadicado();
+        if (tipoAbrirModal == "crear") {
+            generarVistaPreviaRadicado();
+        }
     }
 
     currentTab = tabNumber;
@@ -597,13 +607,13 @@ function validarTabActual() {
     let isValid = true;
 
     if (currentTab === 1) {
-        if(!tipoSolicitudSelected){
+        if (!tipoSolicitudSelected) {
             mostrarError('tipo_solicitud', 'Debe seleccionar un tipo de solicitud');
             isValid = false;
         }
     } else if (currentTab === 2) {
         // Validar Información Laboral
-        
+
     }
 
     return isValid;
@@ -632,11 +642,11 @@ var separador_seleccionado = "-";
 var valores_para_vista_previa_radicado = [];
 var vista_previa_radicado = "";
 function cambiarSeparador(separador) {
-    separador_seleccionado = separador;
+    separador_seleccionado = separador == 'ninguno' ? '' : separador;
 
-    if(separador == "custom"){
+    if (separador == "custom") {
         document.getElementById('separador_personalizado_container').style.display = 'block';
-    }else{
+    } else {
         document.getElementById('separador_personalizado_container').style.display = 'none';
         document.getElementById('separador_personalizado').value = '';
         limpiarTodosLosErrores();
@@ -647,10 +657,10 @@ function cambiarSeparador(separador) {
 function cambiarSeparadorPersonalizado(separador) {
     separador_seleccionado = separador;
     //validar que no sea espacio en blanco 
-    if(separador.trim() == ""){
+    if (separador.trim() == "") {
         mostrarError('separador_personalizado', 'El separador personalizado no puede ser espacio en blanco');
         return;
-    }else{
+    } else {
         limpiarTodosLosErrores();
         generarVistaPreviaRadicado();
     }
@@ -663,19 +673,19 @@ function generarVistaPreviaRadicado() {
     valores_para_vista_previa_radicado.push(tipoSolicitudSelected.codigo);
 
     //agregar el año si esta marcado
-    if(document.getElementById('agregar_ano_a_vista_previa_radicado').checked){
-        if(document.getElementById('numero_digitos_ano').value == 2){
+    if (document.getElementById('agregar_ano_a_vista_previa_radicado').checked) {
+        if (document.getElementById('numero_digitos_ano').value == 2) {
             valores_para_vista_previa_radicado.push(new Date().getFullYear().toString().slice(-2));
-        }else{
+        } else {
             valores_para_vista_previa_radicado.push(new Date().getFullYear().toString());
         }
     }
 
     //agregar el mes si esta marcado
-    if(document.getElementById('agregar_mes_a_vista_previa_radicado').checked){
-        if(document.getElementById('numero_digitos_mes').value == 1){
+    if (document.getElementById('agregar_mes_a_vista_previa_radicado').checked) {
+        if (document.getElementById('numero_digitos_mes').value == 1) {
             valores_para_vista_previa_radicado.push('5');
-        }else{
+        } else {
             valores_para_vista_previa_radicado.push('05');
         }
     }
@@ -686,14 +696,14 @@ function generarVistaPreviaRadicado() {
     var numero_ceros_consecutivo = numero_digitos_consecutivo - numero_caracteres_consecutivo;
 
 
-    if(numero_ceros_consecutivo < 0){
+    if (numero_ceros_consecutivo < 0) {
         mostrarError('numero_inicial_consecutivo', 'El tamaño del número inicial del consecutivo no puede ser mayor al número de dígitos del consecutivo');
-    } else if(numero_caracteres_consecutivo == 0 || document.getElementById('numero_inicial_consecutivo').value == '0'){
+    } else if (numero_caracteres_consecutivo == 0 || document.getElementById('numero_inicial_consecutivo').value == '0') {
         mostrarError('numero_inicial_consecutivo', 'El número inicial del consecutivo no puede ser cero o estar vacío');
-    } else if(parseInt(document.getElementById('numero_inicial_consecutivo').value) < 0){
+    } else if (parseInt(document.getElementById('numero_inicial_consecutivo').value) < 0) {
         mostrarError('numero_inicial_consecutivo', 'El número inicial del consecutivo no puede ser menor a 0');
     }
-    else{
+    else {
         var consecutivo = '0'.repeat(numero_ceros_consecutivo) + document.getElementById('numero_inicial_consecutivo').value;
         document.getElementById('numero_inicial_consecutivo_valor').textContent = document.getElementById('numero_inicial_consecutivo').value;
         document.getElementById('numero_de_solicitudes_podran_registrar').textContent = '9'.repeat(numero_digitos_consecutivo) - parseInt(document.getElementById('numero_inicial_consecutivo').value);
@@ -705,11 +715,11 @@ function generarVistaPreviaRadicado() {
 }
 
 function cambiarAgregarAnoAVistaPreviaRadicado() {
-    if(document.getElementById('agregar_ano_a_vista_previa_radicado').checked){
+    if (document.getElementById('agregar_ano_a_vista_previa_radicado').checked) {
         document.getElementById('numero_digitos_ano_container').style.display = 'block';
         generarVistaPreviaRadicado();
         cambiarReiniciarConsecutivoCada();
-    }else{
+    } else {
         document.getElementById('numero_digitos_ano_container').style.display = 'none';
 
         Swal.fire({
@@ -735,7 +745,7 @@ function cambiarAgregarAnoAVistaPreviaRadicado() {
                 document.getElementById('numero_digitos_ano_container').style.display = 'none';
                 generarVistaPreviaRadicado();
                 cambiarReiniciarConsecutivoCada();
-            }else{
+            } else {
                 document.getElementById('agregar_ano_a_vista_previa_radicado').checked = true;
                 document.getElementById('numero_digitos_ano_container').style.display = 'block';
             }
@@ -744,9 +754,9 @@ function cambiarAgregarAnoAVistaPreviaRadicado() {
 }
 
 function cambiarAgregarMesAVistaPreviaRadicado() {
-    if(document.getElementById('agregar_mes_a_vista_previa_radicado').checked){
+    if (document.getElementById('agregar_mes_a_vista_previa_radicado').checked) {
         document.getElementById('numero_digitos_mes_container').style.display = 'block';
-    }else{
+    } else {
         document.getElementById('numero_digitos_mes_container').style.display = 'none';
     }
 
@@ -762,19 +772,19 @@ function cambiarReiniciarConsecutivoCada() {
 
     var ejemploVisualConsecutivo = document.getElementById('ejemploVisualConsecutivo');
     var texto_ejemplo_visual_consecutivo = "";
-    if(valor == 'ano'){
-        if(checkbox_ano.checked){
+    if (valor == 'ano') {
+        if (checkbox_ano.checked) {
             texto_ejemplo_visual_consecutivo = "31 Dic 2025: LIC-CONS-2025-00999 <br> 01 Ene 2026: LIC-CONS-2026-00001 ← Reinición del consecutivo";
-        }else{
+        } else {
             mostrarError('reiniciar_consecutivo_cada', 'para reiniciar el consecutivo cada año, debe seleccionar la opción de agregar el año al radicado');
         }
-    }else if(valor == 'mes'){
-        if(checkbox_mes.checked){
+    } else if (valor == 'mes') {
+        if (checkbox_mes.checked) {
             texto_ejemplo_visual_consecutivo = "31 Ene 2025: LIC-CONS-2025-01-00999 <br> 01 Feb 2025: LIC-CONS-2025-02-00001 ← Reinición del consecutivo";
-        }else{
+        } else {
             mostrarError('reiniciar_consecutivo_cada', 'para reiniciar el consecutivo cada mes, debe seleccionar la opción de agregar el mes al radicado');
         }
-    } else if(valor == 'nunca'){
+    } else if (valor == 'nunca') {
         texto_ejemplo_visual_consecutivo = "⚠️ Asegúrese de elegir suficientes dígitos, ya que el consecutivo nunca se reiniciara, continúa indefinidamente <br><br> LIC-CONS-2025-00001 <br> ....... <br> LIC-CONS-2025-00003 <br> ....... <br> LIC-CONS-2025-00999";
     }
 
@@ -785,8 +795,43 @@ function cambiarReiniciarConsecutivoCada() {
 function guardarTipoSolicitud(e) {
     limpiarTodosLosErrores();
     e.preventDefault();
-    if(validarTipoSolicitud()){
-        guardarConfiguracionRadicado();
+    if (validarTipoSolicitud()) {
+        if(tipoAbrirModal == "editar") {
+            var cambios = verQueCambiosSeAplicaran();
+            if(cambios.cambio_algo) {
+                Swal.fire({
+                    title: '¿Desea editar la configuración del radicado?',
+                    html: `<div class="message-error bg-red-100 p-2 rounded-md" style="text-align: left;">
+                        <h3 class="font-bold text-red-500">
+                            Los cambios NO afectan radicados ya generados.<br>
+                            Solo aplicarán a partir del próximo radicado<br>
+                            Pueden existir radicados para este tipo de solicitud con diferentes formatos<br>
+                        </h3>
+                    </div> <div class="mt-4 bg-yellow-100 p-2 rounded-md text-yellow-800">
+                        <h3 class="font-bold text-yellow-700">
+                            Cambios a aplicar:
+                        </h3>
+                        <br>
+                        <hr>
+                        <br>
+                        ${cambios.cambios}
+                    </div>`,
+                    icon: 'warning',
+                    confirmButtonText: 'Sí, editar',
+                    cancelButtonText: 'No, cancelar',
+                    showCancelButton: true,
+                    showConfirmButton: true,
+                }).then((result) => {
+                    if(result.isConfirmed) {
+                        editarConfiguracionRadicado();
+                    }
+                });
+            } else {
+                mostrarToast('No hay cambios para aplicar', 'info');
+            }
+        } else {
+            guardarConfiguracionRadicado();
+        }
     }
 }
 
@@ -796,8 +841,8 @@ function validarTipoSolicitud() {
 
     var errores = "<div class='message-error bg-red-100 p-2 rounded-md text-red-500' style='text-align: left;'><ul class='list-disc list-inside'>";
 
-    if(document.getElementById('separador').value == "custom"){
-        if(document.getElementById('separador_personalizado').value.trim() == ""){
+    if (document.getElementById('separador').value == "custom") {
+        if (document.getElementById('separador_personalizado').value.trim() == "") {
             errores += "<li>El separador personalizado no puede ser espacio en blanco</li>";
             mostrarError('separador_personalizado', 'El separador personalizado no puede ser espacio en blanco');
             isValid = false;
@@ -810,15 +855,15 @@ function validarTipoSolicitud() {
     var numero_ceros_consecutivo = numero_digitos_consecutivo - numero_caracteres_consecutivo;
 
 
-    if(numero_ceros_consecutivo < 0){
+    if (numero_ceros_consecutivo < 0) {
         errores += "<li>El tamaño del número inicial del consecutivo no puede ser mayor al número de dígitos del consecutivo</li>";
         mostrarError('numero_inicial_consecutivo', 'El tamaño del número inicial del consecutivo no puede ser mayor al número de dígitos del consecutivo');
         isValid = false;
-    } else if(numero_caracteres_consecutivo == 0 || document.getElementById('numero_inicial_consecutivo').value == '0'){
+    } else if (numero_caracteres_consecutivo == 0 || document.getElementById('numero_inicial_consecutivo').value == '0') {
         errores += "<li>El número inicial del consecutivo no puede ser cero o estar vacío</li>";
         mostrarError('numero_inicial_consecutivo', 'El número inicial del consecutivo no puede ser cero o estar vacío');
         isValid = false;
-    } else if(parseInt(document.getElementById('numero_inicial_consecutivo').value) < 0){
+    } else if (parseInt(document.getElementById('numero_inicial_consecutivo').value) < 0) {
         errores += "<li>El número inicial del consecutivo no puede ser menor a 0</li>";
         mostrarError('numero_inicial_consecutivo', 'El número inicial del consecutivo no puede ser menor a 0');
         isValid = false;
@@ -829,20 +874,20 @@ function validarTipoSolicitud() {
     var checkbox_ano = document.getElementById('agregar_ano_a_vista_previa_radicado');
     var checkbox_mes = document.getElementById('agregar_mes_a_vista_previa_radicado');
 
-    if(valor == 'ano'){
-        if(checkbox_ano.checked == false){
+    if (valor == 'ano') {
+        if (checkbox_ano.checked == false) {
             errores += "<li>Para reiniciar el consecutivo cada año, debe seleccionar la opción de agregar el año al radicado</li>";
             mostrarError('reiniciar_consecutivo_cada', 'Para reiniciar el consecutivo cada año, debe seleccionar la opción de agregar el año al radicado');
             isValid = false;
         }
-    }else if(valor == 'mes'){
-        if(checkbox_mes.checked == false){
+    } else if (valor == 'mes') {
+        if (checkbox_mes.checked == false) {
             errores += "<li>Para reiniciar el consecutivo cada mes, debe seleccionar la opción de agregar el mes al radicado</li>";
             mostrarError('reiniciar_consecutivo_cada', 'Para reiniciar el consecutivo cada mes, debe seleccionar la opción de agregar el mes al radicado');
             isValid = false;
         }
-    } else if(valor == 'nunca'){
-        if(numero_ceros_consecutivo < 5){
+    } else if (valor == 'nunca') {
+        if (numero_ceros_consecutivo < 5) {
             errores += "<li>Asegúrese de elegir suficientes dígitos, ya que el consecutivo nunca se reiniciara, continúa indefinidamente</li>";
             mostrarError('reiniciar_consecutivo_cada', 'Asegúrese de elegir suficientes dígitos, ya que el consecutivo nunca se reiniciara, continúa indefinidamente');
             isValid = false;
@@ -851,7 +896,7 @@ function validarTipoSolicitud() {
 
     errores += "</ul></div>";
 
-    if(!isValid){
+    if (!isValid) {
         Swal.fire({
             title: 'Corrija los siguientes errores',
             html: errores,
@@ -880,15 +925,15 @@ async function guardarConfiguracionRadicado() {
         formData.append('tipo_solicitud_id', tipoSolicitudSelected.id);
         formData.append('codigo', tipoSolicitudSelected.codigo);
         formData.append('incluir_anio', document.getElementById('agregar_ano_a_vista_previa_radicado').checked ? 1 : 0);
-        if(document.getElementById('agregar_ano_a_vista_previa_radicado').checked){
+        if (document.getElementById('agregar_ano_a_vista_previa_radicado').checked) {
             formData.append('formato_anio', document.getElementById('numero_digitos_ano').value);
-        }else{
+        } else {
             formData.append('formato_anio', 0);
         }
         formData.append('incluir_mes', document.getElementById('agregar_mes_a_vista_previa_radicado').checked ? 1 : 0);
-        if(document.getElementById('agregar_mes_a_vista_previa_radicado').checked){
+        if (document.getElementById('agregar_mes_a_vista_previa_radicado').checked) {
             formData.append('formato_mes', document.getElementById('numero_digitos_mes').value);
-        }else{
+        } else {
             formData.append('formato_mes', 0);
         }
         formData.append('longitud_consecutivo', document.getElementById('cantidad_digitos_consecutivo').value);
@@ -964,4 +1009,249 @@ function mostrarToast(message, type = 'success') {
         icon: icons[type] || 'success',
         title: message
     });
+}
+
+async function editarConfiguracionTipoSolicitud(id) {
+    try {
+        // Mostrar loading
+        mostrarSwalCargando('Consultando configuración del radicado, por favor espere...');
+        const response = await fetch('/admin/configuracion/radicados-consecutivos/tipos-solicitud-select');
+        tiposSolicitud = await response.json();
+
+        //filtrar el tipo de solicitud
+        tipoSolicitudSelected = await tiposSolicitud.find(item => item.id == id);
+        Swal.close();
+        abrirModalConfigurarRadicadoEditar();
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function abrirModalConfigurarRadicadoEditar() {
+    tipoAbrirModal = "editar";
+    document.getElementById('modalTitle').textContent = 'Editar Configuración de Radicado';
+    document.getElementById('configurarRadicadoForm').reset();
+    document.getElementById('configurarRadicadoModal').classList.remove('hidden');
+    document.getElementById('submitButton').innerHTML = 'Editar Configuración de Radicado';
+
+    currentTab = 1;
+    mostrarTab(currentTab);
+
+    //cargar tipos de solicitud en el select
+    var tiposSolicitudSelect = [];
+    tiposSolicitud.forEach(tipo => {
+        tiposSolicitudSelect.push({
+            id: tipo.id,
+            text: tipo.configuracion_radicados ? '✅ ' + tipo.nombre : '⚙️ ' + tipo.nombre
+        });
+    });
+
+    $('#tipo_solicitud').empty();
+    inicializarSelect(tiposSolicitudSelect);
+    $('#tipo_solicitud').val(tipoSolicitudSelected.id);
+
+    document.getElementById('nombre_tipo_solicitud').value = tipoSolicitudSelected.nombre;
+    document.getElementById('categoria_tipo_solicitud').value = tipoSolicitudSelected.categoria.nombre;
+    document.getElementById('descripcion_tipo_solicitud').value = tipoSolicitudSelected.descripcion;
+    document.getElementById('area_responsable_tipo_solicitud').value = tipoSolicitudSelected.area_responsable.nombre;
+    document.getElementById('total_solicitudes_historicas_tipo_solicitud').value = tipoSolicitudSelected.total_solicitudes_historicas;
+    document.getElementById('codigo_tipo_solicitud').value = tipoSolicitudSelected.codigo;
+    document.getElementById('codigo_radicado').value = tipoSolicitudSelected.codigo;
+
+    //setear la configuracion del radicado
+    document.getElementById('agregar_ano_a_vista_previa_radicado').checked = tipoSolicitudSelected.configuracion_radicados.incluir_anio;
+    if (tipoSolicitudSelected.configuracion_radicados.incluir_anio) {
+        document.getElementById('numero_digitos_ano_container').style.display = 'block';
+        document.getElementById('numero_digitos_ano').value = tipoSolicitudSelected.configuracion_radicados.formato_anio;
+    } else {
+        document.getElementById('numero_digitos_ano_container').style.display = 'none';
+        document.getElementById('numero_digitos_ano').value = '4';
+    }
+    document.getElementById('numero_digitos_ano').value = tipoSolicitudSelected.configuracion_radicados.formato_anio;
+    document.getElementById('agregar_mes_a_vista_previa_radicado').checked = tipoSolicitudSelected.configuracion_radicados.incluir_mes;
+    if (tipoSolicitudSelected.configuracion_radicados.incluir_mes) {
+        document.getElementById('numero_digitos_mes_container').style.display = 'block';
+        document.getElementById('numero_digitos_mes').value = tipoSolicitudSelected.configuracion_radicados.formato_mes;
+    } else {
+        document.getElementById('numero_digitos_mes_container').style.display = 'none';
+        document.getElementById('numero_digitos_mes').value = '2';
+    }
+    document.getElementById('cantidad_digitos_consecutivo').value = tipoSolicitudSelected.configuracion_radicados.longitud_consecutivo;
+    var separador = tipoSolicitudSelected.configuracion_radicados.separador;
+    if(separador == '-' || separador == '_' || separador == '.' || separador == '/' || separador == 'ninguno') {
+        document.getElementById('separador').value = separador;
+        document.getElementById('separador_personalizado_container').style.display = 'none';
+        document.getElementById('separador_personalizado').value = '';
+        separador_seleccionado = separador == 'ninguno' ? '' : separador;
+    } else {
+        document.getElementById('separador').value = 'custom';
+        document.getElementById('separador_personalizado_container').style.display = 'block';
+        document.getElementById('separador_personalizado').value = separador;
+        separador_seleccionado = 'custom';
+    }
+    document.getElementById('reiniciar_consecutivo_cada').value = tipoSolicitudSelected.configuracion_radicados.reinicia_por;
+    document.getElementById('numero_inicial_consecutivo').value = tipoSolicitudSelected.configuracion_radicados.consecutivo;
+
+    document.getElementById('ejemploVisualConsecutivoContainer').style.display = 'block';
+
+    document.getElementById('numero_inicial_consecutivo').setAttribute('readonly', true);
+    cambiarReiniciarConsecutivoCada();
+
+    setTimeout(() => {
+        generarVistaPreviaRadicado();
+    }, 100);
+
+    return 1;
+}
+
+
+function mostrarSwalCargando(mensaje) {
+    Swal.fire({
+        title: mensaje,
+        icon: 'info',
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        allowClose: false,
+        allowEscapeKey: false,
+        progressBar: true,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+}
+
+async function editarConfiguracionRadicado() {
+
+    const submitButton = document.getElementById('submitButton');
+    const originalText = submitButton.innerHTML;
+
+    try {
+        // Deshabilitar botón y cambiar texto
+        submitButton.disabled = true;
+        submitButton.classList.add('loading');
+        submitButton.innerHTML = '<span class="opacity-0">Guardando...</span>';
+
+        // Preparar FormData
+        const formData = new FormData();
+        // Agregar datos del formulario
+        formData.append('tipo_solicitud_id', tipoSolicitudSelected.id);
+        formData.append('codigo', tipoSolicitudSelected.codigo);
+        formData.append('incluir_anio', document.getElementById('agregar_ano_a_vista_previa_radicado').checked ? 1 : 0);
+        if (document.getElementById('agregar_ano_a_vista_previa_radicado').checked) {
+            formData.append('formato_anio', document.getElementById('numero_digitos_ano').value);
+        } else {
+            formData.append('formato_anio', 0);
+        }
+        formData.append('incluir_mes', document.getElementById('agregar_mes_a_vista_previa_radicado').checked ? 1 : 0);
+        if (document.getElementById('agregar_mes_a_vista_previa_radicado').checked) {
+            formData.append('formato_mes', document.getElementById('numero_digitos_mes').value);
+        } else {
+            formData.append('formato_mes', 0);
+        }
+        formData.append('longitud_consecutivo', document.getElementById('cantidad_digitos_consecutivo').value);
+        formData.append('separador', document.getElementById('separador').value);
+        formData.append('separador_personalizado', document.getElementById('separador_personalizado').value);
+        formData.append('reiniciar_por', document.getElementById('reiniciar_consecutivo_cada').value);
+        formData.append('numero_inicial', document.getElementById('numero_inicial_consecutivo').value);
+
+        // Enviar petición
+        const response = await fetch('/admin/configuracion/radicados-consecutivos/editar', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Éxito
+            mostrarToast(data.message, data.type);
+            cerrarModal();
+
+            // Recargar lista de categorías
+            setTimeout(() => {
+                cargarTiposSolicitud();
+            }, 500);
+
+        } else if (response.status === 422) {
+            // Errores de validación
+            mostrarToast('Por favor corrija los errores en el formulario', 'error');
+
+        } else {
+            // Error del servidor
+            mostrarToast(data.message || 'Error al editar configuración del radicado', 'error');
+        }
+
+    } catch (error) {
+        mostrarToast(error.message || 'Error al editar configuración del radicado', 'error');
+
+    } finally {
+        // Restaurar botón
+        submitButton.disabled = false;
+        submitButton.classList.remove('loading');
+        submitButton.innerHTML = originalText;
+    }
+}
+
+function verQueCambiosSeAplicaran() {
+    var cambio_algo = false;
+    var tipo_reinicio = {
+        'ano': 'Reiniciar el 1 de enero de cada año',
+        'mes': 'Reiniciar el 1 de cada mes',
+        'nunca': 'No reiniciar nunca'
+    };
+
+    var cambios = ['<ul style="text-align: left;" class="list-disc list-inside">'];
+    if(tipoSolicitudSelected.configuracion_radicados.incluir_anio != document.getElementById('agregar_ano_a_vista_previa_radicado').checked) {
+        cambios.push('<li>Incluir año en el radicado: de <strong>' + (tipoSolicitudSelected.configuracion_radicados.incluir_anio ? 'Si' : 'No') + '</strong> a <strong>' + (document.getElementById('agregar_ano_a_vista_previa_radicado').checked ? 'Si' : 'No') + '</strong></li>');
+    }
+
+    if(document.getElementById('agregar_ano_a_vista_previa_radicado').checked) {
+        if(tipoSolicitudSelected.configuracion_radicados.formato_anio != document.getElementById('numero_digitos_ano').value) {
+            cambios.push('<li>Formato de año en el radicado: de <strong>' + "Y".repeat(tipoSolicitudSelected.configuracion_radicados.formato_anio) + '</strong> a <strong>' + "Y".repeat(document.getElementById('numero_digitos_ano').value) + '</strong></li>');
+        }
+    }
+
+    if(tipoSolicitudSelected.configuracion_radicados.incluir_mes != document.getElementById('agregar_mes_a_vista_previa_radicado').checked) {
+        cambios.push('<li>Incluir mes en el radicado: de <strong>' + (tipoSolicitudSelected.configuracion_radicados.incluir_mes ? 'Si' : 'No') + '</strong> a <strong>' + (document.getElementById('agregar_mes_a_vista_previa_radicado').checked ? 'Si' : 'No') + '</strong></li>');
+    }
+
+    if(document.getElementById('agregar_mes_a_vista_previa_radicado').checked) {
+        if(tipoSolicitudSelected.configuracion_radicados.formato_mes != document.getElementById('numero_digitos_mes').value) {
+            cambios.push('<li>Formato de mes en el radicado: de <strong>' + "M".repeat(tipoSolicitudSelected.configuracion_radicados.formato_mes) + '</strong> a <strong>' + "M".repeat(document.getElementById('numero_digitos_mes').value) + '</strong></li>');
+        }
+    }
+
+    if(tipoSolicitudSelected.configuracion_radicados.longitud_consecutivo != document.getElementById('cantidad_digitos_consecutivo').value) {
+        cambios.push('<li>Longitud del consecutivo en el radicado: de <strong>' + (tipoSolicitudSelected.configuracion_radicados.longitud_consecutivo) + '</strong> a <strong>' + (document.getElementById('cantidad_digitos_consecutivo').value) + ' dígitos </strong></li>');
+    }
+
+    if(tipoSolicitudSelected.configuracion_radicados.separador != document.getElementById('separador').value) {
+        if(document.getElementById('separador').value == 'custom') {
+            cambios.push('<li>Separador en el radicado: de <strong>' + (tipoSolicitudSelected.configuracion_radicados.separador) + '</strong> a <strong>' + (document.getElementById('separador_personalizado').value) + '</strong></li>');
+        } else {
+            cambios.push('<li>Separador en el radicado: de <strong>' + (tipoSolicitudSelected.configuracion_radicados.separador) + '</strong> a <strong>' + (document.getElementById('separador').value) + '</strong></li>');
+        }
+    }
+    
+    if(tipoSolicitudSelected.configuracion_radicados.reinicia_por != document.getElementById('reiniciar_consecutivo_cada').value) {
+        cambios.push('<li>Reiniciar consecutivo cada: de <strong>' + (tipo_reinicio[tipoSolicitudSelected.configuracion_radicados.reinicia_por]) + '</strong> a <strong>' + (tipo_reinicio[document.getElementById('reiniciar_consecutivo_cada').value]  ) + '</strong></li>');
+    }
+    
+    cambios.push('</ul>');
+
+    var cambios_html = cambios.join('');
+
+    if(cambios.length > 2) {
+        cambio_algo = true;
+    }
+
+    return {
+        cambios: cambios_html,
+        cambio_algo: cambio_algo
+    };
 }
