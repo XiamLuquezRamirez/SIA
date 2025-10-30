@@ -1,5 +1,5 @@
 <x-app-layout>
-    <x-slot name="title">Festivos</x-slot>
+    <x-slot name="title">Configuración de Radicados por Tipo</x-slot>
     <div class="container mx-auto px-4 py-6">
         <div class="flex justify-between items-center mb-6">
             <div>

@@ -64,7 +64,7 @@
                             <rect x="0" y="0" width="36" height="36" fill-opacity="0" />
                         </svg>
                         <!-- Badge de notificaciones -->
-                        <span class="notification-badge badge-pulse absolute -top-1 -right-1 w-5 h-5 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                        <span id="notification-badge" class="notification-badge badge-pulse absolute -top-1 -right-1 w-5 h-5 text-white text-xs rounded-full flex items-center justify-center">0</span>
                     </button>
 
                     <!-- Icono de Mensajes -->
@@ -131,7 +131,7 @@
                         <!-- Opciones del menú -->
                         <ul class="py-2">
                             <li>
-                                <a href="#" class="user-menu-item flex items-center px-4 py-2 text-sm text-gray-700">
+                                <a href="{{ route('profile.show') }}" class="user-menu-item flex items-center px-4 py-2 text-sm text-gray-700">
                                     <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                     </svg>
@@ -139,20 +139,20 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="#" class="user-menu-item flex items-center px-4 py-2 text-sm text-gray-700">
-                                    <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <a href="{{ route('notificaciones.configurar') }}" class="user-menu-item flex items-center px-4 py-2 text-sm text-gray-700">
+                                    <svg fill="#9ca3af" viewBox="0 0 24 24" id="notification-bell" data-name="Line Color" xmlns="http://www.w3.org/2000/svg" class="icon line-color w-4 h-4 mr-3">
+                                        <path id="secondary" d="M15,18H9a3,3,0,0,0,3,3h0A3,3,0,0,0,15,18Z" style="fill: none; stroke: #9ca3af; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path>
+                                        <path id="primary" d="M19.38,14.38a2.12,2.12,0,0,1,.62,1.5h0A2.12,2.12,0,0,1,17.88,18H6.12A2.12,2.12,0,0,1,4,15.88H4a2.12,2.12,0,0,1,.62-1.5L6,13V9a6,6,0,0,1,6-6h0a6,6,0,0,1,6,6v4Z" style="fill: none; stroke: #9ca3af; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path>
                                     </svg>
-                                    Configuración
+                                    Notificaciones
                                 </a>
                             </li>
                             <li>
                                 <a href="#" class="user-menu-item flex items-center px-4 py-2 text-sm text-gray-700">
-                                    <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    <svg fill="#9ca3af" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="icon line-color w-4 h-4 mr-3">
+                                        <path d="M12,13a1.49,1.49,0,0,0-1,2.61V17a1,1,0,0,0,2,0V15.61A1.49,1.49,0,0,0,12,13Zm5-4V7A5,5,0,0,0,7,7V9a3,3,0,0,0-3,3v7a3,3,0,0,0,3,3H17a3,3,0,0,0,3-3V12A3,3,0,0,0,17,9ZM9,7a3,3,0,0,1,6,0V9H9Zm9,12a1,1,0,0,1-1,1H7a1,1,0,0,1-1-1V12a1,1,0,0,1,1-1H17a1,1,0,0,1,1,1Z"/>
                                     </svg>
-                                    Ayuda
+                                    Seguridad
                                 </a>
                             </li>
                         </ul>
@@ -477,7 +477,35 @@
         {{ $slot }}
     </div>
 
+    
+    @push('scripts')
+    <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
+    <script>
+        var user_id = "{{ auth()->user()->id }}";
+        console.log(user_id);
+        Pusher.logToConsole = true;
+
+        const pusher = new Pusher('61a473ca6a82b3f42a34', {
+            cluster: 'us2',
+            authEndpoint: '/broadcasting/auth',
+            auth: {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            }
+        });
+
+        var channel = pusher.subscribe('users.' + user_id);
+        var notificationBadge = document.getElementById('notification-badge');
+        var numero_notificaciones = notificationBadge.textContent;
+        channel.bind('user-notification', function(data) {
+            numero_notificaciones++;
+        });
+    </script>
+    @endpush
+
     @stack('scripts')
+
 </body>
 
 </html>

@@ -37,6 +37,8 @@ Route::middleware('guest')->group(function () {
 
 // Rutas protegidas (requieren autenticación)
 Route::middleware(['auth'])->group(function () {
+    // Habilitar autorización de canales privados
+    Broadcast::routes(['middleware' => ['auth']]);
     // Logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
@@ -47,7 +49,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [App\Http\Controllers\ProfileController::class, 'show'])->name('show');
         Route::get('/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('edit');
-        Route::put('/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('update');
+        Route::post('/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('update');
         Route::post('/photo', [App\Http\Controllers\ProfileController::class, 'updatePhoto'])->name('photo.update');
         Route::delete('/photo', [App\Http\Controllers\ProfileController::class, 'deletePhoto'])->name('photo.delete');
         Route::put('/password', [App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('password.update');
@@ -363,4 +365,14 @@ Route::middleware(['auth'])->group(function () {
         // });
        
     });
+
+    // ========================================
+    // 🔔 NOTIFICACIONES
+    // ========================================
+    Route::prefix('notificaciones')->name('notificaciones.')->group(function () {
+       Route::get('enviar/{user_id}/{message}', [App\Http\Controllers\NotificationsController::class, 'enviarNotificacion'])->name('enviar');
+       Route::get('configurar', [App\Http\Controllers\NotificationsController::class, 'configurarNotificaciones'])->name('configurar');
+    });
 });
+
+

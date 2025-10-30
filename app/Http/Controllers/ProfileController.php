@@ -59,7 +59,6 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'apellidos' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'telefono' => ['nullable', 'string', 'max:20'],
             'celular' => ['nullable', 'string', 'max:20'],
             'direccion' => ['nullable', 'string', 'max:500'],
@@ -79,6 +78,7 @@ class ProfileController extends Controller
             'subject_type' => 'App\Models\User',
             'subject_id' => $user->id,
             'event' => 'updated',
+            'ip_address' => $request->ip(),
             'properties' => json_encode([
                 'old' => $oldValues,
                 'attributes' => $validated
@@ -121,6 +121,7 @@ class ProfileController extends Controller
             'subject_type' => 'App\Models\User',
             'subject_id' => $user->id,
             'event' => 'photo_updated',
+            'ip_address' => $request->ip(),
             'properties' => json_encode([
                 'old_photo' => $user->foto_url,
                 'new_photo' => $path

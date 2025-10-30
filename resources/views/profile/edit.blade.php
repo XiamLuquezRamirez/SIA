@@ -19,10 +19,8 @@
 
         <!-- Edit Form -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-            <form id="profileForm" method="POST">
+            <form id="profileForm">
                 @csrf
-                @method('PUT')
-
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-900">Información Personal</h3>
                     <p class="mt-1 text-sm text-gray-600">Los campos con <span class="text-red-500">*</span> son obligatorios</p>
@@ -65,6 +63,14 @@
                                 </div>
                                 @endif
                             @endif
+
+                            <!-- Email -->
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700">
+                                    Correo Electrónico <span class="text-red-500">*</span>
+                                </label>
+                                <p class="mt-1 text-sm text-gray-900 bg-white px-3 py-2 rounded border border-gray-200">{{ $user->email }}</p>
+                            </div>
                         </div>
                         <p class="mt-3 text-xs text-gray-500">
                             <svg class="inline w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -104,21 +110,6 @@
                                    maxlength="255"
                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <p class="mt-1 text-xs text-red-600 hidden" id="apellidos-error"></p>
-                        </div>
-
-                        <!-- Email -->
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700">
-                                Correo Electrónico <span class="text-red-500">*</span>
-                            </label>
-                            <input type="email"
-                                   name="email"
-                                   id="email"
-                                   value="{{ old('email', $user->email) }}"
-                                   required
-                                   maxlength="255"
-                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <p class="mt-1 text-xs text-red-600 hidden" id="email-error"></p>
                         </div>
 
                         <!-- Teléfono -->
@@ -239,16 +230,17 @@
             const data = Object.fromEntries(formData.entries());
 
             try {
+                mostrarSwalCargando('Actualizando perfil, por favor espere...');
                 const response = await fetch('{{ route("profile.update") }}', {
-                    method: 'PUT',
+                    method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     },
-                    body: JSON.stringify(data)
+                    body: formData
                 });
 
                 const result = await response.json();
+                Swal.close();
 
                 if (result.success) {
                     await Swal.fire({
@@ -316,5 +308,25 @@
                 }
             }
         });
+
+
+        function mostrarSwalCargando(mensaje) {
+            Swal.fire({
+                title: mensaje,
+                icon: 'info',
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                allowClose: false,
+                allowEscapeKey: false,
+                progressBar: true,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+
+
+
     </script>
 </x-app-layout>
