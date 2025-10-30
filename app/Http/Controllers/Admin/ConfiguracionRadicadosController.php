@@ -111,4 +111,85 @@ class ConfiguracionRadicadosController extends Controller
             'type' => 'success',
         ], 201);
     }
+
+    function editarConfiguracionRadicado(Request $request)
+    {
+        $tipo_solicitud_id = $request->tipo_solicitud_id;
+        $codigo = $request->codigo;
+        $incluir_anio = $request->incluir_anio;
+        $formato_anio = $request->formato_anio;
+        $incluir_mes = $request->incluir_mes;
+        $formato_mes = $request->formato_mes;
+        $longitud_consecutivo = $request->longitud_consecutivo;
+        $separador = $request->separador;
+        $separador_personalizado = $request->separador_personalizado;
+        $reiniciar_por = $request->reiniciar_por;
+        $numero_inicial = $request->numero_inicial;
+        $id_configuracion_radicado = $request->id_configuracion_radicado;
+
+
+        //editar la configuracion del radicado
+        $configuracion_radicado = ConfiguracionRadicados::where('id', $id_configuracion_radicado)->first();
+        
+        $data_old = [
+            'codigo' => $configuracion_radicado->codigo,
+            'incluir_anio' => $configuracion_radicado->incluir_anio,
+            'formato_anio' => $configuracion_radicado->formato_anio,
+            'incluir_mes' => $configuracion_radicado->incluir_mes,
+            'formato_mes' => $configuracion_radicado->formato_mes,
+            'longitud_consecutivo' => $configuracion_radicado->longitud_consecutivo,
+            'separador' => $configuracion_radicado->separador,
+            'reinicia_por' => $configuracion_radicado->reinicia_por,
+        ];
+
+        $configuracion_radicado->codigo = $codigo;
+        $configuracion_radicado->incluir_anio = $incluir_anio;
+        $configuracion_radicado->formato_anio = $formato_anio;
+        $configuracion_radicado->incluir_mes = $incluir_mes;
+        $configuracion_radicado->formato_mes = $formato_mes;
+        $configuracion_radicado->longitud_consecutivo = $longitud_consecutivo;
+        $configuracion_radicado->separador = $separador == 'custom' ? $separador_personalizado : $separador;
+        $configuracion_radicado->reinicia_por = $reiniciar_por;
+        $configuracion_radicado->save();
+
+        //ver que datos cambiaron
+        $data_changed = [];
+        if($data_old['codigo'] != $configuracion_radicado->codigo) {
+            $data_changed[] = 'Código: ' . $data_old['codigo'] . ' -> ' . $configuracion_radicado->codigo;
+        }
+        if($data_old['incluir_anio'] != $configuracion_radicado->incluir_anio) {
+            $data_changed[] = 'Incluir Año: ' . $data_old['incluir_anio'] . ' -> ' . $configuracion_radicado->incluir_anio;
+        }
+        if($data_old['formato_anio'] != $configuracion_radicado->formato_anio) {
+            $data_changed[] = 'Formato Año: ' . $data_old['formato_anio'] . ' -> ' . $configuracion_radicado->formato_anio;
+        }
+        if($data_old['incluir_mes'] != $configuracion_radicado->incluir_mes) {
+            $data_changed[] = 'Incluir Mes: ' . $data_old['incluir_mes'] . ' -> ' . $configuracion_radicado->incluir_mes;
+        }
+        if($data_old['formato_mes'] != $configuracion_radicado->formato_mes) {
+            $data_changed[] = 'Formato Mes: ' . $data_old['formato_mes'] . ' -> ' . $configuracion_radicado->formato_mes;
+        }
+        if($data_old['longitud_consecutivo'] != $configuracion_radicado->longitud_consecutivo) {
+            $data_changed[] = 'Longitud Consecutivo: ' . $data_old['longitud_consecutivo'] . ' -> ' . $configuracion_radicado->longitud_consecutivo;
+        }
+        if($data_old['separador'] != $configuracion_radicado->separador) {
+            $data_changed[] = 'Separador: ' . $data_old['separador'] . ' -> ' . $configuracion_radicado->separador;
+        }
+        if($data_old['reinicia_por'] != $configuracion_radicado->reinicia_por) {
+            $data_changed[] = 'Reiniciar Por: ' . $data_old['reinicia_por'] . ' -> ' . $configuracion_radicado->reinicia_por;
+        }
+
+        //registrar cambios en log para auditoría
+        \Log::info('Configuracion del radicado editada exitosamente: ', [
+            'accion' =>"configurar_radicado_editada",
+            'usuario_que_edita' => auth()->id(),
+            'id_configuracion_radicado' => $configuracion_radicado->id,
+            'cambios_realizados' => $data_changed,
+        ]);
+
+        return response()->json([
+            'message' => 'Configuracion del radicado editada exitosamente',
+            'type' => 'success',
+        ], 200);
+    }
 }

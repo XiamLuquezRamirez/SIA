@@ -181,6 +181,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::resource('/', App\Http\Controllers\Admin\ConfiguracionRadicadosController::class);
                 Route::get('tipos-solicitud-select', [App\Http\Controllers\Admin\ConfiguracionRadicadosController::class, 'getTiposSolicitudes'])->name('get.tipos.solicitudes');
                 Route::post('guardar', [App\Http\Controllers\Admin\ConfiguracionRadicadosController::class, 'guardarConfiguracionRadicado'])->name('guardar');
+                Route::post('editar', [App\Http\Controllers\Admin\ConfiguracionRadicadosController::class, 'editarConfiguracionRadicado'])->name('editar');
             });
             
             // Parámetros Generales (con sub-rutas)

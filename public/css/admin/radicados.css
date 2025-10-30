@@ -1,0 +1,10 @@
+#nextButton, #prevButton, #submitButton, #cancelButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+#nextButton.hidden, #prevButton.hidden, #submitButton.hidden, #cancelButton.hidden {
+    display: none !important;
+}

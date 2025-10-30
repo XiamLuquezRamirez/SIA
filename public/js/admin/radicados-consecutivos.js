@@ -440,6 +440,7 @@ async function cargarTiposSolicitudSelect() {
 }
 
 async function seleccionarTipoSolicitud(id) {
+    limpiarTodosLosErrores();
     tipoSolicitudSelected = await tiposSolicitud.find(item => item.id == id);
 
     if (!tipoSolicitudSelected) {
@@ -466,7 +467,11 @@ async function seleccionarTipoSolicitud(id) {
                 title: 'Tipo de solicitud configurado',
                 text: 'El tipo de solicitud ya tiene una configuración de radicado',
                 icon: 'warning',
-                confirmButtonText: 'Aceptar'
+                confirmButtonText: 'Aceptar',
+                allowOutsideClick: false,
+                didClose: () => {
+                    $('#tipo_solicitud').val(null).trigger('change');
+                }
             });
         }
     }
@@ -487,6 +492,11 @@ async function inicializarSelect(datos) {
 
 // Cerrar modal con confirmación
 async function cerrarModalConConfirmacion() {
+    if(tipoAbrirModal == "ver") {
+        cerrarModal();
+        return;
+    }
+
     const confirmado = await Swal.fire({
         title: '¿Descartar cambios?',
         text: '¿Estás seguro de que deseas salir?',
@@ -580,8 +590,9 @@ function mostrarTab(tabNumber) {
     } else if (tabNumber === 2) {
         prevButton.classList.remove('hidden');
         nextButton.classList.add('hidden');
-        submitButton.classList.remove('hidden');
-
+        if(tipoAbrirModal == "editar" || tipoAbrirModal == "crear") {
+            submitButton.classList.remove('hidden');
+        }
         //generar vista previa del radicado
         if (tipoAbrirModal == "crear") {
             generarVistaPreviaRadicado();
@@ -1027,7 +1038,7 @@ async function editarConfiguracionTipoSolicitud(id) {
     }
 }
 
-function abrirModalConfigurarRadicadoEditar() {
+async function abrirModalConfigurarRadicadoEditar() {
     tipoAbrirModal = "editar";
     document.getElementById('modalTitle').textContent = 'Editar Configuración de Radicado';
     document.getElementById('configurarRadicadoForm').reset();
@@ -1037,6 +1048,12 @@ function abrirModalConfigurarRadicadoEditar() {
     currentTab = 1;
     mostrarTab(currentTab);
 
+    await mapearDatoseditar();
+
+    return 1;
+}
+
+async function mapearDatoseditar(){
     //cargar tipos de solicitud en el select
     var tiposSolicitudSelect = [];
     tiposSolicitud.forEach(tipo => {
@@ -1048,7 +1065,7 @@ function abrirModalConfigurarRadicadoEditar() {
 
     $('#tipo_solicitud').empty();
     inicializarSelect(tiposSolicitudSelect);
-    $('#tipo_solicitud').val(tipoSolicitudSelected.id);
+    $('#tipo_solicitud').val(tipoSolicitudSelected.id).trigger('change');
 
     document.getElementById('nombre_tipo_solicitud').value = tipoSolicitudSelected.nombre;
     document.getElementById('categoria_tipo_solicitud').value = tipoSolicitudSelected.categoria.nombre;
@@ -1087,7 +1104,7 @@ function abrirModalConfigurarRadicadoEditar() {
         document.getElementById('separador').value = 'custom';
         document.getElementById('separador_personalizado_container').style.display = 'block';
         document.getElementById('separador_personalizado').value = separador;
-        separador_seleccionado = 'custom';
+        separador_seleccionado = separador;
     }
     document.getElementById('reiniciar_consecutivo_cada').value = tipoSolicitudSelected.configuracion_radicados.reinicia_por;
     document.getElementById('numero_inicial_consecutivo').value = tipoSolicitudSelected.configuracion_radicados.consecutivo;
@@ -1099,9 +1116,8 @@ function abrirModalConfigurarRadicadoEditar() {
 
     setTimeout(() => {
         generarVistaPreviaRadicado();
+        return 1;
     }, 100);
-
-    return 1;
 }
 
 
@@ -1153,7 +1169,9 @@ async function editarConfiguracionRadicado() {
         formData.append('separador', document.getElementById('separador').value);
         formData.append('separador_personalizado', document.getElementById('separador_personalizado').value);
         formData.append('reiniciar_por', document.getElementById('reiniciar_consecutivo_cada').value);
-        formData.append('numero_inicial', document.getElementById('numero_inicial_consecutivo').value);
+        formData.append('numero_inicial', tipoSolicitudSelected.configuracion_radicados.numero_inicial);
+
+        formData.append('id_configuracion_radicado', tipoSolicitudSelected.configuracion_radicados.id);
 
         // Enviar petición
         const response = await fetch('/admin/configuracion/radicados-consecutivos/editar', {
@@ -1254,4 +1272,30 @@ function verQueCambiosSeAplicaran() {
         cambios: cambios_html,
         cambio_algo: cambio_algo
     };
+}
+
+async function verConfiguracionTipoSolicitud(id) {
+
+    try {
+        // Mostrar loading
+        mostrarSwalCargando('Consultando configuración del radicado, por favor espere...');
+        const response = await fetch('/admin/configuracion/radicados-consecutivos/tipos-solicitud-select');
+        tiposSolicitud = await response.json();
+
+        //filtrar el tipo de solicitud
+        tipoSolicitudSelected = await tiposSolicitud.find(item => item.id == id);
+        Swal.close();
+
+        tipoAbrirModal = "ver";
+        document.getElementById('modalTitle').textContent = 'Ver Configuración de Radicado';
+        document.getElementById('configurarRadicadoForm').reset();
+        document.getElementById('configurarRadicadoModal').classList.remove('hidden');
+    
+        currentTab = 1;
+        mostrarTab(currentTab);
+    
+        await mapearDatoseditar();
+    } catch (error) {
+        console.error('Error:', error);
+    }
 }

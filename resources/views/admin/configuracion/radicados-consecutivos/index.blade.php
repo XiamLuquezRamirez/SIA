@@ -420,22 +420,24 @@
 
                 <!-- Modal Footer -->
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between" style="border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;">
-                    <button type="button" id="prevButton" onclick="anteriorTab()"
-                        class="hidden px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    <button type="button" id="prevButton" onclick="anteriorTab()" class="hidden px-4 py-2 text-white bg-blue-600 border border-blue-700 rounded-lg hover:bg-blue-700 transition">
+                        <svg fill="#ffffff" xmlns="http://www.w3.org/2000/svg"  width="20px" height="20px" viewBox="0 0 52 52" enable-background="new 0 0 52 52" xml:space="preserve">
+                            <path d="M48.6,23H15.4c-0.9,0-1.3-1.1-0.7-1.7l9.6-9.6c0.6-0.6,0.6-1.5,0-2.1l-2.2-2.2c-0.6-0.6-1.5-0.6-2.1,0 L2.5,25c-0.6,0.6-0.6,1.5,0,2.1L20,44.6c0.6,0.6,1.5,0.6,2.1,0l2.1-2.1c0.6-0.6,0.6-1.5,0-2.1l-9.6-9.6C14,30.1,14.4,29,15.3,29 h33.2c0.8,0,1.5-0.6,1.5-1.4v-3C50,23.8,49.4,23,48.6,23z"/>
+                        </svg>
                         Anterior
                     </button>
                     <div class="flex-1"></div>
                     <div class="flex gap-2">
-                        <button type="button" onclick="cerrarModalConConfirmacion()"
-                            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        <button id="cancelButton" type="button" onclick="cerrarModalConConfirmacion()" class="px-4 py-2 text-white bg-red-600 border border-red-700 rounded-lg hover:bg-red-700 transition">
                             Cancelar
                         </button>
-                        <button type="button" id="nextButton" onclick="siguienteTab()"
-                            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        <button type="button" id="nextButton" onclick="siguienteTab()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            <svg fill="#ffffff" width="20px" height="20px" viewBox="0 0 15 15" xmlns="http://www.w3.org/2000/svg" id="arrow">
+                                <path d="M8.29289 2.29289C8.68342 1.90237 9.31658 1.90237 9.70711 2.29289L14.2071 6.79289C14.5976 7.18342 14.5976 7.81658 14.2071 8.20711L9.70711 12.7071C9.31658 13.0976 8.68342 13.0976 8.29289 12.7071C7.90237 12.3166 7.90237 11.6834 8.29289 11.2929L11 8.5H1.5C0.947715 8.5 0.5 8.05228 0.5 7.5C0.5 6.94772 0.947715 6.5 1.5 6.5H11L8.29289 3.70711C7.90237 3.31658 7.90237 2.68342 8.29289 2.29289Z"/>
+                            </svg>
                             Siguiente
                         </button>
-                        <button type="button" id="submitButton" onclick="guardarTipoSolicitud(event)"
-                            class="hidden px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                        <button type="button" id="submitButton" onclick="guardarTipoSolicitud(event)" class="hidden px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                         </button>
                     </div>
                 </div>
@@ -445,6 +447,7 @@
 
 
     @push('styles')
+    <link rel="stylesheet" href="{{ asset('css/admin/radicados.css') }}">
     <link rel="stylesheet" href="{{ asset('css/admin/usuarios-modal.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     @endpush
