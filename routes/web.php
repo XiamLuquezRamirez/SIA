@@ -375,6 +375,14 @@ Route::middleware(['auth'])->group(function () {
        Route::post('guardar-configuracion', [App\Http\Controllers\NotificationsController::class, 'guardarConfiguracion'])->name('guardar-configuracion');
        Route::get('obtener-configuracion', [App\Http\Controllers\NotificationsController::class, 'obtenerConfiguracion'])->name('obtener-configuracion');
     });
+
+    // ========================================
+    // 🔒 SEGURIDAD Y PRIVACIDAD
+    // ========================================
+    Route::prefix('seguridad')->name('seguridad.')->group(function () {
+        Route::get('/', [App\Http\Controllers\SeguridadController::class, 'index'])->name('index');
+        Route::get('registrar-sesion', [App\Http\Controllers\SeguridadController::class, 'registrarSesion'])->name('registrar-sesion');
+    });
 });
 
 

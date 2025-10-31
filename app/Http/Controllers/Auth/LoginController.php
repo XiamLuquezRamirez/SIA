@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use App\Http\Controllers\SeguridadController;
 
 class LoginController extends Controller
 {
@@ -61,6 +62,12 @@ class LoginController extends Controller
 
             // Registrar login exitoso
             ActivityLog::logLogin($user);
+
+            // Registrar sesión
+            $seguridadController = new SeguridadController();
+            $request->ip_privada = request()->ip();
+
+            $seguridadController->registrarSesion($request);
 
             // Redirigir según rol
             if ($user->hasRole(['Super Administrador', 'Director OAPM'])) {

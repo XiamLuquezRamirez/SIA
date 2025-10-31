@@ -94,6 +94,8 @@
                     </a>
                 </div>
 
+                <input type="hidden" name="ip_publica" id="ip_publica">
+
                 <!-- Botón Submit -->
                 <button
                     type="submit"
@@ -113,4 +115,24 @@
             <p class="text-xs text-yellow-700">Password: admin123</p>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            obtenerIpPublica().then(ip => {
+                document.getElementById('ip_publica').value = ip;
+            });
+        });
+
+        async function obtenerIpPublica() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                if (!res.ok) throw new Error('Respuesta no OK');
+                const data = await res.json();
+                return data.ip; // cadena con la IP pública
+            } catch (err) {
+                console.error('No se pudo obtener la IP pública:', err);
+                return null;
+            }
+        }
+    </script>
 </x-guest-layout>
