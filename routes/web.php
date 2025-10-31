@@ -372,6 +372,8 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('notificaciones')->name('notificaciones.')->group(function () {
        Route::get('enviar/{user_id}/{message}', [App\Http\Controllers\NotificationsController::class, 'enviarNotificacion'])->name('enviar');
        Route::get('configurar', [App\Http\Controllers\NotificationsController::class, 'configurarNotificaciones'])->name('configurar');
+       Route::post('guardar-configuracion', [App\Http\Controllers\NotificationsController::class, 'guardarConfiguracion'])->name('guardar-configuracion');
+       Route::get('obtener-configuracion', [App\Http\Controllers\NotificationsController::class, 'obtenerConfiguracion'])->name('obtener-configuracion');
     });
 });
 

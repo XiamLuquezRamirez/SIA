@@ -220,6 +220,8 @@ class ProfileController extends Controller
         // Log the activity
         ActivityLog::create([
             'user_id' => $user->id,
+            'user_name' => $user->nombre . ' ' . $user->apellidos,
+            'user_email' => $user->email,
             'log_name' => 'user_profile',
             'description' => 'Usuario cambió su contraseña',
             'subject_type' => 'App\Models\User',
