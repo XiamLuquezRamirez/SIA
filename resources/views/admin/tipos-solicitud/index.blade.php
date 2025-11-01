@@ -3,7 +3,7 @@
 
     @push('styles')
     <link rel="stylesheet" href="{{ asset('css/admin/tipos-solicitud.css') }}?v={{ time() }}">
-    @endpush
+    @endpush  
 
     <div class="container mx-auto">
         <!-- Header -->
@@ -44,12 +44,14 @@
                     <p class="text-gray-600 text-sm mt-1">Configurar y gestionar tipos de solicitudes del sistema</p>
                 </div>
                 <div class="flex gap-2">
+                    @can('tipos_solicitud.crear')
                     <button onclick="abrirModalNuevoTipo()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
                         Nuevo Tipo
                     </button>
+                    @endcan
                 </div>
             </div>
         </div>
@@ -116,9 +118,42 @@
             </div>
         </div>
 
-        <!-- Grid de Cards -->
-        <div id="tiposGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Los cards se cargarán aquí via JavaScript -->
+        <!-- Contenedor con Grid y Paginación -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <!-- Grid de Cards -->
+            <div id="tiposGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                <!-- Los cards se cargarán aquí via JavaScript -->
+            </div>
+
+            <!-- Paginación -->
+            <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <button id="prevPageMobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Anterior
+                    </button>
+                    <button id="nextPageMobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Siguiente
+                    </button>
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Mostrando <span id="showingFrom" class="font-medium">0</span> a <span id="showingTo" class="font-medium">0</span> de <span id="totalTipos" class="font-medium">0</span> resultados
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <select id="perPageSelect" class="border border-gray-300 rounded-md text-sm px-2 py-1">
+                            <option value="6">6 por página</option>
+                            <option value="12">12 por página</option>
+                            <option value="24">24 por página</option>
+                            <option value="50">50 por página</option>
+                        </select>
+                        <nav id="pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            <!-- Pagination buttons will be inserted here -->
+                        </nav>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Skeleton Loader -->
@@ -368,7 +403,7 @@
     </div>
 
     @push('scripts')
-    <script src="{{ asset('js/admin/tipos-solicitud.js') }}"></script>
+    <script src="{{ asset('js/admin/tipos-solicitud.js') }}?v={{ time() }}"></script>
     @endpush
 </x-app-layout>
 

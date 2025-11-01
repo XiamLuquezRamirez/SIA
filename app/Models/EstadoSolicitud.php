@@ -4,77 +4,106 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class EstadoSolicitud extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'estados_solicitud';
 
     protected $fillable = [
+        'codigo',
         'nombre',
         'slug',
         'descripcion',
         'tipo',
+        'es_inicial',
+        'es_final',
+        'es_sistema',
+        'notifica_solicitante',
+        'permite_edicion',
+        'requiere_resolucion',
+        'genera_documento',
+        'pausa_sla',
+        'reinicia_sla',
         'color',
         'icono',
         'orden',
-        'notificar_ciudadano',
-        'notificar_funcionario',
-        'requiere_comentario',
-        'permite_cambios',
-        'visible_ciudadano',
         'activo',
-        'es_sistema',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
-        'notificar_ciudadano' => 'boolean',
-        'notificar_funcionario' => 'boolean',
-        'requiere_comentario' => 'boolean',
-        'permite_cambios' => 'boolean',
-        'visible_ciudadano' => 'boolean',
-        'activo' => 'boolean',
+        'es_inicial' => 'boolean',
+        'es_final' => 'boolean',
         'es_sistema' => 'boolean',
+        'notifica_solicitante' => 'boolean',
+        'permite_edicion' => 'boolean',
+        'requiere_resolucion' => 'boolean',
+        'genera_documento' => 'boolean',
+        'pausa_sla' => 'boolean',
+        'reinicia_sla' => 'boolean',
+        'activo' => 'boolean',
         'orden' => 'integer',
     ];
 
     /**
-     * Relación con transiciones de origen
+     * Relación con usuario creador
      */
-    public function transicionesOrigen()
+    public function creador()
     {
-        return $this->hasMany(TransicionFlujo::class, 'estado_origen_id');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
-     * Relación con transiciones de destino
+     * Relación con usuario que actualizó
      */
-    public function transicionesDestino()
+    public function editor()
     {
-        return $this->hasMany(TransicionFlujo::class, 'estado_destino_id');
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     /**
-     * Obtener todos los estados a los que se puede transicionar desde este
+     * Estados a los que puede avanzar desde este estado
      */
     public function estadosSiguientes()
     {
         return $this->belongsToMany(
             EstadoSolicitud::class,
-            'transiciones_flujo',
-            'estado_origen_id',
-            'estado_destino_id'
-        )->withPivot([
-            'nombre',
-            'descripcion',
-            'roles_permitidos',
-            'requiere_comentario',
-            'requiere_documento',
-            'activo'
-        ]);
+            'estado_siguiente',
+            'estado_actual_id',
+            'estado_siguiente_id'
+        )->withTimestamps();
+    }
+
+    /**
+     * Estados desde los que puede venir
+     */
+    public function estadosAnteriores()
+    {
+        return $this->belongsToMany(
+            EstadoSolicitud::class,
+            'estado_siguiente',
+            'estado_siguiente_id',
+            'estado_actual_id'
+        )->withTimestamps();
+    }
+
+    /**
+     * Roles que pueden asignar este estado
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(
+            Role::class,
+            'estado_rol',
+            'estado_solicitud_id',
+            'role_id'
+        )->withTimestamps();
     }
 
     /**
@@ -102,11 +131,62 @@ class EstadoSolicitud extends Model
     }
 
     /**
-     * Accessor para nombre con icono
+     * Scope para estados del sistema
      */
-    public function getNombreConIconoAttribute()
+    public function scopeSistema($query)
     {
-        return "{$this->icono} {$this->nombre}";
+        return $query->where('es_sistema', true);
+    }
+
+    /**
+     * Generar slug único
+     */
+    public static function generarSlug($nombre)
+    {
+        $slug = Str::slug($nombre);
+        $contador = 1;
+        $slugBase = $slug;
+
+        while (static::where('slug', $slug)->exists()) {
+            $slug = $slugBase . '-' . $contador;
+            $contador++;
+        }
+
+        return $slug;
+    }
+
+    /**
+     * Verificar si tiene solicitudes asociadas
+     */
+    public function tieneSolicitudes()
+    {
+        // TODO: Implementar cuando exista la tabla de solicitudes
+        return false;
+    }
+
+    /**
+     * Contar solicitudes en este estado
+     */
+    public function contarSolicitudes()
+    {
+        // TODO: Implementar cuando exista la tabla de solicitudes
+        return 0;
+    }
+
+    /**
+     * Verificar si puede ser eliminado
+     */
+    public function puedeSerEliminado()
+    {
+        if ($this->es_sistema) {
+            return false;
+        }
+
+        if ($this->tieneSolicitudes()) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -114,7 +194,7 @@ class EstadoSolicitud extends Model
      */
     public function esInicial()
     {
-        return $this->tipo === 'inicial';
+        return $this->es_inicial;
     }
 
     /**
@@ -122,33 +202,38 @@ class EstadoSolicitud extends Model
      */
     public function esFinal()
     {
-        return in_array($this->tipo, ['final', 'final_exitoso', 'final_rechazado', 'cancelado']);
+        return $this->es_final;
     }
 
     /**
-     * Verificar si es estado de proceso
+     * Accessor para nombre con icono
      */
-    public function esProceso()
+    public function getNombreConIconoAttribute()
     {
-        return in_array($this->tipo, ['proceso', 'intermedio']);
+        return $this->icono ? "{$this->icono} {$this->nombre}" : $this->nombre;
     }
 
     /**
-     * Obtener transiciones disponibles para un tipo de solicitud
+     * Obtener badge HTML
      */
-    public function getTransicionesDisponibles($tipoSolicitudId = null)
+    public function getBadgeHtmlAttribute()
     {
-        $query = $this->transicionesOrigen()->where('activo', true);
-        
-        if ($tipoSolicitudId) {
-            $query->where(function($q) use ($tipoSolicitudId) {
-                $q->where('tipo_solicitud_id', $tipoSolicitudId)
-                  ->orWhereNull('tipo_solicitud_id');
-            });
-        } else {
-            $query->whereNull('tipo_solicitud_id');
-        }
-        
-        return $query->get();
+        $tipoClasses = [
+            'inicial' => 'bg-blue-100 text-blue-800',
+            'proceso' => 'bg-orange-100 text-orange-800',
+            'final' => 'bg-green-100 text-green-800',
+            'bloqueante' => 'bg-gray-100 text-gray-800',
+        ];
+
+        $class = $tipoClasses[$this->tipo] ?? 'bg-gray-100 text-gray-800';
+
+        return sprintf(
+            '<span class="px-2 py-1 rounded text-xs font-medium %s" style="background-color: %s20; color: %s;">%s %s</span>',
+            $class,
+            $this->color,
+            $this->color,
+            $this->icono ?? '',
+            $this->nombre
+        );
     }
 }

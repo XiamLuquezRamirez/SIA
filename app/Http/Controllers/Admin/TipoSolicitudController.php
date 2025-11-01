@@ -17,6 +17,12 @@ class TipoSolicitudController extends Controller
      */
     public function index(Request $request)
     {
+
+
+        if(!auth()->user()->can('tipos_solicitud.ver')) {
+            return redirect()->route('admin.dashboard')->with('error', 'No tienes permisos para ver tipos de solicitud');
+        }
+
         // Debug: Verificar autenticación
         \Log::info('TipoSolicitud index - Auth check', [
             'authenticated' => auth()->check(),
@@ -69,9 +75,22 @@ class TipoSolicitudController extends Controller
                 // Ordenar - usar solo campos que existen con seguridad
                 $query->orderBy('id', 'desc');
 
-                $tipos = $query->paginate(6);
+                // Paginación con per_page configurable
+                $perPage = $request->get('per_page', 6);
+                $tipos = $query->paginate($perPage);
 
-                return response()->json($tipos);
+                return response()->json(
+                    [
+                        'tipos' => $tipos,
+                        'permissions' => [
+                            'canCreate' => auth()->user()->can('tipos_solicitud.crear'),
+                            'canEdit' => auth()->user()->can('tipos_solicitud.editar'),
+                            'canDelete' => auth()->user()->can('tipos_solicitud.eliminar'),
+                            'canConfigurarFormulario' => auth()->user()->can('tipos_solicitud.configurar_formulario'),
+                            'canClonar' => auth()->user()->can('tipos_solicitud.clonar'),
+                            'canActivar' => auth()->user()->can('tipos_solicitud.activar'),
+                        ]
+                    ]);
             }
 
             // Vista HTML

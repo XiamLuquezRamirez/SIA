@@ -80,14 +80,11 @@ Route::middleware(['auth'])->group(function () {
             Route::put('{solicitud}', [App\Http\Controllers\Admin\SolicitudController::class, 'update'])->name('update');
             Route::delete('{solicitud}', [App\Http\Controllers\Admin\SolicitudController::class, 'destroy'])->name('destroy');
             
-            // Tipos de Solicitud
-            Route::get('tipos', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'index'])
-                ->name('tipos.index');
-            
-            // APIs de Tipos de Solicitud
+            // API de Tipos de Solicitud (alias para compatibilidad)
             Route::prefix('api/tipos')->name('api.tipos.')->group(function () {
-                Route::get('categorias', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'getCategorias'])->name('categorias');
                 Route::get('/', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'index'])->name('index');
+                Route::get('categorias', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'getCategorias'])->name('categorias');
+                Route::get('getByCodigo/{codigo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'getByCodigo'])->name('getByCodigo');
                 Route::post('/', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'store'])->name('store');
                 Route::get('{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'show'])->name('show');
                 Route::put('{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'update'])->name('update');
@@ -95,7 +92,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::delete('{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'destroy'])->name('destroy');
                 Route::post('{tipo}/plantillas', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'guardarPlantillas'])->name('plantillas');
                 Route::post('{tipo}/campos-rapidos', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'guardarCamposRapidos'])->name('campos-rapidos');
-                Route::get('getByCodigo/{codigo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'getByCodigo'])->name('getByCodigo');
+                Route::post('{tipo}/clonar', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'clonar'])->name('clonar');
             });
         });
         
@@ -160,7 +157,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('equipos-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getEquiposAreaSelect'])->name('equipos-select');
         Route::get('usuarios-area-select', [App\Http\Controllers\Admin\EquiposController::class, 'getUsuariosAreaSelect'])->name('usuarios-area.select');
-    
+       
         // ========================================
         // ⚙️ CONFIGURACIÓN
         // ========================================
@@ -169,6 +166,24 @@ Route::middleware(['auth'])->group(function () {
             Route::get('flujos-estados', [App\Http\Controllers\Admin\FlujosAprobacionController::class, 'index'])
                 ->name('flujos-estados');
             
+            // Tipos de Solicitud
+            Route::get('tipos', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'index'])
+                ->name('tipos.index');
+
+            // APIs de Tipos de Solicitud
+            Route::prefix('api/tipos')->name('api.tipos.')->group(function () {
+                Route::get('categorias', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'getCategorias'])->name('categorias');
+                Route::get('/', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'index'])->name('index');
+                Route::post('/', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'store'])->name('store');
+                Route::get('{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'show'])->name('show');
+                Route::put('{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'update'])->name('update');
+                Route::patch('{tipo}/toggle', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'toggleEstado'])->name('toggle');
+                Route::delete('{tipo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'destroy'])->name('destroy');
+                Route::post('{tipo}/plantillas', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'guardarPlantillas'])->name('plantillas');
+                Route::post('{tipo}/campos-rapidos', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'guardarCamposRapidos'])->name('campos-rapidos');
+                Route::get('getByCodigo/{codigo}', [App\Http\Controllers\Admin\TipoSolicitudController::class, 'getByCodigo'])->name('getByCodigo');
+            });
+
             // Documentos (con sub-rutas)
             Route::prefix('documentos')->name('documentos.')->group(function () {
                 Route::get('plantillas', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'index'])->name('plantillas');
@@ -230,6 +245,10 @@ Route::middleware(['auth'])->group(function () {
             // Biblioteca de Campos Personalizados
             Route::get('campos-personalizados', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'index'])
                 ->name('campos-personalizados.index');
+
+            // Estados de Solicitud
+            Route::get('estados', [App\Http\Controllers\Admin\EstadoSolicitudController::class, 'index'])
+                ->name('estados.index');
         });
 
         // API de Flujos de Aprobación
@@ -261,6 +280,7 @@ Route::middleware(['auth'])->group(function () {
 
                 // Preview y generación de PDF
                 Route::post('{id}/preview', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'previewPDF'])->name('preview');
+                Route::post('{id}/generar', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'generarDocumento'])->name('generar');
 
                 // Importar/Exportar
                 Route::post('exportar', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'exportar'])->name('exportar');
@@ -284,6 +304,24 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('{id}/toggle', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'toggleEstado'])->name('toggle');
                 Route::post('{id}/duplicar', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'duplicar'])->name('duplicar');
                 Route::get('{id}/uso', [App\Http\Controllers\Admin\CampoPersonalizadoController::class, 'verUso'])->name('uso');
+            });
+
+            // Estados de Solicitud - API
+            Route::prefix('estados-solicitud')->name('estados-solicitud.')->group(function () {
+                // Rutas especiales ANTES de las rutas con parámetros
+                Route::get('diagrama', [App\Http\Controllers\Admin\EstadoSolicitudController::class, 'diagrama'])->name('diagrama');
+                Route::put('reordenar', [App\Http\Controllers\Admin\EstadoSolicitudController::class, 'reordenar'])->name('reordenar');
+
+                // Rutas generales
+                Route::get('/', [App\Http\Controllers\Admin\EstadoSolicitudController::class, 'index'])->name('index');
+                Route::post('/', [App\Http\Controllers\Admin\EstadoSolicitudController::class, 'store'])->name('store');
+
+                // Rutas con parámetros {id} al final
+                Route::get('{id}', [App\Http\Controllers\Admin\EstadoSolicitudController::class, 'show'])->name('show');
+                Route::put('{id}', [App\Http\Controllers\Admin\EstadoSolicitudController::class, 'update'])->name('update');
+                Route::delete('{id}', [App\Http\Controllers\Admin\EstadoSolicitudController::class, 'destroy'])->name('destroy');
+                Route::patch('{id}/toggle', [App\Http\Controllers\Admin\EstadoSolicitudController::class, 'toggleEstado'])->name('toggle');
+                Route::post('{id}/duplicar', [App\Http\Controllers\Admin\EstadoSolicitudController::class, 'duplicar'])->name('duplicar');
             });
         });
         
@@ -357,6 +395,6 @@ Route::middleware(['auth'])->group(function () {
         // Route::prefix('reportes')->name('reportes.')->group(function () {
         //     Route::get('/', [App\Http\Controllers\Admin\ReportesController::class, 'index'])->name('index');
         // });
-       
+
     });
 });

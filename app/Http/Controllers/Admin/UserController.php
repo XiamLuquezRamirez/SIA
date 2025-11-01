@@ -27,20 +27,20 @@ class UserController extends Controller
         // Si es petición AJAX, devolver JSON
         if ($request->ajax()) {
             $query = User::with(['area', 'equipo', 'roles']);
-     
-         
+
+
             // Búsqueda
             if ($request->has('search') && $request->search) {
                 $search = $request->search;
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('nombre', 'ILIKE', "%{$search}%")
-                      ->orWhere('apellidos', 'ILIKE', "%{$search}%")
-                      ->orWhere('email', 'ILIKE', "%{$search}%")
-                      ->orWhere('cedula', 'ILIKE', "%{$search}%");
+                        ->orWhere('apellidos', 'ILIKE', "%{$search}%")
+                        ->orWhere('email', 'ILIKE', "%{$search}%")
+                        ->orWhere('cedula', 'ILIKE', "%{$search}%");
                 });
             }
-           
-      
+
+
 
             // Filtro por tipo de usuario
             if ($request->has('tipo') && $request->tipo) {
@@ -53,7 +53,7 @@ class UserController extends Controller
                 $query->where('area_id', $request->area_id);
             }
 
-       
+
             // Filtro por equipo
             if ($request->has('equipo_id') && $request->equipo_id) {
                 $query->where('equipo_id', $request->equipo_id);
@@ -61,7 +61,7 @@ class UserController extends Controller
 
             // Filtro por rol
             if ($request->has('rol') && $request->rol) {
-                $query->whereHas('roles', function($q) use ($request) {
+                $query->whereHas('roles', function ($q) use ($request) {
                     $q->where('name', $request->rol);
                 });
             }
@@ -75,11 +75,11 @@ class UserController extends Controller
                 }
             }
 
-            
+
             // Paginación
             $perPage = $request->get('per_page', 15);
             $users = $query->paginate($perPage);
-           
+
 
             return response()->json($users);
         }
@@ -159,7 +159,7 @@ class UserController extends Controller
         // Enviar correo de bienvenida con contraseña
         try {
             Mail::to($user->email)->send(new UserWelcomeEmail($user, $passwordPlainText));
-            
+
             \Log::info('Email de bienvenida enviado', [
                 'user_id' => $user->id,
                 'user_email' => $user->email,
@@ -244,6 +244,8 @@ class UserController extends Controller
             'foto' => 'nullable|image|max:2048',
             'motivo_cambio_area' => 'nullable|string|max:500',
             'remover_como_coordinador' => 'nullable|boolean',
+            // Hacer la contraseña opcional en actualización
+            'password' => 'nullable|string|min:8|confirmed',
         ], [
             'cedula.unique' => 'Ya existe un usuario con este documento',
             'email.unique' => 'El email ya está registrado',
@@ -251,7 +253,7 @@ class UserController extends Controller
         ]);
 
         // Si es funcionario, validar área y equipo
-        if ($validated['tipo_usuario'] === 'interno') {
+        if (($validated['tipo_usuario'] ?? $user->tipo_usuario) === 'interno') {
             $request->validate([
                 'area_id' => 'required|exists:areas,id',
                 'equipo_id' => 'required|exists:equipos,id',
@@ -330,10 +332,15 @@ class UserController extends Controller
         }
 
         // Si el usuario es externo, asegurar que campos laborales sean null
-        if ($validated['tipo_usuario'] === 'externo') {
+        if (($validated['tipo_usuario'] ?? $user->tipo_usuario) === 'externo') {
             $validated['area_id'] = null;
             $validated['equipo_id'] = null;
             $validated['cargo'] = null;
+        }
+
+        // No actualizar la contraseña si no fue enviada
+        if (empty($validated['password'])) {
+            unset($validated['password']);
         }
 
         // Actualizar usuario
@@ -569,7 +576,7 @@ class UserController extends Controller
     public function getDetalle(string $id)
     {
         $user = User::with([
-            'area.coordinador', 
+            'area.coordinador',
             'equipo.lider',
             'roles.permissions'
         ])->findOrFail($id);
@@ -613,7 +620,7 @@ class UserController extends Controller
         // Roles y permisos organizados por módulo
         $rolesDetalle = [];
         $permisosEfectivos = [];
-        
+
         foreach ($user->roles as $role) {
             $rolesDetalle[] = [
                 'id' => $role->id,
@@ -626,11 +633,11 @@ class UserController extends Controller
                 // Agrupar permisos por módulo (usando el prefijo antes del punto)
                 $partes = explode('.', $permission->name);
                 $modulo = $partes[0] ?? 'general';
-                
+
                 if (!isset($permisosEfectivos[$modulo])) {
                     $permisosEfectivos[$modulo] = [];
                 }
-                
+
                 $permisosEfectivos[$modulo][] = [
                     'nombre' => $permission->name,
                     'rol_origen' => $role->name,
@@ -998,12 +1005,12 @@ class UserController extends Controller
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 
-        $callback = function() use ($usuarios) {
+        $callback = function () use ($usuarios) {
             $file = fopen('php://output', 'w');
-            
+
             // BOM para UTF-8
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
             // Headers
             fputcsv($file, [
                 'ID',
@@ -1190,6 +1197,6 @@ class UserController extends Controller
         return response()->json([
             'usuarios' => $usuarios,
             'total' => $usuarios->count(),
-        ]); 
+        ]);
     }
 }

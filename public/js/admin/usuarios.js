@@ -110,8 +110,11 @@ function mostrarExito(mensaje, titulo = '¡Éxito!') {
         icon: 'success',
         title: titulo,
         text: mensaje,
-        confirmButtonColor: '#2563eb',
-        confirmButtonText: 'Aceptar'
+        timer: 3000,
+        timerProgressBar: true,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false
     });
 }
 
@@ -123,8 +126,11 @@ function mostrarErrorAlerta(mensaje, titulo = 'Error') {
         icon: 'error',
         title: titulo,
         text: mensaje,
-        confirmButtonColor: '#dc2626',
-        confirmButtonText: 'Aceptar'
+        timer: 3000,
+        timerProgressBar: true,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false
     });
 }
 
@@ -136,8 +142,11 @@ function mostrarAdvertencia(mensaje, titulo = 'Advertencia') {
         icon: 'warning',
         title: titulo,
         text: mensaje,
-        confirmButtonColor: '#f59e0b',
-        confirmButtonText: 'Aceptar'
+        timer: 3000,
+        timerProgressBar: true,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false
     });
 }
 
@@ -149,8 +158,11 @@ function mostrarInfo(mensaje, titulo = 'Información') {
         icon: 'info',
         title: titulo,
         text: mensaje,
-        confirmButtonColor: '#2563eb',
-        confirmButtonText: 'Aceptar'
+        timer: 3000,
+        timerProgressBar: true,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false
     });
 }
 
@@ -2216,9 +2228,12 @@ async function eliminarUsuario(id) {
         if (response.ok) {
             await Swal.fire({
                 title: '¡Eliminado!',
-                text: 'El usuario ha sido eliminado exitosamente',
-                icon: 'success',
-                confirmButtonColor: '#3b82f6'
+                toast: true,
+                position: 'top-end',
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                text: 'El usuario ha sido eliminado exitosamente'
             });
 
             // Recargar la tabla de usuarios
@@ -2249,9 +2264,12 @@ async function eliminarUsuario(id) {
         console.error('Error:', error);
         await Swal.fire({
             title: 'Error',
-            text: 'Ocurrió un error al eliminar el usuario',
-            icon: 'error',
-            confirmButtonColor: '#3b82f6'
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            text: error.message || 'Ocurrió un error al eliminar el usuario'
         });
     }
 }
@@ -2337,9 +2355,12 @@ async function gestionarRoles(id) {
         console.error('Error:', error);
         await Swal.fire({
             title: 'Error',
-            text: 'No se pudo cargar la información del usuario',
-            icon: 'error',
-            confirmButtonColor: '#3b82f6'
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            text: error.message || 'No se pudo cargar la información del usuario'
         });
     }
 }
@@ -2443,9 +2464,12 @@ async function removerRolTemporal(rolId) {
     if (rolesTemporales.length === 1) {
         await Swal.fire({
             title: 'No se puede remover',
-            text: 'El usuario debe tener al menos un rol',
-            icon: 'error',
-            confirmButtonColor: '#3b82f6'
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            text: 'El usuario debe tener al menos un rol asignado'
         });
         return;
     }
@@ -2586,7 +2610,11 @@ async function confirmarGuardarRoles() {
             title: 'Error de validación',
             text: 'El usuario debe tener al menos un rol asignado',
             icon: 'error',
-            confirmButtonColor: '#3b82f6'
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
         });
         return;
     }
@@ -2617,7 +2645,11 @@ async function confirmarGuardarRoles() {
                 title: '¡Roles actualizados!',
                 text: responseData.message || 'Los roles han sido actualizados exitosamente',
                 icon: 'success',
-                confirmButtonColor: '#3b82f6'
+                toast: true,
+                position: 'top-end',
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false
             });
 
             // Cerrar modal
@@ -2630,16 +2662,23 @@ async function confirmarGuardarRoles() {
                 title: 'Error',
                 text: responseData.message || 'Error al actualizar roles',
                 icon: 'error',
-                confirmButtonColor: '#3b82f6'
+                toast: true,
+                position: 'top-end',
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false
             });
         }
     } catch (error) {
         console.error('Error:', error);
         await Swal.fire({
             title: 'Error',
-            text: 'Ocurrió un error al actualizar los roles',
-            icon: 'error',
-            confirmButtonColor: '#3b82f6'
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            text: error.message || 'Ocurrió un error al actualizar los roles',
         });
     }
 }
@@ -4158,6 +4197,8 @@ let todosLosPermisosDelSistema = [];
 let rolActualEdicion = null;
 let rolActualPermisos = null;
 let permisosSeleccionados = [];
+let paginaActualRoles = 1;
+let rolesPorPagina = 12;
 
 /**
  * Cambiar entre vista de usuarios y vista de roles
@@ -4185,6 +4226,17 @@ function cambiarVistaUsuariosRoles(vista) {
 
         // Cargar roles al cambiar a la vista
         cargarRolesDelSistema();
+        
+        // Configurar event listener para el selector de items por página (solo una vez)
+        const perPageSelectRoles = document.getElementById('perPageSelectRoles');
+        if (perPageSelectRoles && !perPageSelectRoles.dataset.listenerAdded) {
+            perPageSelectRoles.addEventListener('change', function(e) {
+                rolesPorPagina = parseInt(e.target.value);
+                paginaActualRoles = 1; // Resetear a la primera página
+                renderizarRolesGrid();
+            });
+            perPageSelectRoles.dataset.listenerAdded = 'true';
+        }
     }
 }
 
@@ -4216,7 +4268,12 @@ async function cargarRolesDelSistema() {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudieron cargar los roles del sistema'
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            text: error.message || 'No se pudieron cargar los roles del sistema'
         });
     }
 }
@@ -4284,8 +4341,12 @@ async function cargarAreasParaRoles() {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudieron cargar las áreas. Por favor, recarga la página.',
-            footer: error.message
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            text: error.message || 'No se pudieron cargar las áreas. Por favor, recarga la página.'
         });
     }
 }
@@ -4326,17 +4387,42 @@ function renderizarRolesGrid() {
     if (rolesFiltrados.length === 0) {
         rolesGrid.classList.add('hidden');
         noRolesMessage.classList.remove('hidden');
+        // Ocultar paginación cuando no hay resultados
+        document.getElementById('paginationRoles').parentElement.parentElement.classList.add('hidden');
         return;
     }
 
     rolesGrid.classList.remove('hidden');
     noRolesMessage.classList.add('hidden');
+    
+    // Mostrar paginación
+    document.getElementById('paginationRoles').parentElement.parentElement.classList.remove('hidden');
+
+    // Calcular paginación
+    const totalRoles = rolesFiltrados.length;
+    const totalPaginas = Math.ceil(totalRoles / rolesPorPagina);
+    const inicio = (paginaActualRoles - 1) * rolesPorPagina;
+    const fin = Math.min(inicio + rolesPorPagina, totalRoles);
+    
+    // Obtener roles de la página actual
+    const rolesPaginaActual = rolesFiltrados.slice(inicio, fin);
+
+    // Limpiar grid
     rolesGrid.innerHTML = '';
 
     // Renderizar cada rol como card
-    rolesFiltrados.forEach(rol => {
+    rolesPaginaActual.forEach(rol => {
         const card = crearCardRol(rol);
         rolesGrid.appendChild(card);
+    });
+
+    // Renderizar paginación
+    renderizarPaginacionRoles({
+        from: inicio + 1,
+        to: fin,
+        total: totalRoles,
+        current_page: paginaActualRoles,
+        last_page: totalPaginas
     });
 }
 
@@ -4448,9 +4534,71 @@ function crearCardRol(rol) {
 }
 
 /**
+ * Renderizar paginación de roles
+ */
+function renderizarPaginacionRoles(data) {
+    // Actualizar información de registros
+    document.getElementById('showingFromRoles').textContent = data.from || 0;
+    document.getElementById('showingToRoles').textContent = data.to || 0;
+    document.getElementById('totalRoles').textContent = data.total || 0;
+
+    const pagination = document.getElementById('paginationRoles');
+    let html = '';
+
+    // Botón anterior
+    html += `
+        <button onclick="cambiarPaginaRoles(${data.current_page - 1})"
+                ${data.current_page === 1 ? 'disabled' : ''}
+                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${data.current_page === 1 ? 'cursor-not-allowed opacity-50' : ''}">
+            Anterior
+        </button>
+    `;
+
+    // Páginas
+    for (let i = 1; i <= data.last_page; i++) {
+        if (i === 1 || i === data.last_page || (i >= data.current_page - 2 && i <= data.current_page + 2)) {
+            html += `
+                <button onclick="cambiarPaginaRoles(${i})"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium ${
+                            i === data.current_page
+                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                : 'bg-white text-gray-500 hover:bg-gray-50'
+                        }">
+                    ${i}
+                </button>
+            `;
+        } else if (i === data.current_page - 3 || i === data.current_page + 3) {
+            html += '<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>';
+        }
+    }
+
+    // Botón siguiente
+    html += `
+        <button onclick="cambiarPaginaRoles(${data.current_page + 1})"
+                ${data.current_page === data.last_page ? 'disabled' : ''}
+                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${data.current_page === data.last_page ? 'cursor-not-allowed opacity-50' : ''}">
+            Siguiente
+        </button>
+    `;
+
+    pagination.innerHTML = html;
+}
+
+/**
+ * Cambiar de página en la vista de roles
+ */
+function cambiarPaginaRoles(page) {
+    paginaActualRoles = page;
+    renderizarRolesGrid();
+    // Scroll suave hacia arriba
+    document.getElementById('rolesGrid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/**
  * Filtrar roles según criterios de búsqueda
  */
 function filtrarRoles() {
+    paginaActualRoles = 1; // Resetear a la primera página al filtrar
     renderizarRolesGrid();
 }
 
@@ -4534,7 +4682,12 @@ async function editarRol(idRol) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudo cargar el rol'
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            text: error.message || 'No se pudo cargar el rol'
         });
     }
 }
@@ -4595,9 +4748,12 @@ document.getElementById('roleForm')?.addEventListener('submit', async function(e
         await Swal.fire({
             icon: 'success',
             title: 'Éxito',
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
             text: data.message || 'Rol guardado correctamente',
-            timer: 2000,
-            showConfirmButton: false
         });
 
         cerrarModalRol();
@@ -4607,6 +4763,11 @@ document.getElementById('roleForm')?.addEventListener('submit', async function(e
         Swal.fire({
             icon: 'error',
             title: 'Error',
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
             text: error.message || 'No se pudo guardar el rol'
         });
     }
@@ -4818,7 +4979,12 @@ async function gestionarPermisosRol(idRol) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudieron cargar los permisos'
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            text: error.message || 'No se pudieron cargar los permisos'
         });
     }
 }
@@ -4997,9 +5163,12 @@ async function guardarPermisosRol() {
         await Swal.fire({
             icon: 'success',
             title: 'Éxito',
-            text: data.message || 'Permisos actualizados correctamente',
-            timer: 2000,
-            showConfirmButton: false
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            text: data.message || 'Permisos actualizados correctamente'
         });
 
         cerrarModalPermisos();
@@ -5009,7 +5178,12 @@ async function guardarPermisosRol() {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudieron guardar los permisos'
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            text: error.message || 'No se pudieron guardar los permisos'
         });
     }
 }
@@ -5065,7 +5239,12 @@ async function clonarRol(idRol) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'No se pudo preparar la clonación del rol'
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            text: error.message || 'No se pudo preparar la clonación del rol'
         });
     }
 }
@@ -5156,9 +5335,12 @@ document.getElementById('clonarRolForm')?.addEventListener('submit', async funct
         await Swal.fire({
             icon: 'success',
             title: 'Éxito',
-            text: data.message || 'Rol clonado correctamente',
-            timer: 2000,
-            showConfirmButton: false
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            text: data.message || 'Rol clonado correctamente'
         });
 
         cerrarModalClonarRol();
@@ -5168,6 +5350,11 @@ document.getElementById('clonarRolForm')?.addEventListener('submit', async funct
         Swal.fire({
             icon: 'error',
             title: 'Error',
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
             text: error.message || 'No se pudo clonar el rol'
         });
     }
@@ -5231,9 +5418,12 @@ async function eliminarRol(idRol) {
         await Swal.fire({
             icon: 'success',
             title: 'Eliminado',
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
             text: data.message || 'Rol eliminado correctamente',
-            timer: 2000,
-            showConfirmButton: false
         });
 
         cargarRolesDelSistema();
@@ -5242,6 +5432,11 @@ async function eliminarRol(idRol) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
             text: error.message || 'No se pudo eliminar el rol'
         });
     }

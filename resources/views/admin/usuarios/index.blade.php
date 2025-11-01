@@ -248,6 +248,44 @@
                 </div>
             </div>
 
+            <!-- Paginación -->
+            <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-4 rounded-b-lg">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <button id="prevPageRolesMobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Anterior
+                    </button>
+                    <button id="nextPageRolesMobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Siguiente
+                    </button>
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Mostrando <span id="showingFromRoles" class="font-medium">0</span> a <span id="showingToRoles" class="font-medium">0</span> de <span id="totalRoles" class="font-medium">0</span> resultados
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <select id="perPageSelectRoles" class="border border-gray-300 rounded-md text-sm px-2 py-1">
+                            <option value="6">6 por página</option>
+                            <option value="12" selected>12 por página</option>
+                            <option value="24">24 por página</option>
+                            <option value="50">50 por página</option>
+                        </select>
+                        <nav id="paginationRoles" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            <!-- Pagination buttons will be inserted here -->
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fin Vista de Gestión de Roles -->
+    </div>
+
+    <!-- Modal Crear/Editar Usuario -->
+    <div id="userModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto mb-10 p-0 border w-11/12 max-w-4xl shadow-lg bg-white" style="border-radius: 20px;">
+            <!-- Modal Header -->
             <!-- Mensaje sin resultados -->
             <div id="noRolesMessage" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
                 <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
