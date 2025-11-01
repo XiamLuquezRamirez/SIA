@@ -1,0 +1,371 @@
+/**
+ * Estilos para Gestión de Estados de Solicitud
+ */
+
+/* ========================================
+   Cards de Estados
+   ======================================== */
+.estado-card {
+    transition: all 0.3s ease;
+}
+
+.estado-card:hover {
+    transform: translateY(-2px);
+}
+
+/* ========================================
+   Pestañas de Filtro
+   ======================================== */
+.tab-filter {
+    border-bottom: 2px solid transparent;
+    color: #6B7280;
+    transition: all 0.2s ease;
+}
+
+.tab-filter:hover {
+    color: #374151;
+    border-color: #D1D5DB;
+}
+
+.tab-filter.active {
+    color: #3B82F6;
+    border-color: #3B82F6;
+    font-weight: 600;
+}
+
+/* ========================================
+   Wizard - Indicador de Pasos
+   ======================================== */
+.wizard-step {
+    position: relative;
+    opacity: 0.5;
+}
+
+.wizard-step.active {
+    opacity: 1;
+}
+
+.wizard-step.completed {
+    opacity: 0.8;
+}
+
+.wizard-step .step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #E5E7EB;
+    color: #6B7280;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.wizard-step.active .step-circle {
+    background-color: #3B82F6;
+    color: white;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+.wizard-step.completed .step-circle {
+    background-color: #10B981;
+    color: white;
+}
+
+.wizard-step.completed .step-circle::before {
+    content: '✓';
+}
+
+/* ========================================
+   Panel Lateral de Detalles
+   ======================================== */
+#panelDetalles {
+    transform: translateX(100%);
+}
+
+#panelDetalles:not(.hidden) {
+    transform: translateX(0);
+}
+
+/* ========================================
+   Diagrama de Flujo
+   ======================================== */
+#diagramaContainer {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* ========================================
+   Animaciones
+   ======================================== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* ========================================
+   Badges y Etiquetas
+   ======================================== */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* ========================================
+   Modales
+   ======================================== */
+#wizardModal,
+#diagramaModal {
+    backdrop-filter: blur(4px);
+}
+
+/* ========================================
+   Inputs del Wizard
+   ======================================== */
+#wizardContent input[type="text"],
+#wizardContent input[type="number"],
+#wizardContent textarea,
+#wizardContent select {
+    transition: all 0.2s ease;
+}
+
+#wizardContent input[type="text"]:focus,
+#wizardContent input[type="number"]:focus,
+#wizardContent textarea:focus,
+#wizardContent select:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ========================================
+   Checkboxes
+   ======================================== */
+input[type="checkbox"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ========================================
+   Color Picker
+   ======================================== */
+input[type="color"] {
+    cursor: pointer;
+}
+
+/* ========================================
+   Scrollbar personalizado
+   ======================================== */
+#diagramaContainer::-webkit-scrollbar,
+#panelDetalles::-webkit-scrollbar {
+    width: 8px;
+}
+
+#diagramaContainer::-webkit-scrollbar-track,
+#panelDetalles::-webkit-scrollbar-track {
+    background: #F3F4F6;
+}
+
+#diagramaContainer::-webkit-scrollbar-thumb,
+#panelDetalles::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 4px;
+}
+
+#diagramaContainer::-webkit-scrollbar-thumb:hover,
+#panelDetalles::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
+}
+
+/* ========================================
+   Botones de Acción
+   ======================================== */
+button svg {
+    transition: transform 0.2s ease;
+}
+
+button:hover svg {
+    transform: scale(1.1);
+}
+
+/* ========================================
+   Loading State
+   ======================================== */
+.loading-spinner {
+    border: 3px solid rgba(59, 130, 246, 0.1);
+    border-radius: 50%;
+    border-top-color: #3B82F6;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ========================================
+   Empty State
+   ======================================== */
+.empty-state {
+    padding: 3rem 0;
+}
+
+/* ========================================
+   Responsive
+   ======================================== */
+@media (max-width: 768px) {
+    #panelDetalles {
+        width: 100%;
+    }
+
+    .wizard-step span {
+        display: none;
+    }
+
+    .wizard-step .step-circle {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
+    #wizardModal .max-w-4xl {
+        max-width: 95%;
+    }
+}
+
+/* ========================================
+   Utilidades
+   ======================================== */
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+.shadow-hover:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* ========================================
+   Estados Inactivos
+   ======================================== */
+.estado-card.inactive {
+    opacity: 0.6;
+    background-color: #F9FAFB;
+}
+
+/* ========================================
+   Preview Badge en Paso 4
+   ======================================== */
+.preview-badge {
+    transition: all 0.3s ease;
+}
+
+/* ========================================
+   SweetAlert2 Custom
+   ======================================== */
+.swal2-container .swal2-input {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* ========================================
+   Grid de Estados Siguientes
+   ======================================== */
+.estados-grid label {
+    cursor: pointer;
+}
+
+.estados-grid label:has(input:checked) {
+    background-color: #EFF6FF;
+    border-color: #3B82F6;
+}
+
+/* ========================================
+   Color Palette Buttons
+   ======================================== */
+.color-palette-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.color-palette-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.1);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.color-palette-btn:active::after {
+    width: 100%;
+    height: 100%;
+}
+
+/* ========================================
+   Iconos Emoji Selector
+   ======================================== */
+.emoji-selector button {
+    transition: all 0.2s ease;
+}
+
+.emoji-selector button:hover {
+    transform: scale(1.1);
+}
+
+/* ========================================
+   Roles Grid
+   ======================================== */
+.roles-grid {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* ========================================
+   Diagrama Nodos
+   ======================================== */
+.diagrama-nodo {
+    transition: all 0.2s ease;
+}
+
+.diagrama-nodo:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+@media print {
+    #panelDetalles,
+    .estado-card button,
+    #wizardModal,
+    #diagramaModal {
+        display: none;
+    }
+
+    .estado-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}

@@ -29,19 +29,21 @@
 
         <!-- Header -->
         <div class="mb-6">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">BIBLIOTECA DE CAMPOS PERSONALIZADOS</h1>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Biblioteca de Campos Personalizados</h1>
             <p class="text-gray-600">Cree campos reutilizables que puede usar en diferentes tipos de solicitud</p>
         </div>
 
         <!-- Botones de Acción -->
         <div class="flex justify-end items-right mb-6">
             <div class="flex gap-3">
+                @if(auth()->user()->can('campos_personalizados.crear'))
                 <button onclick="abrirModalNuevoCampo()" class="flex items-right px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
                     Nuevo Campo
                 </button>
+                @endif
             </div>
         </div>
 
@@ -121,12 +123,44 @@
         </div>
 
         <!-- Contenedor de Campos -->
-        <div id="camposContainer" class="min-h-[400px]">
-            <!-- Los campos se cargarán aquí dinámicamente -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div id="camposContainer" class="min-h-[400px]">
+                <!-- Los campos se cargarán aquí dinámicamente -->
+            </div>
+
+            <!-- Paginación -->
+            <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <button id="prevPageMobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Anterior
+                    </button>
+                    <button id="nextPageMobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Siguiente
+                    </button>
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Mostrando <span id="showingFrom" class="font-medium">0</span> a <span id="showingTo" class="font-medium">0</span> de <span id="totalCampos" class="font-medium">0</span> resultados
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <select id="perPageSelect" class="border border-gray-300 rounded-md text-sm px-2 py-1">
+                            <option value="6">6 por página</option>
+                            <option value="12">12 por página</option>
+                            <option value="24">24 por página</option>
+                            <option value="50">50 por página</option>
+                        </select>
+                        <nav id="pagination" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                            <!-- Pagination buttons will be inserted here -->
+                        </nav>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Estado Vacío -->
-        <div id="estadoVacio" class="hidden bg-white rounded-lg shadow-sm p-12 text-center">
+        <div id="emptyState" class="hidden bg-white rounded-lg shadow-sm p-12 text-center">
             <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
             </svg>

@@ -100,9 +100,11 @@ class SeguridadController extends Controller
             ->where('ip', $ip_publica)
             ->where('ip_privada', $ip_privada)
             ->first();
-        $sesion->update([
-            'estado' => 'inactiva',
-        ]);
+            if($sesion){
+                $sesion->update([
+                    'estado' => 'inactiva',
+                ]);
+            }
     }
 
     public function datosSeguridad()

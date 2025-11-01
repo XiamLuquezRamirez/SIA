@@ -14,6 +14,13 @@ class CampoPersonalizadoController extends Controller
     public function index(Request $request)
     {
        
+        if(!auth()->user()->can('campos_personalizados.ver')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para ver campos personalizados'
+            ], 403);
+        }
+
         // Si es petición AJAX, devolver JSON
         if ($request->ajax()) {
             $query = CampoPersonalizado::query();
@@ -55,10 +62,24 @@ class CampoPersonalizadoController extends Controller
             // Cargar relaciones y conteos
             $query->with(['creador', 'tiposSolicitud'])
                   ->withCount('tiposSolicitud');
-                
-            $campos = $query->paginate(6);
+            
+            // Paginación con per_page configurable    
+            $perPage = $request->get('per_page', 6);
+            $campos = $query->paginate($perPage);
 
-            return response()->json($campos);
+            return response()->json([
+                'campos' => $campos,
+                  'permissions' => [
+                        'canCreate' => auth()->user()->can('campos_personalizados.crear'),
+                        'canEdit' => auth()->user()->can('campos_personalizados.editar'),
+                        'canDelete' => auth()->user()->can('campos_personalizados.eliminar'),
+                        'canActivate' => auth()->user()->can('campos_personalizados.activar'),
+                        'canDuplicate' => auth()->user()->can('campos_personalizados.duplicar'),
+                        'canVer' => auth()->user()->can('campos_personalizados.ver'),
+                        'canVerUso' => auth()->user()->can('campos_personalizados.ver_uso')
+                    ] 
+                ]
+            );
         }
 
         // Vista HTML

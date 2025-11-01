@@ -27,6 +27,7 @@ class FlujosAprobacionController extends Controller
     public function getEstados(Request $request)
     {
         try {
+          
             $estados = EstadoSolicitud::activos()
                 ->ordenado()
                 ->get()
@@ -45,6 +46,8 @@ class FlujosAprobacionController extends Controller
                         'es_final' => $estado->esFinal(),
                     ];
                 });
+
+             
 
             return response()->json([
                 'success' => true,

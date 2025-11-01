@@ -247,7 +247,7 @@ class PlantillaDocumento extends Model
     public function getEstadisticas()
     {
         return [
-            'veces_usado' => $this->veces_usado,
+            'veces_usado' => $this->veces_usado ?? 0,
             'ultima_generacion' => $this->ultima_generacion,
             'tipos_asociados' => $this->tiposSolicitud()->count(),
         ];

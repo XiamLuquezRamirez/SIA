@@ -26,8 +26,17 @@ class PlantillaDocumentoController extends Controller
     {
         
         try {
+
+            if(!auth()->user()->can('plantillas.ver')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permisos para ver plantillas'
+                ], 403);
+            }
+
             if ($request->ajax() || $request->wantsJson()) {
-                $query = PlantillaDocumento::with(['creador', 'editor']);
+                $query = PlantillaDocumento::with(['creador', 'editor'])
+                    ->withCount('tiposSolicitud'); // Contar tipos de solicitud de forma eficiente
 
                 // Filtro por tipo de documento
                 if ($request->filled('tipo')) {
@@ -62,15 +71,16 @@ class PlantillaDocumentoController extends Controller
                 $perPage = $request->get('per_page', 6);
                 $plantillas = $query->paginate($perPage);
 
-                // Agregar información de uso
-                $plantillas->getCollection()->transform(function($plantilla) {
-                    $plantilla->tipos_usando = $plantilla->tiposSolicitud()->count();
-                    return $plantilla;
-                });
-
                 return response()->json([
                     'success' => true,
-                    'plantillas' => $plantillas
+                    'plantillas' => $plantillas,
+                    'permissions' => [
+                        'canEdit' => auth()->user()->can('plantillas.editar'),
+                        'canDelete' => auth()->user()->can('plantillas.eliminar'),
+                        'canActivate' => auth()->user()->can('plantillas.activar'),
+                        'canDuplicate' => auth()->user()->can('plantillas.duplicar'),
+                        'canVer' => auth()->user()->can('plantillas.ver'),
+                    ]
                 ]);
             }
 
@@ -150,10 +160,11 @@ class PlantillaDocumentoController extends Controller
                 'margen_izquierdo' => $request->margen_izquierdo ?? 25,
                 'margen_derecho' => $request->margen_derecho ?? 25,
                 'activo' => $request->activo ?? true,
+                'veces_usado' => 0,
                 'created_by' => auth()->id(),
             ]);
 
-            // Extraer y guardar variables usadas
+            // Extraer y guardar variables usadas 
             $plantilla->actualizarVariables();
 
             DB::commit();
@@ -398,6 +409,7 @@ class PlantillaDocumentoController extends Controller
                 'margen_izquierdo' => $request->copiar_configuracion !== false ? $plantillaOriginal->margen_izquierdo : 25,
                 'margen_derecho' => $request->copiar_configuracion !== false ? $plantillaOriginal->margen_derecho : 25,
                 'activo' => $request->activo ?? false,
+                'veces_usado' => 0,
                 'created_by' => auth()->id(),
             ]);
 
@@ -469,11 +481,18 @@ class PlantillaDocumentoController extends Controller
 
             $estadisticas = $plantilla->getEstadisticas();
 
+            // Formatear la última generación para mostrar en el frontend
+            $ultimaGeneracion = $plantilla->ultima_generacion
+                ? $plantilla->ultima_generacion->format('d/m/Y H:i:s')
+                : null;
+
             return response()->json([
                 'success' => true,
-                'plantilla' => $plantilla,
-                'estadisticas' => $estadisticas,
-                'tipos_solicitud' => $plantilla->tiposSolicitud
+                'veces_usado' => $estadisticas['veces_usado'] ?? 0,
+                'tipos_asociados' => $estadisticas['tipos_asociados'] ?? 0,
+                'ultima_generacion' => $ultimaGeneracion,
+                'tipos_solicitud' => $plantilla->tiposSolicitud,
+                'plantilla' => $plantilla
             ]);
 
         } catch (\Exception $e) {
@@ -508,6 +527,12 @@ class PlantillaDocumentoController extends Controller
             // Agregar CSS
             $css = $plantilla->contenido_css ?? '';
 
+            // Incrementar contador de uso (solo si no es una previsualización de ejemplo)
+            // Si tiene datos personalizados, significa que es una generación real
+            if ($request->has('datos_personalizados')) {
+                $plantilla->incrementarUso();
+            }
+
             // TODO: Aquí iría la integración con librería PDF (DomPDF, mPDF, etc.)
             // Por ahora retornamos el HTML procesado
 
@@ -536,6 +561,73 @@ class PlantillaDocumentoController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al generar preview: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Generar documento PDF (producción)
+     */
+    public function generarDocumento(Request $request, $id)
+    {
+        try {
+            $plantilla = PlantillaDocumento::findOrFail($id);
+
+            $validator = Validator::make($request->all(), [
+                'datos' => 'required|array',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Datos inválidos',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Generar HTML completo
+            $htmlCompleto = $plantilla->encabezado_html ?? '';
+            $htmlCompleto .= $plantilla->contenido_html;
+            $htmlCompleto .= $plantilla->pie_pagina_html ?? '';
+
+            // Reemplazar variables con datos reales
+            $htmlFinal = $plantilla->reemplazarVariables($htmlCompleto, $request->datos);
+
+            // Incrementar contador de uso
+            $plantilla->incrementarUso();
+
+            // TODO: Aquí iría la generación real del PDF con DomPDF o mPDF
+            // Por ahora retornamos el HTML procesado
+
+            \Log::info('Documento generado', [
+                'plantilla_id' => $plantilla->id,
+                'plantilla_nombre' => $plantilla->nombre,
+                'veces_usado' => $plantilla->veces_usado,
+                'user_id' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'html' => $htmlFinal,
+                'css' => $plantilla->contenido_css ?? '',
+                'plantilla' => [
+                    'id' => $plantilla->id,
+                    'nombre' => $plantilla->nombre,
+                    'veces_usado' => $plantilla->veces_usado,
+                    'ultima_generacion' => $plantilla->ultima_generacion,
+                ],
+                'message' => 'Documento generado exitosamente'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error al generar documento', [
+                'plantilla_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al generar documento: ' . $e->getMessage()
             ], 500);
         }
     }

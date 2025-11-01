@@ -12,10 +12,13 @@ const SwalOriginal = window.Swal;
 const fireOriginal = SwalOriginal.fire.bind(SwalOriginal);
 
 // Sobrescribir solo el método fire, manteniendo Swal como constructor
-window.Swal.fire = function(options) {
+window.Swal.fire = function (options) {
     // Si el modal de configuración está visible, ajustar z-index
-    const modalConfiguracion = document.getElementById('modalConfigurarFormulario');
-    const modalVisible = modalConfiguracion && !modalConfiguracion.classList.contains('hidden');
+    const modalConfiguracion = document.getElementById(
+        "modalConfigurarFormulario"
+    );
+    const modalVisible =
+        modalConfiguracion && !modalConfiguracion.classList.contains("hidden");
 
     if (modalVisible) {
         // Agregar didOpen a las opciones existentes
@@ -23,15 +26,16 @@ window.Swal.fire = function(options) {
         options = {
             ...options,
             didOpen: () => {
-                const swalContainer = document.querySelector('.swal2-container');
+                const swalContainer =
+                    document.querySelector(".swal2-container");
                 if (swalContainer) {
-                    swalContainer.style.zIndex = '9999';
+                    swalContainer.style.zIndex = "9999";
                 }
                 // Llamar al didOpen original si existe
                 if (originalDidOpen) {
                     originalDidOpen();
                 }
-            }
+            },
         };
     }
 
@@ -227,6 +231,15 @@ function configurarEscuchadores() {
             cargarTiposSolicitud();
             actualizarIndicadorFiltros();
         });
+
+    // Items por página
+    const perPageSelect = document.getElementById("perPageSelect");
+    if (perPageSelect) {
+        perPageSelect.addEventListener("change", function (e) {
+            paginaActual = 1;
+            cargarTiposSolicitud();
+        });
+    }
 }
 
 // ========================================
@@ -237,8 +250,11 @@ async function cargarTiposSolicitud() {
     try {
         mostrarCargador();
 
+        const perPageSelect = document.getElementById("perPageSelect");
+        const perPage = perPageSelect ? perPageSelect.value : 6;
         const params = new URLSearchParams({
             page: paginaActual,
+            per_page: perPage,
             ...filtrosActuales,
         });
 
@@ -270,7 +286,15 @@ async function cargarTiposSolicitud() {
         console.log("Data recibida:", data);
 
         // Verificar estructura
-        const tipos = data.data || data;
+        const permissions = data.permissions;
+        window.userPermissions = permissions;
+
+        // La respuesta paginada viene en data.tipos.data (Laravel pagination)
+        const tiposPaginados = data.tipos;
+        const tipos = tiposPaginados.data || [];
+
+        console.log("Tipos paginados:", tiposPaginados);
+        console.log("Array de tipos:", tipos);
 
         if (!Array.isArray(tipos)) {
             console.error("Tipos no es array:", tipos);
@@ -284,16 +308,7 @@ async function cargarTiposSolicitud() {
         } else {
             console.log("Renderizando", tipos.length, "tipos");
             renderizarTipos(tipos);
-            // Renderizar paginación si hay datos paginados
-            if (data.last_page && data.last_page > 1) {
-                renderizarPaginacion(data);
-            } else {
-                // Si no hay paginación, limpiar el contenedor
-                const paginacionContainer = document.getElementById('paginacionContainer');
-                if (paginacionContainer) {
-                    paginacionContainer.innerHTML = '';
-                }
-            }
+            renderizarPaginacion(tiposPaginados);
         }
     } catch (error) {
         console.error("Error completo:", error);
@@ -398,121 +413,70 @@ function renderizarTipos(tipos) {
 }
 
 function renderizarPaginacion(data) {
-    // Buscar o crear el contenedor de paginación
-    let paginacionContainer = document.getElementById('paginacionContainer');
-    
-    if (!paginacionContainer) {
-        // Crear el contenedor después del grid
-        const grid = document.getElementById("tiposGrid");
-        paginacionContainer = document.createElement('div');
-        paginacionContainer.id = 'paginacionContainer';
-        paginacionContainer.className = 'mt-6';
-        grid.parentNode.insertBefore(paginacionContainer, grid.nextSibling);
-    }
+    // Actualizar información de registros
+    document.getElementById("showingFrom").textContent = data.from || 0;
+    document.getElementById("showingTo").textContent = data.to || 0;
+    document.getElementById("totalTipos").textContent = data.total || 0;
 
-    const { current_page, last_page, from, to, total } = data;
+    const pagination = document.getElementById("pagination");
+    let html = "";
 
-    // Generar botones de paginación
-    let paginacionHTML = `
-        <div class="bg-white rounded-lg shadow-sm p-4">
-            <div class="flex items-center justify-between">
-                <!-- Información de registros -->
-                <div class="text-sm text-gray-700">
-                    Mostrando <span class="font-medium">${from || 0}</span> a 
-                    <span class="font-medium">${to || 0}</span> de 
-                    <span class="font-medium">${total || 0}</span> resultados
-                </div>
-
-                <!-- Botones de navegación -->
-                <div class="flex items-center space-x-2">
-                    <!-- Botón Anterior -->
-                    <button 
-                        onclick="cambiarPagina(${current_page - 1})" 
-                        ${current_page === 1 ? 'disabled' : ''}
-                        class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Anterior
-                    </button>
-
-                    <!-- Números de página -->
-                    <div class="hidden md:flex space-x-1">
-                        ${generarBotonesPaginas(current_page, last_page)}
-                    </div>
-
-                    <!-- Botón Siguiente -->
-                    <button 
-                        onclick="cambiarPagina(${current_page + 1})" 
-                        ${current_page === last_page ? 'disabled' : ''}
-                        class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Siguiente
-                    </button>
-                </div>
-            </div>
-        </div>
+    // Botón anterior
+    html += `
+        <button onclick="cambiarPagina(${data.current_page - 1})"
+                ${data.current_page === 1 ? "disabled" : ""}
+                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+                    data.current_page === 1
+                        ? "cursor-not-allowed opacity-50"
+                        : ""
+                }">
+            Anterior
+        </button>
     `;
 
-    paginacionContainer.innerHTML = paginacionHTML;
-}
-
-function generarBotonesPaginas(paginaActual, ultimaPagina) {
-    let botones = [];
-    const rango = 2; // Cuántas páginas mostrar a cada lado de la actual
-
-    // Primera página
-    if (paginaActual > rango + 1) {
-        botones.push(`
-            <button 
-                onclick="cambiarPagina(1)" 
-                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-                1
-            </button>
-        `);
-        if (paginaActual > rango + 2) {
-            botones.push('<span class="px-2 py-2 text-gray-500">...</span>');
+    // Páginas
+    for (let i = 1; i <= data.last_page; i++) {
+        if (
+            i === 1 ||
+            i === data.last_page ||
+            (i >= data.current_page - 2 && i <= data.current_page + 2)
+        ) {
+            html += `
+                <button onclick="cambiarPagina(${i})"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium ${
+                            i === data.current_page
+                                ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                                : "bg-white text-gray-500 hover:bg-gray-50"
+                        }">
+                    ${i}
+                </button>
+            `;
+        } else if (i === data.current_page - 3 || i === data.current_page + 3) {
+            html +=
+                '<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>';
         }
     }
 
-    // Páginas alrededor de la actual
-    for (let i = Math.max(1, paginaActual - rango); i <= Math.min(ultimaPagina, paginaActual + rango); i++) {
-        botones.push(`
-            <button 
-                onclick="cambiarPagina(${i})" 
-                class="px-3 py-2 text-sm font-medium ${
-                    i === paginaActual 
-                        ? 'text-white bg-blue-600 border border-blue-600' 
-                        : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                } rounded-md"
-            >
-                ${i}
-            </button>
-        `);
-    }
+    // Botón siguiente
+    html += `
+        <button onclick="cambiarPagina(${data.current_page + 1})"
+                ${data.current_page === data.last_page ? "disabled" : ""}
+                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+                    data.current_page === data.last_page
+                        ? "cursor-not-allowed opacity-50"
+                        : ""
+                }">
+            Siguiente
+        </button>
+    `;
 
-    // Última página
-    if (paginaActual < ultimaPagina - rango) {
-        if (paginaActual < ultimaPagina - rango - 1) {
-            botones.push('<span class="px-2 py-2 text-gray-500">...</span>');
-        }
-        botones.push(`
-            <button 
-                onclick="cambiarPagina(${ultimaPagina})" 
-                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-                ${ultimaPagina}
-            </button>
-        `);
-    }
-
-    return botones.join('');
+    pagination.innerHTML = html;
 }
 
-function cambiarPagina(nuevaPagina) {
-    paginaActual = nuevaPagina;
+function cambiarPagina(page) {
+    paginaActual = page;
     cargarTiposSolicitud();
-    // Scroll hacia arriba para ver los resultados
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function crearCard(tipo) {
@@ -540,7 +504,7 @@ function crearCard(tipo) {
                     <button @click="open = !open" class="text-gray-400 hover:text-gray-600 p-1">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
-                        </svg>
+                        </svg> 
                     </button>
                     <div x-show="open" @click.away="open = false" 
                         class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
@@ -554,38 +518,54 @@ function crearCard(tipo) {
                                 </svg>
                                 Ver Detalle
                             </a>
-                            <a href="#" onclick="editarTipo(${
-                                tipo.id
-                            }); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            ${
+                                window.userPermissions.canEdit
+                                    ? `
+                            <a href="#" onclick="editarTipo(${tipo.id}); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                 </svg>
                                 Editar Información
                             </a>
-                            <a href="#" onclick="configurarFormulario(${
-                                tipo.id
-                            }); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            `
+                                    : ""
+                            }
+                            ${
+                                window.userPermissions.canConfigurarFormulario
+                                    ? `
+                            <a href="#" onclick="configurarFormulario(${tipo.id}); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>
                                 Configurar Formulario
                             </a>
-                            <a href="#" onclick="clonarTipo(${
-                                tipo.id
-                            }); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            `
+                                    : ""
+                            }
+                            ${
+                                window.userPermissions.canClonar
+                                    ? `
+                            <a href="#" onclick="clonarTipo(${tipo.id}); return false;" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                                 </svg>
                                 Clonar Tipo
                             </a>
-                            <a href="#" onclick="eliminarTipo(${tipo.id}, '${
-        tipo.codigo
-    }'); return false;" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                            `
+                                    : ""
+                            }
+                            ${
+                                window.userPermissions.canDelete
+                                    ? `
+                            <a href="#" onclick="eliminarTipo(${tipo.id}, '${tipo.codigo}'); return false;" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                 </svg>
                                 Eliminar
                             </a>
+                            `
+                                    : ""
+                            }
                         </div>
                     </div>
                 </div>
@@ -673,8 +653,11 @@ function crearCard(tipo) {
 
             <!-- Botón Ver Detalle -->
             <button onclick="verDetalleTipo(${tipo.id})" 
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition">
-                Ver Detalle
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition flex items-center gap-2 justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>  Ver Detalle
             </button>
         </div>
     `;
@@ -746,11 +729,11 @@ async function verDetalleTipo(id) {
         mostrarModalDetalleTipo(tipo, plantillas, estadisticas);
     } catch (error) {
         console.error("Error al cargar detalle del tipo:", error);
-        Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: "No se pudo cargar la información del tipo de solicitud",
-        });
+        mostrarToast(
+            "Error",
+            "error",
+            "No se pudo cargar la información del tipo de solicitud"
+        );
     }
 }
 
@@ -1180,21 +1163,27 @@ function generarContenidoTabsDetalle(
         <div id="tabContent3" class="tab-content-detalle hidden">
             <h4 class="text-lg font-semibold text-gray-800 mb-4">Flujo de Aprobación</h4>
             ${
-                flujoAprobacion && typeof flujoAprobacion === 'object' && Object.keys(flujoAprobacion).length > 0
+                flujoAprobacion &&
+                typeof flujoAprobacion === "object" &&
+                Object.keys(flujoAprobacion).length > 0
                     ? `
                 <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
                     <p class="text-sm text-blue-700">
                         <strong>Tipo de Flujo:</strong> ${
-                            flujoAprobacion.tipo === 'personalizado'
-                                ? '🎨 Flujo Personalizado'
-                                : flujoAprobacion.tipo === 'defecto'
-                                ? '⚙️ Flujo por Defecto'
-                                : '⚙️ Flujo Estándar del Sistema'
+                            flujoAprobacion.tipo === "personalizado"
+                                ? "🎨 Flujo Personalizado"
+                                : flujoAprobacion.tipo === "defecto"
+                                ? "⚙️ Flujo por Defecto"
+                                : "⚙️ Flujo Estándar del Sistema"
                         }
                     </p>
                 </div>
 
-                ${flujoAprobacion.tipo === 'personalizado' && flujoAprobacion.transiciones && flujoAprobacion.transiciones.length > 0 ? `
+                ${
+                    flujoAprobacion.tipo === "personalizado" &&
+                    flujoAprobacion.transiciones &&
+                    flujoAprobacion.transiciones.length > 0
+                        ? `
                     <!-- Diagrama Visual del Flujo Personalizado -->
                     <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 mb-4">
                         <h5 class="text-md font-semibold text-gray-800 mb-4">🔄 Diagrama de Flujo</h5>
@@ -1202,29 +1191,46 @@ function generarContenidoTabsDetalle(
                             ${(() => {
                                 // Crear un conjunto de estados únicos en orden
                                 const estados = new Map();
-                                flujoAprobacion.transiciones.forEach(trans => {
-                                    const origen = trans.estado_origen?.nombre || trans.origen || 'Inicial';
-                                    const destino = trans.estado_destino?.nombre || trans.destino || 'Final';
-                                    if (!estados.has(origen)) estados.set(origen, estados.size);
-                                    if (!estados.has(destino)) estados.set(destino, estados.size);
-                                });
+                                flujoAprobacion.transiciones.forEach(
+                                    (trans) => {
+                                        const origen =
+                                            trans.estado_origen?.nombre ||
+                                            trans.origen ||
+                                            "Inicial";
+                                        const destino =
+                                            trans.estado_destino?.nombre ||
+                                            trans.destino ||
+                                            "Final";
+                                        if (!estados.has(origen))
+                                            estados.set(origen, estados.size);
+                                        if (!estados.has(destino))
+                                            estados.set(destino, estados.size);
+                                    }
+                                );
 
                                 // Generar badges de estados en orden
                                 const estadosArray = Array.from(estados.keys());
-                                return estadosArray.map((estado, idx) => {
-                                    const colores = [
-                                        'bg-blue-100 text-blue-700',
-                                        'bg-yellow-100 text-yellow-700',
-                                        'bg-purple-100 text-purple-700',
-                                        'bg-orange-100 text-orange-700',
-                                        'bg-green-100 text-green-700'
-                                    ];
-                                    const color = colores[idx % colores.length];
-                                    return `
-                                        ${idx > 0 ? '<span class="text-gray-400">→</span>' : ''}
+                                return estadosArray
+                                    .map((estado, idx) => {
+                                        const colores = [
+                                            "bg-blue-100 text-blue-700",
+                                            "bg-yellow-100 text-yellow-700",
+                                            "bg-purple-100 text-purple-700",
+                                            "bg-orange-100 text-orange-700",
+                                            "bg-green-100 text-green-700",
+                                        ];
+                                        const color =
+                                            colores[idx % colores.length];
+                                        return `
+                                        ${
+                                            idx > 0
+                                                ? '<span class="text-gray-400">→</span>'
+                                                : ""
+                                        }
                                         <span class="px-3 py-2 ${color} rounded-lg font-medium text-sm whitespace-nowrap">${estado}</span>
                                     `;
-                                }).join('');
+                                    })
+                                    .join("");
                             })()}
                         </div>
                     </div>
@@ -1233,50 +1239,86 @@ function generarContenidoTabsDetalle(
                     <div class="bg-white border border-gray-200 rounded-lg p-6">
                         <h5 class="text-md font-semibold text-gray-800 mb-4">📋 Detalle de Transiciones</h5>
                         <div class="space-y-3">
-                            ${flujoAprobacion.transiciones.map((trans, idx) => `
+                            ${flujoAprobacion.transiciones
+                                .map(
+                                    (trans, idx) => `
                                 <div class="bg-gray-50 border-l-4 border-purple-500 rounded-lg p-4">
                                     <div class="flex items-center gap-3 mb-3">
-                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-800 text-xs font-bold">${idx + 1}</span>
-                                        <span class="text-sm font-semibold text-gray-900">${trans.nombre || 'Transición'}</span>
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-800 text-xs font-bold">${
+                                            idx + 1
+                                        }</span>
+                                        <span class="text-sm font-semibold text-gray-900">${
+                                            trans.nombre || "Transición"
+                                        }</span>
                                     </div>
                                     <div class="flex items-center gap-2 mb-2">
-                                        <span class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md font-medium text-sm">${trans.estado_origen?.nombre || trans.origen || 'Inicial'}</span>
+                                        <span class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md font-medium text-sm">${
+                                            trans.estado_origen?.nombre ||
+                                            trans.origen ||
+                                            "Inicial"
+                                        }</span>
                                         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                                         </svg>
-                                        <span class="px-3 py-1.5 bg-green-100 text-green-700 rounded-md font-medium text-sm">${trans.estado_destino?.nombre || trans.destino || 'Final'}</span>
+                                        <span class="px-3 py-1.5 bg-green-100 text-green-700 rounded-md font-medium text-sm">${
+                                            trans.estado_destino?.nombre ||
+                                            trans.destino ||
+                                            "Final"
+                                        }</span>
                                     </div>
-                                    ${trans.roles_permitidos ? `
+                                    ${
+                                        trans.roles_permitidos
+                                            ? `
                                         <div class="mt-2 flex items-center gap-2">
                                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                             </svg>
                                             <span class="text-xs text-gray-600">
-                                                <strong>Roles autorizados:</strong> ${Array.isArray(trans.roles_permitidos) ? trans.roles_permitidos.join(', ') : trans.roles_permitidos}
+                                                <strong>Roles autorizados:</strong> ${
+                                                    Array.isArray(
+                                                        trans.roles_permitidos
+                                                    )
+                                                        ? trans.roles_permitidos.join(
+                                                              ", "
+                                                          )
+                                                        : trans.roles_permitidos
+                                                }
                                             </span>
                                         </div>
-                                    ` : ''}
-                                    ${trans.requiere_aprobacion ? `
+                                    `
+                                            : ""
+                                    }
+                                    ${
+                                        trans.requiere_aprobacion
+                                            ? `
                                         <div class="mt-2">
                                             <span class="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
                                                 ✓ Requiere Aprobación
                                             </span>
                                         </div>
-                                    ` : ''}
+                                    `
+                                            : ""
+                                    }
                                 </div>
-                            `).join('')}
+                            `
+                                )
+                                .join("")}
                         </div>
                     </div>
-                ` : `
+                `
+                        : `
                     <div class="bg-gray-50 rounded-lg p-6">
                         <p class="text-sm text-gray-600">
-                            ${flujoAprobacion.tipo === 'defecto' || !flujoAprobacion.tipo
-                                ? '✅ Este tipo de solicitud utiliza el flujo estándar del sistema con las siguientes etapas: Radicada → En Revisión → En Proceso → Completada.'
-                                : 'El flujo personalizado está configurado pero no tiene transiciones específicas definidas.'
+                            ${
+                                flujoAprobacion.tipo === "defecto" ||
+                                !flujoAprobacion.tipo
+                                    ? "✅ Este tipo de solicitud utiliza el flujo estándar del sistema con las siguientes etapas: Radicada → En Revisión → En Proceso → Completada."
+                                    : "El flujo personalizado está configurado pero no tiene transiciones específicas definidas."
                             }
                         </p>
                     </div>
-                `}
+                `
+                }
             `
                     : `
                 <div class="bg-gray-50 rounded-lg p-8 text-center">
@@ -1505,17 +1547,24 @@ function abrirModalNuevoTipo() {
 
             <!-- Footer con botones -->
             <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between rounded-b-2xl">
-                <button type="button" onclick="cerrarWizard()" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                    Cancelar
+                <button type="button" onclick="cerrarWizard()" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>  Cancelar
                 </button>
                 <div class="flex gap-2">
                     <button type="button" id="btnAnterior" onclick="pasoAnteriorWizard()" 
                         class="hidden px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                        ← Anterior
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg> 
+                        Anterior
                     </button>
                     <button type="button" id="btnSiguiente" onclick="pasoSiguienteWizard()" 
                         class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        Siguiente →
+                        Siguiente <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
                     </button>
                 </div>
             </div>
@@ -1594,9 +1643,11 @@ function abrirModalEditarTipo(tipo, plantillas = []) {
         // Puede venir como objeto con tipo, o como array, o con transiciones
         if (
             tipo.flujo_aprobacion.tipo === "personalizado" ||
-            (Array.isArray(tipo.flujo_aprobacion.transiciones) && tipo.flujo_aprobacion.transiciones.length > 0) ||
-            (tipo.flujo_aprobacion.personalizado === true) ||
-            (typeof tipo.flujo_aprobacion === 'string' && tipo.flujo_aprobacion === 'personalizado')
+            (Array.isArray(tipo.flujo_aprobacion.transiciones) &&
+                tipo.flujo_aprobacion.transiciones.length > 0) ||
+            tipo.flujo_aprobacion.personalizado === true ||
+            (typeof tipo.flujo_aprobacion === "string" &&
+                tipo.flujo_aprobacion === "personalizado")
         ) {
             tipoFlujo = "personalizado";
             console.log("✅ Flujo personalizado detectado");
@@ -1612,7 +1663,7 @@ function abrirModalEditarTipo(tipo, plantillas = []) {
         puede_editar_campos: true,
         tiene_solicitudes: false,
         solicitudes_count: 0,
-        mensaje_bloqueo: null
+        mensaje_bloqueo: null,
     };
 
     datosWizardTemp = {
@@ -1621,9 +1672,9 @@ function abrirModalEditarTipo(tipo, plantillas = []) {
         datosOriginales: tipo,
         plantillasOriginales: plantillas,
         camposOriginales: tipo.campos_personalizados,
-        tipo_flujo: tipoFlujo,  // Guardar el tipo de flujo
-        flujo_aprobacion_original: tipo.flujo_aprobacion,  // Guardar el flujo completo
-        permisos: permisos,  // Guardar permisos de edición
+        tipo_flujo: tipoFlujo, // Guardar el tipo de flujo
+        flujo_aprobacion_original: tipo.flujo_aprobacion, // Guardar el flujo completo
+        permisos: permisos, // Guardar permisos de edición
     };
 
     console.log("🔍 DEBUG - datosWizardTemp configurado:", datosWizardTemp);
@@ -1706,7 +1757,10 @@ function abrirModalEditarTipo(tipo, plantillas = []) {
                 <div class="flex gap-2">
                     <button type="button" id="btnAnterior" onclick="pasoAnteriorWizard()"
                         class="hidden px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                        ← Anterior
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg> 
+                        Anterior
                     </button>
                     <button type="button" id="btnSiguiente" onclick="pasoSiguienteWizard()"
                         class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
@@ -1826,7 +1880,10 @@ async function inicializarPaso3Flujos() {
     // Debug: Mostrar estado actual
     console.log("🔍 datosWizardTemp:", datosWizardTemp);
     console.log("🔍 datosWizardTemp.tipo_flujo:", datosWizardTemp.tipo_flujo);
-    console.log("🔍 datosWizardTemp.flujo_aprobacion_original:", datosWizardTemp.flujo_aprobacion_original);
+    console.log(
+        "🔍 datosWizardTemp.flujo_aprobacion_original:",
+        datosWizardTemp.flujo_aprobacion_original
+    );
     console.log("🔍 datosWizardTemp.modoEdicion:", datosWizardTemp.modoEdicion);
 
     // Restaurar selección previa si existe
@@ -1980,7 +2037,9 @@ function guardarDatosPasoActual() {
         console.log("📦 Datos del Paso 2 guardados:", datosWizardTemp.paso2);
     } else if (pasoActualWizard === 3) {
         // Guardar configuración del flujo del paso 3
-        const tipoFlujoSeleccionado = document.querySelector('input[name="tipo_flujo"]:checked')?.value || "defecto";
+        const tipoFlujoSeleccionado =
+            document.querySelector('input[name="tipo_flujo"]:checked')?.value ||
+            "defecto";
         datosWizardTemp.tipo_flujo = tipoFlujoSeleccionado;
         datosWizardTemp.paso3 = {
             tipo_flujo: tipoFlujoSeleccionado,
@@ -2325,15 +2384,11 @@ async function descartarTodoWizard() {
 
     try {
         // Mostrar loading
-        Swal.fire({
-            title: "Descartando...",
-            text: "Eliminando tipo de solicitud y transiciones",
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            didOpen: () => {
-                Swal.showLoading();
-            },
-        });
+        mostrarToast(
+            "Descartando...",
+            "info",
+            "Eliminando tipo de solicitud y transiciones"
+        );
 
         // 1. Eliminar todas las transiciones específicas del tipo
         const responseTransiciones = await fetch(
@@ -2403,23 +2458,19 @@ async function descartarTodoWizard() {
         cargarTiposSolicitud();
 
         // Mostrar mensaje de éxito
-        Swal.fire({
-            icon: "success",
-            title: "Descartado exitosamente",
-            text: "El tipo de solicitud y sus transiciones fueron eliminados",
-            timer: 2000,
-            showConfirmButton: false,
-        });
+        mostrarToast(
+            "Descartado exitosamente",
+            "success",
+            "El tipo de solicitud y sus transiciones fueron eliminados"
+        );
     } catch (error) {
         console.error("Error al descartar:", error);
-        Swal.fire({
-            icon: "error",
-            title: "Error al descartar",
-            text:
-                error.message ||
-                "No se pudo eliminar completamente. Por favor, revisa manualmente.",
-            confirmButtonColor: "#dc2626",
-        });
+        mostrarToast(
+            "Error al descartar",
+            "error",
+            error.message ||
+                "No se pudo eliminar completamente. Por favor, revisa manualmente."
+        );
 
         // Aun con error, cerrar el wizard
         document.getElementById("wizardModal")?.remove();
@@ -2470,7 +2521,8 @@ function generarPaso1() {
                     <input type="text" id="wizard_codigo" 
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Ej: CERT-NOM-001"
-                        maxlength="50">
+                        maxlength="50"
+                        oninput="this.value = this.value.toUpperCase();">
                     <p class="mt-1 text-xs text-gray-500">Identificador único del tipo</p>
                     <p id="error_codigo" class="mt-1 text-xs text-red-600 hidden"></p>
                 </div>
@@ -2503,7 +2555,7 @@ function generarPaso1() {
                 <input type="text" id="wizard_slug" required
                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
                     placeholder="ej: certificado-nomenclatura"
-                    pattern="[-a-z0-9]+"
+                    pattern='[a-z0-9\-]+'
                     title="Solo letras minúsculas, números y guiones">
                 <p class="mt-1 text-xs text-gray-500">Se genera automáticamente del nombre. Debe ser único.</p>
                 <p id="error_slug" class="mt-1 text-xs text-red-600 hidden"></p>
@@ -2745,11 +2797,14 @@ function inicializarPaso2() {
 
     // Si no se pueden editar campos, mostrar advertencia
     if (!puedeEditarCampos && datosWizardTemp.modoEdicion) {
-        const container = document.getElementById("campos_seleccionados_container");
+        const container = document.getElementById(
+            "campos_seleccionados_container"
+        );
         if (container) {
             // Agregar advertencia al inicio del contenedor
             const advertencia = document.createElement("div");
-            advertencia.className = "bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4";
+            advertencia.className =
+                "bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4";
             advertencia.innerHTML = `
                 <div class="flex">
                     <div class="flex-shrink-0">
@@ -2760,7 +2815,10 @@ function inicializarPaso2() {
                     <div class="ml-3">
                         <h3 class="text-sm font-medium text-yellow-800">Campos no editables</h3>
                         <p class="mt-1 text-sm text-yellow-700">
-                            ${permisos.mensaje_bloqueo || 'No se pueden modificar los campos de este tipo de solicitud porque ya tiene solicitudes radicadas.'}
+                            ${
+                                permisos.mensaje_bloqueo ||
+                                "No se pueden modificar los campos de este tipo de solicitud porque ya tiene solicitudes radicadas."
+                            }
                         </p>
                         <p class="mt-2 text-xs text-yellow-600">
                             Puedes ver los campos configurados pero no agregar, eliminar o reordenarlos.
@@ -2772,34 +2830,39 @@ function inicializarPaso2() {
         }
 
         // Deshabilitar checkboxes de campos predefinidos
-        document.querySelectorAll(".campo-predefinido").forEach(checkbox => {
+        document.querySelectorAll(".campo-predefinido").forEach((checkbox) => {
             checkbox.disabled = true;
             checkbox.style.cursor = "not-allowed";
             checkbox.parentElement.style.opacity = "0.6";
         });
 
         // Deshabilitar botón de agregar campo personalizado
-        const btnAgregarCampo = container?.querySelector('button[onclick="abrirModalCampoPersonalizado()"]');
+        const btnAgregarCampo = container?.querySelector(
+            'button[onclick="abrirModalCampoPersonalizado()"]'
+        );
         if (btnAgregarCampo) {
             btnAgregarCampo.disabled = true;
-            btnAgregarCampo.classList.add('opacity-50', 'cursor-not-allowed');
+            btnAgregarCampo.classList.add("opacity-50", "cursor-not-allowed");
             btnAgregarCampo.onclick = (e) => {
                 e.preventDefault();
-                mostrarToast('No se pueden agregar campos porque el tipo tiene solicitudes radicadas', 'warning');
+                mostrarToast(
+                    "No se pueden agregar campos porque el tipo tiene solicitudes radicadas",
+                    "warning"
+                );
             };
         }
     } else {
         // Event listeners for predefined fields checkboxes (solo si puede editar)
-    const checkboxes = document.querySelectorAll(".campo-predefinido");
-    checkboxes.forEach((checkbox) => {
-        checkbox.addEventListener("change", (e) => {
-            if (e.target.checked) {
-                agregarCampoPredefinido(e.target.value);
-            } else {
-                removerCampoPredefinido(e.target.value);
-            }
+        const checkboxes = document.querySelectorAll(".campo-predefinido");
+        checkboxes.forEach((checkbox) => {
+            checkbox.addEventListener("change", (e) => {
+                if (e.target.checked) {
+                    agregarCampoPredefinido(e.target.value);
+                } else {
+                    removerCampoPredefinido(e.target.value);
+                }
+            });
         });
-    });
     }
 
     // Load campos from biblioteca
@@ -2836,7 +2899,7 @@ async function cargarCamposBiblioteca() {
         const data = await response.json();
         console.log("📚 Campos de biblioteca cargados:", data);
 
-        renderizarCamposBiblioteca(data.data || data.campos || []);
+        renderizarCamposBiblioteca(data.campos.data || []);
     } catch (error) {
         console.error("❌ Error al cargar campos de biblioteca:", error);
         const container = document.getElementById("campos_biblioteca_list");
@@ -3058,8 +3121,12 @@ function renderizarCamposSeleccionados() {
                 : "";
 
             // Si no puede editar, deshabilitar el drag y el botón de eliminar
-            const draggable = puedeEditarCampos ? 'draggable="true" cursor-move' : '';
-            const cursorClass = puedeEditarCampos ? 'cursor-move' : 'cursor-default';
+            const draggable = puedeEditarCampos
+                ? 'draggable="true" cursor-move'
+                : "";
+            const cursorClass = puedeEditarCampos
+                ? "cursor-move"
+                : "cursor-default";
             const deleteButton = puedeEditarCampos
                 ? `<button type="button" onclick="removerCampoSeleccionado(${index})"
                        class="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded">
@@ -3075,10 +3142,16 @@ function renderizarCamposSeleccionados() {
             <div class="campo-seleccionado flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 ${cursorClass}"
                  data-index="${index}" ${draggable}>
                 <div class="flex items-center space-x-3">
-                    ${puedeEditarCampos ? `<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    ${
+                        puedeEditarCampos
+                            ? `<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-                    </svg>` : ''}
-                    <span class="text-sm font-medium text-gray-700">${icono} ${campo.nombre}</span>
+                    </svg>`
+                            : ""
+                    }
+                    <span class="text-sm font-medium text-gray-700">${icono} ${
+                campo.nombre
+            }</span>
                     ${badge}
                 </div>
                 ${deleteButton}
@@ -3089,7 +3162,7 @@ function renderizarCamposSeleccionados() {
 
     // Initialize drag & drop (solo si puede editar)
     if (puedeEditarCampos) {
-    initializarDragAndDrop();
+        initializarDragAndDrop();
     }
 }
 
@@ -3233,13 +3306,17 @@ function vistaPreviaFormularioWizard() {
     console.log("📋 Mostrando vista previa del formulario");
     console.log("📝 Campos seleccionados:", window.camposSeleccionadosWizard);
 
-    if (!window.camposSeleccionadosWizard || window.camposSeleccionadosWizard.length === 0) {
-        mostrarToast('No hay campos seleccionados para previsualizar', 'info');
+    if (
+        !window.camposSeleccionadosWizard ||
+        window.camposSeleccionadosWizard.length === 0
+    ) {
+        mostrarToast("No hay campos seleccionados para previsualizar", "info");
         return;
     }
 
     // Obtener nombre del tipo de solicitud
-    const nombreTipo = document.getElementById('wizard_nombre')?.value || 'Tipo de Solicitud';
+    const nombreTipo =
+        document.getElementById("wizard_nombre")?.value || "Tipo de Solicitud";
 
     // Generar HTML de la vista previa
     let htmlPreview = `
@@ -3260,12 +3337,48 @@ function vistaPreviaFormularioWizard() {
                         Datos del Solicitante
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${generarCampoPreview('Tipo de Documento', 'select', false, null, ['Cédula de Ciudadanía', 'Cédula de Extranjería', 'Pasaporte', 'NIT'])}
-                        ${generarCampoPreview('Número de Documento', 'text', false, '1234567890')}
-                        ${generarCampoPreview('Nombres', 'text', false, 'Juan Carlos')}
-                        ${generarCampoPreview('Apellidos', 'text', false, 'Pérez González')}
-                        ${generarCampoPreview('Correo Electrónico', 'email', false, 'juan.perez@example.com')}
-                        ${generarCampoPreview('Teléfono', 'tel', false, '300 123 4567')}
+                        ${generarCampoPreview(
+                            "Tipo de Documento",
+                            "select",
+                            false,
+                            null,
+                            [
+                                "Cédula de Ciudadanía",
+                                "Cédula de Extranjería",
+                                "Pasaporte",
+                                "NIT",
+                            ]
+                        )}
+                        ${generarCampoPreview(
+                            "Número de Documento",
+                            "text",
+                            false,
+                            "1234567890"
+                        )}
+                        ${generarCampoPreview(
+                            "Nombres",
+                            "text",
+                            false,
+                            "Juan Carlos"
+                        )}
+                        ${generarCampoPreview(
+                            "Apellidos",
+                            "text",
+                            false,
+                            "Pérez González"
+                        )}
+                        ${generarCampoPreview(
+                            "Correo Electrónico",
+                            "email",
+                            false,
+                            "juan.perez@example.com"
+                        )}
+                        ${generarCampoPreview(
+                            "Teléfono",
+                            "tel",
+                            false,
+                            "300 123 4567"
+                        )}
                     </div>
                 </div>
 
@@ -3306,16 +3419,20 @@ function vistaPreviaFormularioWizard() {
     `;
 
     // Mostrar en modal HTML personalizado
-    const modalVistaPrevia = document.getElementById('modalVistaPreviaFormulario');
-    const contenidoVistaPrevia = document.getElementById('contenidoVistaPrevia');
+    const modalVistaPrevia = document.getElementById(
+        "modalVistaPreviaFormulario"
+    );
+    const contenidoVistaPrevia = document.getElementById(
+        "contenidoVistaPrevia"
+    );
 
     if (modalVistaPrevia && contenidoVistaPrevia) {
         contenidoVistaPrevia.innerHTML = htmlPreview;
-        modalVistaPrevia.classList.remove('hidden');
-        console.log('✅ Modal de vista previa abierto correctamente');
+        modalVistaPrevia.classList.remove("hidden");
+        console.log("✅ Modal de vista previa abierto correctamente");
     } else {
-        console.error('❌ No se encontró el modal de vista previa');
-        mostrarToast('Error al abrir vista previa', 'error');
+        console.error("❌ No se encontró el modal de vista previa");
+        mostrarToast("Error al abrir vista previa", "error");
     }
 }
 
@@ -3323,43 +3440,57 @@ function vistaPreviaFormularioWizard() {
  * Cerrar modal de vista previa
  */
 function cerrarModalVistaPrevia() {
-    const modalVistaPrevia = document.getElementById('modalVistaPreviaFormulario');
+    const modalVistaPrevia = document.getElementById(
+        "modalVistaPreviaFormulario"
+    );
     if (modalVistaPrevia) {
-        modalVistaPrevia.classList.add('hidden');
-        console.log('✅ Modal de vista previa cerrado');
+        modalVistaPrevia.classList.add("hidden");
+        console.log("✅ Modal de vista previa cerrado");
     }
 }
 
 /**
  * Generar HTML de un campo para la vista previa
  */
-function generarCampoPreview(label, tipo, obligatorio, valorEjemplo = '', opciones = null) {
-    const requiredMark = obligatorio ? '<span class="text-red-500 ml-1">*</span>' : '';
-    let inputHTML = '';
+function generarCampoPreview(
+    label,
+    tipo,
+    obligatorio,
+    valorEjemplo = "",
+    opciones = null
+) {
+    const requiredMark = obligatorio
+        ? '<span class="text-red-500 ml-1">*</span>'
+        : "";
+    let inputHTML = "";
 
     switch (tipo) {
-        case 'text':
+        case "text":
             inputHTML = `<input type="text" value="${valorEjemplo}" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">`;
             break;
-        case 'email':
+        case "email":
             inputHTML = `<input type="email" value="${valorEjemplo}" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">`;
             break;
-        case 'tel':
+        case "tel":
             inputHTML = `<input type="tel" value="${valorEjemplo}" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">`;
             break;
-        case 'number':
+        case "number":
             inputHTML = `<input type="number" value="${valorEjemplo}" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">`;
             break;
-        case 'date':
+        case "date":
             inputHTML = `<input type="date" value="${valorEjemplo}" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">`;
             break;
-        case 'select':
+        case "select":
             inputHTML = `<select disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">
                 <option>Seleccione una opción...</option>
-                ${opciones ? opciones.map(o => `<option>${o}</option>`).join('') : ''}
+                ${
+                    opciones
+                        ? opciones.map((o) => `<option>${o}</option>`).join("")
+                        : ""
+                }
             </select>`;
             break;
-        case 'textarea':
+        case "textarea":
             inputHTML = `<textarea rows="3" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">${valorEjemplo}</textarea>`;
             break;
         default:
@@ -3380,114 +3511,144 @@ function generarCampoPreview(label, tipo, obligatorio, valorEjemplo = '', opcion
  * Generar HTML de los campos personalizados seleccionados
  */
 function generarCamposPersonalizadosPreview() {
-    let html = '';
-    const campos = [...window.camposSeleccionadosWizard].sort((a, b) => (a.orden || 0) - (b.orden || 0));
+    let html = "";
+    const campos = [...window.camposSeleccionadosWizard].sort(
+        (a, b) => (a.orden || 0) - (b.orden || 0)
+    );
 
     campos.forEach((campo, index) => {
-        const obligatorio = campo.obligatorio || campo.pivot?.obligatorio || false;
+        const obligatorio =
+            campo.obligatorio || campo.pivot?.obligatorio || false;
         const etiqueta = campo.etiqueta || campo.nombre || `Campo ${index + 1}`;
-        const tipo = campo.tipo || 'text';
+        const tipo = campo.tipo || "text";
 
         // Determinar el tipo de input HTML
-        let tipoHTML = 'text';
+        let tipoHTML = "text";
         let opciones = null;
 
         switch (tipo) {
-            case 'text':
-            case 'texto':
-            case 'texto_corto':
-                tipoHTML = 'text';
+            case "text":
+            case "texto":
+            case "texto_corto":
+                tipoHTML = "text";
                 break;
-            case 'textarea':
-            case 'texto_largo':
-                tipoHTML = 'textarea';
+            case "textarea":
+            case "texto_largo":
+                tipoHTML = "textarea";
                 break;
-            case 'number':
-            case 'numero':
-                tipoHTML = 'number';
+            case "number":
+            case "numero":
+                tipoHTML = "number";
                 break;
-            case 'email':
-            case 'correo':
-                tipoHTML = 'email';
+            case "email":
+            case "correo":
+                tipoHTML = "email";
                 break;
-            case 'tel':
-            case 'telefono':
-                tipoHTML = 'tel';
+            case "tel":
+            case "telefono":
+                tipoHTML = "tel";
                 break;
-            case 'date':
-            case 'fecha':
-                tipoHTML = 'date';
+            case "date":
+            case "fecha":
+                tipoHTML = "date";
                 break;
-            case 'select':
-            case 'lista':
-                tipoHTML = 'select';
-                opciones = campo.opciones || ['Opción 1', 'Opción 2', 'Opción 3'];
+            case "select":
+            case "lista":
+                tipoHTML = "select";
+                opciones = campo.opciones || [
+                    "Opción 1",
+                    "Opción 2",
+                    "Opción 3",
+                ];
                 break;
-            case 'radio':
-                tipoHTML = 'radio';
-                opciones = campo.opciones || ['Opción 1', 'Opción 2'];
+            case "radio":
+                tipoHTML = "radio";
+                opciones = campo.opciones || ["Opción 1", "Opción 2"];
                 break;
-            case 'checkbox':
-                tipoHTML = 'checkbox';
-                opciones = campo.opciones || ['Opción 1', 'Opción 2'];
+            case "checkbox":
+                tipoHTML = "checkbox";
+                opciones = campo.opciones || ["Opción 1", "Opción 2"];
                 break;
-            case 'file':
-            case 'archivo':
-                tipoHTML = 'file';
+            case "file":
+            case "archivo":
+                tipoHTML = "file";
                 break;
             default:
-                tipoHTML = 'text';
+                tipoHTML = "text";
         }
 
         // Generar HTML según el tipo
-        if (tipoHTML === 'radio') {
+        if (tipoHTML === "radio") {
             html += `
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        ${etiqueta}${obligatorio ? '<span class="text-red-500 ml-1">*</span>' : ''}
+                        ${etiqueta}${
+                obligatorio ? '<span class="text-red-500 ml-1">*</span>' : ""
+            }
                     </label>
                     <div class="space-y-2">
-                        ${opciones.map((opcion, i) => `
+                        ${opciones
+                            .map(
+                                (opcion, i) => `
                             <label class="flex items-center">
                                 <input type="radio" name="radio_${index}" disabled class="mr-2 text-blue-600">
                                 <span class="text-sm text-gray-700">${opcion}</span>
                             </label>
-                        `).join('')}
+                        `
+                            )
+                            .join("")}
                     </div>
                 </div>
             `;
-        } else if (tipoHTML === 'checkbox') {
+        } else if (tipoHTML === "checkbox") {
             html += `
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        ${etiqueta}${obligatorio ? '<span class="text-red-500 ml-1">*</span>' : ''}
+                        ${etiqueta}${
+                obligatorio ? '<span class="text-red-500 ml-1">*</span>' : ""
+            }
                     </label>
                     <div class="space-y-2">
-                        ${opciones.map(opcion => `
+                        ${opciones
+                            .map(
+                                (opcion) => `
                             <label class="flex items-center">
                                 <input type="checkbox" disabled class="mr-2 text-blue-600">
                                 <span class="text-sm text-gray-700">${opcion}</span>
                             </label>
-                        `).join('')}
+                        `
+                            )
+                            .join("")}
                     </div>
                 </div>
             `;
-        } else if (tipoHTML === 'file') {
+        } else if (tipoHTML === "file") {
             html += `
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
-                        ${etiqueta}${obligatorio ? '<span class="text-red-500 ml-1">*</span>' : ''}
+                        ${etiqueta}${
+                obligatorio ? '<span class="text-red-500 ml-1">*</span>' : ""
+            }
                     </label>
                     <input type="file" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
                     <p class="text-xs text-gray-500 mt-1">Formatos permitidos: PDF, JPG, PNG. Máximo 10MB.</p>
                 </div>
             `;
         } else {
-            html += generarCampoPreview(etiqueta, tipoHTML, obligatorio, '', opciones);
+            html += generarCampoPreview(
+                etiqueta,
+                tipoHTML,
+                obligatorio,
+                "",
+                opciones
+            );
         }
     });
 
-    return html || '<p class="text-gray-500 text-center py-4">No hay campos personalizados seleccionados</p>';
+    return (
+        html ||
+        '<p class="text-gray-500 text-center py-4">No hay campos personalizados seleccionados</p>'
+    );
 }
 
 function abrirModalCampoPersonalizado() {
@@ -3653,7 +3814,7 @@ async function cargarTransicionesConfiguradas() {
             if (dataEspecificas.success) {
                 // Usar las mismas transiciones para diagrama y lista
                 const transiciones = dataEspecificas.transiciones || [];
-                
+
                 window.transicionesTodas = transiciones;
                 window.transicionesConfiguradas = transiciones;
 
@@ -3710,7 +3871,7 @@ function renderizarDiagramaFlujo() {
     const transiciones =
         window.transicionesTodas || window.transicionesConfiguradas || [];
 
-    diagrama.innerHTML = '';
+    diagrama.innerHTML = "";
 
     let html = '<div class="p-8 min-h-[400px]">';
     html += '<div class="flex flex-wrap gap-6 justify-center">';
@@ -3756,7 +3917,7 @@ function renderizarDiagramaFlujo() {
     html += "</div>";
 
     // Mostrar transiciones como lista debajo
-   
+
     if (transiciones.length > 0) {
         html += '<div class="mt-8 space-y-2">';
         html +=
@@ -4076,14 +4237,17 @@ async function validarCampoPaso1(campo) {
 
                 // Obtener el código original guardado (si existe)
                 // Puede venir de datosOriginales (modo edición) o del paso1 guardado (modo creación después de guardar paso 1)
-                const codigoOriginal = datosWizardTemp.datosOriginales?.codigo ||
-                                      datosWizardTemp.paso1?.codigo ||
-                                      null;
+                const codigoOriginal =
+                    datosWizardTemp.datosOriginales?.codigo ||
+                    datosWizardTemp.paso1?.codigo ||
+                    null;
 
                 // Determinar si debemos validar:
                 // - Siempre validar si NO hay código original guardado (primera vez)
                 // - Si hay código original, solo validar si el código cambió
-                const codigoCambio = codigoOriginal ? input.value.trim() !== codigoOriginal : true;
+                const codigoCambio = codigoOriginal
+                    ? input.value.trim() !== codigoOriginal
+                    : true;
 
                 if (codigoCambio) {
                     // Construir URL con parámetro de exclusión si ya existe un ID
@@ -4127,7 +4291,7 @@ async function validarCampoPaso1(campo) {
             if (!input.value) {
                 esValido = false;
                 mensaje = "Este campo es obligatorio";
-            } else if (!/^[a-z0-9-]+$/.test(input.value)) {
+            } else if (!/^[a-z0-9\-]+$/.test(input.value)) {
                 esValido = false;
                 mensaje = "Solo letras minúsculas, números y guiones";
             }
@@ -5532,9 +5696,11 @@ async function validarYGuardarPaso2() {
     );
     console.log("✅ ID del tipo:", tipoIdCreado);
 
-   
     // Prepare data to send
-    console.log("📝 Campos seleccionados ultimo paso:", window.camposSeleccionadosWizard);
+    console.log(
+        "📝 Campos seleccionados ultimo paso:",
+        window.camposSeleccionadosWizard
+    );
 
     // Separar campos por tipo de origen
     const camposPredefinidos = [];
@@ -5549,14 +5715,18 @@ async function validarYGuardarPaso2() {
 
         if (tipoOrigen === "predefinido") {
             camposPredefinidos.push(campo.slug);
-        } else if (tipoOrigen === "personalizado" || tipoOrigen === "formulario_tipo_solicitud") {
+        } else if (
+            tipoOrigen === "personalizado" ||
+            tipoOrigen === "formulario_tipo_solicitud"
+        ) {
             // Incluir el ID del campo si existe para que el backend lo actualice en lugar de crear uno nuevo
             camposPersonalizados.push({
                 id: campo.id || campo.campo_id || null,
                 tipo: campo.tipo,
                 nombre: campo.nombre || campo.etiqueta,
                 etiqueta: campo.etiqueta || campo.nombre,
-                obligatorio: campo.obligatorio || campo.pivot?.obligatorio || false,
+                obligatorio:
+                    campo.obligatorio || campo.pivot?.obligatorio || false,
                 orden: campo.orden || campo.pivot?.orden || index + 1,
                 configuracion: campo.configuracion || {},
             });
@@ -5734,46 +5904,6 @@ async function validarYGuardarPaso2() {
     }
 }
 
-function mostrarErrorAlerta(title, text) {
-    Swal.fire({
-        icon: "error",
-        title: title,
-        text: text,
-    });
-}
-
-function mostrarAdvertencia(text) {
-    Swal.fire({
-        icon: "warning",
-        title: "Advertencia",
-        text: text,
-    });
-}
-
-function mostrarExito(title, text) {
-    Swal.fire({
-        icon: "success",
-        title: title,
-        text: text,
-    });
-}
-
-function mostrarInfo(title, text) {
-    Swal.fire({
-        icon: "info",
-        title: title,
-        text: text,
-    });
-}
-
-function mostrarConfirmacion(title, text) {
-    Swal.fire({
-        icon: "question",
-        title: title,
-        text: text,
-    });
-}
-
 function mostrarLoading(title, text) {
     Swal.fire({
         title: title,
@@ -5906,19 +6036,27 @@ async function guardarFlujoAprobacion() {
         if (tipoFlujo === "personalizado") {
             // Aquí podrías agregar transiciones, estados, etc.
             flujoData.transiciones = []; // Por ahora vacío, se configura en otro momento
-            console.log("⚙️ Flujo personalizado - transiciones se configuran por separado");
+            console.log(
+                "⚙️ Flujo personalizado - transiciones se configuran por separado"
+            );
         }
 
         console.log("📦 Datos a enviar:", flujoData);
 
         // Obtener los datos actuales del tipo para no perder información
-        const responseGet = await fetch(`/admin/api/tipos-solicitud/${tipoIdCreado}`, {
-            headers: {
-                "X-Requested-With": "XMLHttpRequest",
-                Accept: "application/json",
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "",
-            },
-        });
+        const responseGet = await fetch(
+            `/admin/api/tipos-solicitud/${tipoIdCreado}`,
+            {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    Accept: "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
+                },
+            }
+        );
 
         if (!responseGet.ok) {
             throw new Error("No se pudo cargar los datos actuales del tipo");
@@ -5960,16 +6098,22 @@ async function guardarFlujoAprobacion() {
         console.log("📦 Datos completos a enviar:", datosCompletos);
 
         // Guardar en el campo flujo_aprobacion del tipo de solicitud
-        const response = await fetch(`/admin/api/tipos-solicitud/${tipoIdCreado}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Requested-With": "XMLHttpRequest",
-                Accept: "application/json",
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "",
-            },
-            body: JSON.stringify(datosCompletos),
-        });
+        const response = await fetch(
+            `/admin/api/tipos-solicitud/${tipoIdCreado}`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    Accept: "application/json",
+                    "X-CSRF-TOKEN":
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute("content") || "",
+                },
+                body: JSON.stringify(datosCompletos),
+            }
+        );
 
         await manejarRespuestaFetch(response);
 
@@ -5979,7 +6123,9 @@ async function guardarFlujoAprobacion() {
         } else {
             const errorData = await response.json();
             console.error("❌ Error al guardar flujo:", errorData);
-            throw new Error(errorData.message || "Error al guardar flujo de aprobación");
+            throw new Error(
+                errorData.message || "Error al guardar flujo de aprobación"
+            );
         }
 
         console.log("✅ Flujo de aprobación guardado correctamente");
@@ -6101,7 +6247,7 @@ async function editarTipo(id) {
             puede_editar_campos: true,
             tiene_solicitudes: false,
             solicitudes_count: 0,
-            mensaje_bloqueo: null
+            mensaje_bloqueo: null,
         };
 
         Swal.close();
@@ -6135,23 +6281,28 @@ async function clonarTipo(id) {
     try {
         // Mostrar loading
         Swal.fire({
-            title: 'Clonando...',
-            text: 'Creando copia del tipo de solicitud',
+            title: "Clonando...",
+            text: "Creando copia del tipo de solicitud",
             allowOutsideClick: false,
             allowEscapeKey: false,
             didOpen: () => {
                 Swal.showLoading();
-            }
+            },
         });
 
-        const response = await fetch(`/admin/api/tipos-solicitud/${id}/clonar`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'X-Requested-With': 'XMLHttpRequest',
+        const response = await fetch(
+            `/admin/api/tipos-solicitud/${id}/clonar`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector(
+                        'meta[name="csrf-token"]'
+                    ).content,
+                    "X-Requested-With": "XMLHttpRequest",
+                },
             }
-        });
+        );
 
         await manejarRespuestaFetch(response);
 
@@ -6159,8 +6310,8 @@ async function clonarTipo(id) {
 
         if (response.ok && data.success) {
             Swal.fire({
-                icon: 'success',
-                title: '¡Clonado Exitosamente!',
+                icon: "success",
+                title: "¡Clonado Exitosamente!",
                 html: `
                     <div class="text-left">
                         <p class="mb-2">Se ha creado una copia del tipo de solicitud:</p>
@@ -6173,22 +6324,22 @@ async function clonarTipo(id) {
                         </p>
                     </div>
                 `,
-                confirmButtonColor: '#3B82F6',
-                confirmButtonText: 'Entendido'
+                confirmButtonColor: "#3B82F6",
+                confirmButtonText: "Entendido",
             }).then(() => {
                 // Recargar la lista
                 cargarTiposSolicitud();
             });
         } else {
-            throw new Error(data.message || 'Error al clonar el tipo');
+            throw new Error(data.message || "Error al clonar el tipo");
         }
     } catch (error) {
-        console.error('Error al clonar tipo:', error);
+        console.error("Error al clonar tipo:", error);
         Swal.fire({
-            icon: 'error',
-            title: 'Error al Clonar',
-            text: error.message || 'No se pudo clonar el tipo de solicitud',
-            confirmButtonColor: '#EF4444'
+            icon: "error",
+            title: "Error al Clonar",
+            text: error.message || "No se pudo clonar el tipo de solicitud",
+            confirmButtonColor: "#EF4444",
         });
     }
 }
@@ -6351,8 +6502,15 @@ function mostrarToast(message, type = "success") {
         },
     });
 
+    const icons = {
+        success: "success",
+        error: "error",
+        warning: "warning",
+        info: "info",
+    };
+
     Toast.fire({
-        icon: type,
+        icon: icons[type] || "success",
         title: message,
     });
 }
@@ -6375,35 +6533,15 @@ async function mostrarConfirmacion(opciones = {}) {
 }
 
 function mostrarErrorAlerta(mensaje, titulo = "Error") {
-    return Swal.fire({
-        icon: "error",
-        title: titulo,
-        text: mensaje,
-        confirmButtonColor: "#dc2626",
-        confirmButtonText: "Aceptar",
-    });
+    return mostrarToast(titulo, "error", mensaje);
 }
 
 function mostrarInfo(mensaje, titulo = "Información") {
-    return Swal.fire({
-        icon: "info",
-        title: titulo,
-        text: mensaje,
-        confirmButtonColor: "#2563eb",
-        confirmButtonText: "Aceptar",
-    });
+    return mostrarToast(titulo, "info", mensaje);
 }
 
 function mostrarExito(titulo, mensaje) {
-    return Swal.fire({
-        icon: "success",
-        title: titulo,
-        text: mensaje,
-        confirmButtonColor: "#10B981",
-        confirmButtonText: "Aceptar",
-        timer: 3000,
-        timerProgressBar: true,
-    });
+    return mostrarToast(titulo, "success", mensaje);
 }
 
 // ========================================
@@ -6426,15 +6564,18 @@ async function cargarPlantillasDisponibles() {
 
         const params = new URLSearchParams();
         if (busqueda) params.append("search", busqueda);
-        if (tipoDocumento) params.append("tipo_documento", tipoDocumento);
+        if (tipoDocumento) params.append("tipo", tipoDocumento);
+        params.append("per_page", 1000); // Cargar todas las plantillas activas
 
         const response = await fetch(
-            `/admin/api/configuracion/plantillas?${params.toString()}`,
+            `/admin/api/configuracion/plantillas-documentos?${params.toString()}`,
             {
                 headers: {
                     "X-CSRF-TOKEN": document.querySelector(
                         'meta[name="csrf-token"]'
                     ).content,
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
                 },
             }
         );
@@ -6448,8 +6589,10 @@ async function cargarPlantillasDisponibles() {
         const data = await response.json();
 
         if (data.success) {
-            window.todasLasPlantillas = data.plantillas;
-            renderizarPlantillasDisponibles(data.plantillas);
+            // Extraer las plantillas del objeto paginado
+            const plantillas = data.plantillas?.data || data.plantillas || [];
+            window.todasLasPlantillas = plantillas;
+            renderizarPlantillasDisponibles(plantillas);
         } else {
             throw new Error(data.message || "Error al cargar plantillas");
         }
@@ -6521,7 +6664,7 @@ function renderizarPlantillasDisponibles(plantillas) {
                 plantilla.orientacion || "vertical"
             }</span>
                             <span>🔧 ${
-                                plantilla.total_variables || 0
+                                plantilla.variables_usadas.length || 0
                             } variables</span>
                         </div>
                         <button onclick="verVistaPrevia(${plantilla.id})"
@@ -6836,7 +6979,7 @@ async function verVistaPrevia(plantillaId) {
                             <div>
                                 <span class="text-gray-600">Variables:</span>
                                 <span class="ml-2 font-medium">${
-                                    plantilla.total_variables || 0
+                                    plantilla.variables_usadas.length || 0
                                 }</span>
                             </div>
                         </div>
@@ -6893,15 +7036,15 @@ let contadorCampos = 0;
  * Abrir modal para configurar formulario de un tipo
  */
 async function abrirModalConfigurarFormulario(tipoId) {
-    console.log('🎨 Abriendo configurador de formulario para tipo:', tipoId);
+    console.log("🎨 Abriendo configurador de formulario para tipo:", tipoId);
 
     tipoIdConfigurando = tipoId;
     camposFormulario = [];
     campoSeleccionado = null;
 
     // Mostrar modal
-    const modal = document.getElementById('modalConfigurarFormulario');
-    modal.classList.remove('hidden');
+    const modal = document.getElementById("modalConfigurarFormulario");
+    modal.classList.remove("hidden");
 
     // Cargar datos del tipo
     cargarDatosTipoParaFormulario(tipoId);
@@ -6912,7 +7055,7 @@ async function abrirModalConfigurarFormulario(tipoId) {
     // IMPORTANTE: Esperar a que se carguen los campos existentes antes de continuar
     await cargarCamposExistentes(tipoId);
 
-    console.log('🎨 Modal listo. Campos cargados:', camposFormulario.length);
+    console.log("🎨 Modal listo. Campos cargados:", camposFormulario.length);
 }
 
 /**
@@ -6922,18 +7065,20 @@ async function abrirModalConfigurarFormulario(tipoId) {
 function cerrarModalConfiguracion(forzarCierre = false) {
     if (camposFormulario.length > 0 && !forzarCierre) {
         Swal.fire({
-            title: '¿Cerrar sin guardar?',
-            text: 'Tienes cambios sin guardar. ¿Estás seguro de que deseas cerrar?',
-            icon: 'warning',
+            title: "¿Cerrar sin guardar?",
+            text: "Tienes cambios sin guardar. ¿Estás seguro de que deseas cerrar?",
+            icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: '#EF4444',
-            cancelButtonColor: '#6B7280',
-            confirmButtonText: 'Sí, cerrar',
-            cancelButtonText: 'Cancelar'
+            confirmButtonColor: "#EF4444",
+            cancelButtonColor: "#6B7280",
+            confirmButtonText: "Sí, cerrar",
+            cancelButtonText: "Cancelar",
         }).then((result) => {
             if (result.isConfirmed) {
-                const modal = document.getElementById('modalConfigurarFormulario');
-                modal.classList.add('hidden');
+                const modal = document.getElementById(
+                    "modalConfigurarFormulario"
+                );
+                modal.classList.add("hidden");
 
                 // Limpiar estado
                 tipoIdConfigurando = null;
@@ -6945,8 +7090,8 @@ function cerrarModalConfiguracion(forzarCierre = false) {
         return;
     }
 
-    const modal = document.getElementById('modalConfigurarFormulario');
-    modal.classList.add('hidden');
+    const modal = document.getElementById("modalConfigurarFormulario");
+    modal.classList.add("hidden");
 
     // Limpiar estado
     tipoIdConfigurando = null;
@@ -6964,10 +7109,11 @@ async function cargarDatosTipoParaFormulario(tipoId) {
         const data = await response.json();
 
         if (data.tipo) {
-            document.getElementById('modal-tipo-nombre').textContent = data.tipo.nombre;
+            document.getElementById("modal-tipo-nombre").textContent =
+                data.tipo.nombre;
         }
     } catch (error) {
-        console.error('Error al cargar datos del tipo:', error);
+        console.error("Error al cargar datos del tipo:", error);
     }
 }
 
@@ -6979,35 +7125,70 @@ async function cargarCamposExistentes(tipoId) {
         const response = await fetch(`/admin/solicitudes/api/tipos/${tipoId}`);
         const data = await response.json();
 
-        console.log('📥 Datos recibidos del backend:', data);
-        console.log('📥 Campos personalizados:', data.tipo?.campos_personalizados);
+        console.log("📥 Datos recibidos del backend:", data);
+        console.log(
+            "📥 Campos personalizados:",
+            data.tipo?.campos_personalizados
+        );
 
-        if (data.tipo && data.tipo.campos_personalizados && data.tipo.campos_personalizados.length > 0) {
-            console.log(`📥 Cargando ${data.tipo.campos_personalizados.length} campos existentes...`);
+        if (
+            data.tipo &&
+            data.tipo.campos_personalizados &&
+            data.tipo.campos_personalizados.length > 0
+        ) {
+            console.log(
+                `📥 Cargando ${data.tipo.campos_personalizados.length} campos existentes...`
+            );
 
             // Agregar campos existentes al constructor SIN renderizar cada vez
             data.tipo.campos_personalizados.forEach((campo, index) => {
-                console.log(`➕ [${index + 1}/${data.tipo.campos_personalizados.length}] Campo: "${campo.etiqueta}"`);
-                console.log(`   ↳ ID: ${campo.id}, Tipo: ${campo.tipo}, Categoria: ${campo.categoria}`);
+                console.log(
+                    `➕ [${index + 1}/${
+                        data.tipo.campos_personalizados.length
+                    }] Campo: "${campo.etiqueta}"`
+                );
+                console.log(
+                    `   ↳ ID: ${campo.id}, Tipo: ${campo.tipo}, Categoria: ${campo.categoria}`
+                );
                 console.log(`   ↳ Slug: ${campo.slug}`);
-                console.log(`   ↳ tipo_origen directo: ${campo.tipo_origen ? `✅ "${campo.tipo_origen}"` : '❌ NO'}`);
-                console.log(`   ↳ pivot.tipo_origen: ${campo.pivot?.tipo_origen ? `✅ "${campo.pivot.tipo_origen}"` : '❌ NO'}`);
-                
+                console.log(
+                    `   ↳ tipo_origen directo: ${
+                        campo.tipo_origen
+                            ? `✅ "${campo.tipo_origen}"`
+                            : "❌ NO"
+                    }`
+                );
+                console.log(
+                    `   ↳ pivot.tipo_origen: ${
+                        campo.pivot?.tipo_origen
+                            ? `✅ "${campo.pivot.tipo_origen}"`
+                            : "❌ NO"
+                    }`
+                );
+
                 // El tercer parámetro "true" evita renderizar en cada iteración
                 agregarCampoAlFormulario(campo.tipo, campo, true);
             });
 
-            console.log('✅ Total de campos cargados en memoria:', camposFormulario.length);
-            console.log('✅ ESTRUCTURA COMPLETA de campos en memoria:', camposFormulario);
+            console.log(
+                "✅ Total de campos cargados en memoria:",
+                camposFormulario.length
+            );
+            console.log(
+                "✅ ESTRUCTURA COMPLETA de campos en memoria:",
+                camposFormulario
+            );
 
             // Renderizar UNA SOLA VEZ al final
             renderizarCamposFormulario();
             actualizarContador();
         } else {
-            console.log('ℹ️ No hay campos existentes para este tipo de solicitud');
+            console.log(
+                "ℹ️ No hay campos existentes para este tipo de solicitud"
+            );
         }
     } catch (error) {
-        console.error('❌ Error al cargar campos existentes:', error);
+        console.error("❌ Error al cargar campos existentes:", error);
     }
 }
 
@@ -7021,114 +7202,145 @@ let dragAndDropInicializado = false;
 let handleDragOver, handleDragLeave, handleDrop;
 
 function inicializarDragAndDrop() {
-    const camposDisponibles = document.querySelectorAll('.campo-disponible');
-    const areaFormulario = document.getElementById('area-formulario-drop');
+    const camposDisponibles = document.querySelectorAll(".campo-disponible");
+    const areaFormulario = document.getElementById("area-formulario-drop");
 
     if (!areaFormulario) {
-        console.warn('⚠️ Área de formulario no encontrada');
+        console.warn("⚠️ Área de formulario no encontrada");
         return;
     }
 
     // Si ya fue inicializado, remover listeners anteriores del área de formulario
     if (dragAndDropInicializado) {
-        console.log('🔄 Removiendo listeners anteriores de drag and drop');
-        areaFormulario.removeEventListener('dragover', handleDragOver);
-        areaFormulario.removeEventListener('dragleave', handleDragLeave);
-        areaFormulario.removeEventListener('drop', handleDrop);
+        console.log("🔄 Removiendo listeners anteriores de drag and drop");
+        areaFormulario.removeEventListener("dragover", handleDragOver);
+        areaFormulario.removeEventListener("dragleave", handleDragLeave);
+        areaFormulario.removeEventListener("drop", handleDrop);
     }
 
     // Definir funciones de manejo de eventos
     handleDragOver = (e) => {
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'copy';
-        areaFormulario.classList.add('drag-over');
+        e.dataTransfer.dropEffect = "copy";
+        areaFormulario.classList.add("drag-over");
     };
 
     handleDragLeave = () => {
-        areaFormulario.classList.remove('drag-over');
+        areaFormulario.classList.remove("drag-over");
     };
 
     handleDrop = (e) => {
         e.preventDefault();
-        areaFormulario.classList.remove('drag-over');
+        areaFormulario.classList.remove("drag-over");
 
-        const tipoCampo = e.dataTransfer.getData('tipoCampo');
+        const tipoCampo = e.dataTransfer.getData("tipoCampo");
         if (tipoCampo) {
-            console.log('📥 Campo soltado en formulario:', tipoCampo);
+            console.log("📥 Campo soltado en formulario:", tipoCampo);
             agregarCampoAlFormulario(tipoCampo);
         }
     };
 
     // Drag start en campos disponibles (estos se recrean cada vez, no hay problema)
-    camposDisponibles.forEach(campo => {
-        campo.addEventListener('dragstart', (e) => {
-            e.dataTransfer.effectAllowed = 'copy';
-            e.dataTransfer.setData('tipoCampo', campo.dataset.tipo);
-            campo.style.opacity = '0.5';
+    camposDisponibles.forEach((campo) => {
+        campo.addEventListener("dragstart", (e) => {
+            e.dataTransfer.effectAllowed = "copy";
+            e.dataTransfer.setData("tipoCampo", campo.dataset.tipo);
+            campo.style.opacity = "0.5";
         });
 
-        campo.addEventListener('dragend', (e) => {
-            campo.style.opacity = '1';
+        campo.addEventListener("dragend", (e) => {
+            campo.style.opacity = "1";
         });
     });
 
     // Agregar listeners al área de formulario
-    areaFormulario.addEventListener('dragover', handleDragOver);
-    areaFormulario.addEventListener('dragleave', handleDragLeave);
-    areaFormulario.addEventListener('drop', handleDrop);
+    areaFormulario.addEventListener("dragover", handleDragOver);
+    areaFormulario.addEventListener("dragleave", handleDragLeave);
+    areaFormulario.addEventListener("drop", handleDrop);
 
     dragAndDropInicializado = true;
-    console.log('✅ Drag and drop inicializado correctamente');
+    console.log("✅ Drag and drop inicializado correctamente");
 }
 
 /**
  * Agregar un campo al formulario
  */
-function agregarCampoAlFormulario(tipoCampo, datosExistentes = null, noRenderizar = false) {
+function agregarCampoAlFormulario(
+    tipoCampo,
+    datosExistentes = null,
+    noRenderizar = false
+) {
     contadorCampos++;
 
     // Determinar el tipo_origen del campo
-    let tipoOrigen = 'personalizado'; // Por defecto
-    
+    let tipoOrigen = "personalizado"; // Por defecto
+
     if (datosExistentes) {
-        console.log(`🔍 Detectando tipo_origen para "${datosExistentes.etiqueta}":`, {
-            tiene_tipo_origen: !!datosExistentes.tipo_origen,
-            tipo_origen_valor: datosExistentes.tipo_origen,
-            tiene_pivot_tipo_origen: !!(datosExistentes.pivot && datosExistentes.pivot.tipo_origen),
-            pivot_tipo_origen_valor: datosExistentes.pivot?.tipo_origen,
-            categoria: datosExistentes.categoria,
-            slug: datosExistentes.slug
-        });
-        
+        console.log(
+            `🔍 Detectando tipo_origen para "${datosExistentes.etiqueta}":`,
+            {
+                tiene_tipo_origen: !!datosExistentes.tipo_origen,
+                tipo_origen_valor: datosExistentes.tipo_origen,
+                tiene_pivot_tipo_origen: !!(
+                    datosExistentes.pivot && datosExistentes.pivot.tipo_origen
+                ),
+                pivot_tipo_origen_valor: datosExistentes.pivot?.tipo_origen,
+                categoria: datosExistentes.categoria,
+                slug: datosExistentes.slug,
+            }
+        );
+
         // PRIORIDAD 1: Si viene tipo_origen en el nivel principal (agregado por el backend desde pivot)
         if (datosExistentes.tipo_origen) {
             tipoOrigen = datosExistentes.tipo_origen;
-            console.log(`✅ [PRIORIDAD 1] Campo "${datosExistentes.etiqueta}" tiene tipo_origen:`, tipoOrigen);
+            console.log(
+                `✅ [PRIORIDAD 1] Campo "${datosExistentes.etiqueta}" tiene tipo_origen:`,
+                tipoOrigen
+            );
         }
         // PRIORIDAD 2: Si viene tipo_origen del pivot (fallback para compatibilidad)
         else if (datosExistentes.pivot && datosExistentes.pivot.tipo_origen) {
             tipoOrigen = datosExistentes.pivot.tipo_origen;
-            console.log(`✅ [PRIORIDAD 2] Campo "${datosExistentes.etiqueta}" tiene tipo_origen en pivot:`, tipoOrigen);
+            console.log(
+                `✅ [PRIORIDAD 2] Campo "${datosExistentes.etiqueta}" tiene tipo_origen en pivot:`,
+                tipoOrigen
+            );
         }
         // FALLBACK: Si no tiene tipo_origen, intentar detectarlo (casos legacy)
         else {
             const slugsPredefinidos = [
-                'direccion_predio', 'barrio_sector', 'estrato',
-                'uso_predio', 'area_m2', 'ubicacion_mapa', 'observaciones'
+                "direccion_predio",
+                "barrio_sector",
+                "estrato",
+                "uso_predio",
+                "area_m2",
+                "ubicacion_mapa",
+                "observaciones",
             ];
-            
-            if (datosExistentes.slug && slugsPredefinidos.includes(datosExistentes.slug)) {
-                tipoOrigen = 'predefinido';
-                console.log(`⚠️ [FALLBACK] Campo "${datosExistentes.etiqueta}" detectado como PREDEFINIDO por slug`);
-            }
-            else if (datosExistentes.categoria && 
-                     datosExistentes.categoria !== 'formulario_tipo_solicitud' && 
-                     datosExistentes.categoria !== null &&
-                     datosExistentes.categoria !== '') {
-                tipoOrigen = 'biblioteca';
-                console.log(`⚠️ [FALLBACK] Campo "${datosExistentes.etiqueta}" detectado como BIBLIOTECA por categoria:`, datosExistentes.categoria);
+
+            if (
+                datosExistentes.slug &&
+                slugsPredefinidos.includes(datosExistentes.slug)
+            ) {
+                tipoOrigen = "predefinido";
+                console.log(
+                    `⚠️ [FALLBACK] Campo "${datosExistentes.etiqueta}" detectado como PREDEFINIDO por slug`
+                );
+            } else if (
+                datosExistentes.categoria &&
+                datosExistentes.categoria !== "formulario_tipo_solicitud" &&
+                datosExistentes.categoria !== null &&
+                datosExistentes.categoria !== ""
+            ) {
+                tipoOrigen = "biblioteca";
+                console.log(
+                    `⚠️ [FALLBACK] Campo "${datosExistentes.etiqueta}" detectado como BIBLIOTECA por categoria:`,
+                    datosExistentes.categoria
+                );
             } else {
-                console.log(`⚠️ [FALLBACK] Campo "${datosExistentes.etiqueta}" detectado como PERSONALIZADO (default)`);
+                console.log(
+                    `⚠️ [FALLBACK] Campo "${datosExistentes.etiqueta}" detectado como PERSONALIZADO (default)`
+                );
             }
         }
     }
@@ -7138,7 +7350,8 @@ function agregarCampoAlFormulario(tipoCampo, datosExistentes = null, noRenderiza
         id: datosExistentes?.id || `campo_${Date.now()}_${contadorCampos}`,
         tipo: datosExistentes?.tipo || tipoCampo,
         nombre: datosExistentes?.nombre || `campo_${contadorCampos}`,
-        etiqueta: datosExistentes?.etiqueta || obtenerEtiquetaPorTipo(tipoCampo),
+        etiqueta:
+            datosExistentes?.etiqueta || obtenerEtiquetaPorTipo(tipoCampo),
         orden: datosExistentes?.pivot?.orden || camposFormulario.length + 1,
         obligatorio: datosExistentes?.pivot?.obligatorio || false,
         configuracion: datosExistentes?.configuracion || {},
@@ -7146,17 +7359,17 @@ function agregarCampoAlFormulario(tipoCampo, datosExistentes = null, noRenderiza
         tipo_origen: tipoOrigen,
         slug: datosExistentes?.slug || null,
         categoria: datosExistentes?.categoria || null,
-        // Para campos de biblioteca: campo_id puede venir de datosExistentes (wizard) 
+        // Para campos de biblioteca: campo_id puede venir de datosExistentes (wizard)
         // o ser null si es campo existente (en ese caso usamos id directamente)
-        campo_id: datosExistentes?.campo_id || null
+        campo_id: datosExistentes?.campo_id || null,
     };
-    
+
     console.log(`📝 Campo creado en memoria:`, {
         etiqueta: campo.etiqueta,
         id: campo.id,
         tipo_id: typeof campo.id,
         tipo_origen: campo.tipo_origen,
-        campo_id: campo.campo_id
+        campo_id: campo.campo_id,
     });
 
     camposFormulario.push(campo);
@@ -7169,9 +7382,11 @@ function agregarCampoAlFormulario(tipoCampo, datosExistentes = null, noRenderiza
 
     // Ocultar placeholder si es el primer campo
     if (camposFormulario.length === 1) {
-        const placeholder = document.getElementById('placeholder-formulario-vacio');
+        const placeholder = document.getElementById(
+            "placeholder-formulario-vacio"
+        );
         if (placeholder) {
-            placeholder.style.display = 'none';
+            placeholder.style.display = "none";
         }
     }
 
@@ -7188,23 +7403,23 @@ function agregarCampoAlFormulario(tipoCampo, datosExistentes = null, noRenderiza
  */
 function obtenerEtiquetaPorTipo(tipo) {
     const etiquetas = {
-        'texto_corto': 'Texto Corto',
-        'texto_largo': 'Texto Largo',
-        'email': 'Correo Electrónico',
-        'telefono': 'Teléfono',
-        'fecha': 'Fecha',
-        'numero': 'Número',
-        'moneda': 'Valor en Pesos',
-        'checkbox': 'Opción de Selección',
-        'radio': 'Seleccione una Opción',
-        'select': 'Lista Desplegable',
-        'archivo': 'Adjuntar Archivo',
-        'imagen': 'Adjuntar Imagen',
-        'direccion': 'Dirección',
-        'ubicacion': 'Ubicación en Mapa'
+        texto_corto: "Texto Corto",
+        texto_largo: "Texto Largo",
+        email: "Correo Electrónico",
+        telefono: "Teléfono",
+        fecha: "Fecha",
+        numero: "Número",
+        moneda: "Valor en Pesos",
+        checkbox: "Opción de Selección",
+        radio: "Seleccione una Opción",
+        select: "Lista Desplegable",
+        archivo: "Adjuntar Archivo",
+        imagen: "Adjuntar Imagen",
+        direccion: "Dirección",
+        ubicacion: "Ubicación en Mapa",
     };
 
-    return etiquetas[tipo] || 'Campo Personalizado';
+    return etiquetas[tipo] || "Campo Personalizado";
 }
 
 /**
@@ -7212,38 +7427,40 @@ function obtenerEtiquetaPorTipo(tipo) {
  */
 function obtenerIconoPorTipo(tipo) {
     const iconos = {
-        'texto_corto': '📝',
-        'texto_largo': '📄',
-        'email': '📧',
-        'telefono': '☎️',
-        'fecha': '📅',
-        'numero': '#️⃣',
-        'moneda': '💰',
-        'checkbox': '☑️',
-        'radio': '🔘',
-        'select': '📋',
-        'archivo': '📎',
-        'imagen': '🖼️',
-        'direccion': '📍',
-        'ubicacion': '🗺️'
+        texto_corto: "📝",
+        texto_largo: "📄",
+        email: "📧",
+        telefono: "☎️",
+        fecha: "📅",
+        numero: "#️⃣",
+        moneda: "💰",
+        checkbox: "☑️",
+        radio: "🔘",
+        select: "📋",
+        archivo: "📎",
+        imagen: "🖼️",
+        direccion: "📍",
+        ubicacion: "🗺️",
     };
 
-    return iconos[tipo] || '📌';
+    return iconos[tipo] || "📌";
 }
 
 /**
  * Renderizar lista de campos en el formulario
  */
 function renderizarCamposFormulario() {
-    const lista = document.getElementById('formulario-campos-lista');
-    lista.innerHTML = '';
+    const lista = document.getElementById("formulario-campos-lista");
+    lista.innerHTML = "";
 
     // Ordenar por campo.orden
     camposFormulario.sort((a, b) => a.orden - b.orden);
 
     camposFormulario.forEach((campo, index) => {
-        const div = document.createElement('div');
-        div.className = `campo-formulario-item ${campoSeleccionado === campo.id ? 'selected' : ''}`;
+        const div = document.createElement("div");
+        div.className = `campo-formulario-item ${
+            campoSeleccionado === campo.id ? "selected" : ""
+        }`;
         div.dataset.campoId = campo.id;
         div.draggable = true;
 
@@ -7259,35 +7476,53 @@ function renderizarCamposFormulario() {
                 <!-- Contenido del campo -->
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-xl">${obtenerIconoPorTipo(campo.tipo)}</span>
-                        <span class="font-semibold text-gray-900">${campo.etiqueta}</span>
-                        ${campo.obligatorio ? '<span class="text-red-500">*</span>' : ''}
+                        <span class="text-xl">${obtenerIconoPorTipo(
+                            campo.tipo
+                        )}</span>
+                        <span class="font-semibold text-gray-900">${
+                            campo.etiqueta
+                        }</span>
+                        ${
+                            campo.obligatorio
+                                ? '<span class="text-red-500">*</span>'
+                                : ""
+                        }
                     </div>
                     <div class="text-sm text-gray-500">
                         Tipo: <span class="font-medium">${campo.tipo}</span> •
-                        Nombre: <span class="font-mono text-xs bg-gray-100 px-1 rounded">${campo.nombre}</span>
+                        Nombre: <span class="font-mono text-xs bg-gray-100 px-1 rounded">${
+                            campo.nombre
+                        }</span>
                     </div>
                     <div class="mt-2">
-                        ${campo.configurado ?
-                            '<span class="badge-configurado">✓ Configurado</span>' :
-                            '<span class="badge-sin-configurar">⚠️ Sin configurar</span>'}
+                        ${
+                            campo.configurado
+                                ? '<span class="badge-configurado">✓ Configurado</span>'
+                                : '<span class="badge-sin-configurar">⚠️ Sin configurar</span>'
+                        }
                     </div>
                 </div>
 
                 <!-- Botones de acción -->
                 <div class="flex flex-col gap-1">
-                    <button onclick="seleccionarCampo('${campo.id}')" class="btn-config p-2 text-blue-600 hover:bg-blue-50 rounded" title="Configurar">
+                    <button onclick="seleccionarCampo('${
+                        campo.id
+                    }')" class="btn-config p-2 text-blue-600 hover:bg-blue-50 rounded" title="Configurar">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
                     </button>
-                    <button onclick="duplicarCampo('${campo.id}')" class="btn-duplicate p-2 text-gray-600 hover:bg-gray-50 rounded" title="Duplicar">
+                    <button onclick="duplicarCampo('${
+                        campo.id
+                    }')" class="btn-duplicate p-2 text-gray-600 hover:bg-gray-50 rounded" title="Duplicar">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                         </svg>
                     </button>
-                    <button onclick="eliminarCampo('${campo.id}')" class="btn-delete p-2 text-red-600 hover:bg-red-50 rounded" title="Eliminar">
+                    <button onclick="eliminarCampo('${
+                        campo.id
+                    }')" class="btn-delete p-2 text-red-600 hover:bg-red-50 rounded" title="Eliminar">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
@@ -7297,19 +7532,19 @@ function renderizarCamposFormulario() {
         `;
 
         // Agregar eventos de drag para reordenar
-        div.addEventListener('dragstart', (e) => {
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('campoId', campo.id);
-            div.classList.add('dragging');
+        div.addEventListener("dragstart", (e) => {
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("campoId", campo.id);
+            div.classList.add("dragging");
         });
 
-        div.addEventListener('dragend', () => {
-            div.classList.remove('dragging');
+        div.addEventListener("dragend", () => {
+            div.classList.remove("dragging");
         });
 
-        div.addEventListener('dragover', (e) => {
+        div.addEventListener("dragover", (e) => {
             e.preventDefault();
-            const dragging = document.querySelector('.dragging');
+            const dragging = document.querySelector(".dragging");
             if (dragging && dragging !== div) {
                 const rect = div.getBoundingClientRect();
                 const midY = rect.top + rect.height / 2;
@@ -7321,7 +7556,7 @@ function renderizarCamposFormulario() {
             }
         });
 
-        div.addEventListener('drop', () => {
+        div.addEventListener("drop", () => {
             actualizarOrdenCampos();
         });
 
@@ -7333,10 +7568,10 @@ function renderizarCamposFormulario() {
  * Actualizar orden de los campos después de reordenar
  */
 function actualizarOrdenCampos() {
-    const items = document.querySelectorAll('.campo-formulario-item');
+    const items = document.querySelectorAll(".campo-formulario-item");
     items.forEach((item, index) => {
         const campoId = item.dataset.campoId;
-        const campo = camposFormulario.find(c => c.id === campoId);
+        const campo = camposFormulario.find((c) => c.id === campoId);
         if (campo) {
             campo.orden = index + 1;
         }
@@ -7348,17 +7583,19 @@ function actualizarOrdenCampos() {
  */
 function actualizarContador() {
     const total = camposFormulario.length;
-    const configurados = camposFormulario.filter(c => c.configurado).length;
+    const configurados = camposFormulario.filter((c) => c.configurado).length;
     const sinConfigurar = total - configurados;
 
-    document.getElementById('modal-campos-contador').textContent = configurados;
+    document.getElementById("modal-campos-contador").textContent = configurados;
 
-    const badgeSinConfigurar = document.getElementById('modal-campos-sin-configurar');
+    const badgeSinConfigurar = document.getElementById(
+        "modal-campos-sin-configurar"
+    );
     if (sinConfigurar > 0) {
-        badgeSinConfigurar.style.display = 'inline-flex';
+        badgeSinConfigurar.style.display = "inline-flex";
         badgeSinConfigurar.textContent = `⚠️ ${sinConfigurar} campo(s) sin configurar`;
     } else {
-        badgeSinConfigurar.style.display = 'none';
+        badgeSinConfigurar.style.display = "none";
     }
 }
 
@@ -7367,7 +7604,7 @@ function actualizarContador() {
  */
 function seleccionarCampo(campoId) {
     campoSeleccionado = campoId;
-    const campo = camposFormulario.find(c => c.id === campoId);
+    const campo = camposFormulario.find((c) => c.id === campoId);
 
     if (!campo) return;
 
@@ -7378,14 +7615,16 @@ function seleccionarCampo(campoId) {
     mostrarPanelConfiguracion(campo);
 
     // Scroll al panel de configuración en móvil
-    document.getElementById('panel-config-campo').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    document
+        .getElementById("panel-config-campo")
+        .scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 /**
  * Duplicar un campo
  */
 function duplicarCampo(campoId) {
-    const campo = camposFormulario.find(c => c.id === campoId);
+    const campo = camposFormulario.find((c) => c.id === campoId);
     if (!campo) return;
 
     contadorCampos++;
@@ -7395,28 +7634,28 @@ function duplicarCampo(campoId) {
         id: `campo_${Date.now()}_${contadorCampos}`,
         nombre: `${campo.nombre}_copia`,
         orden: camposFormulario.length + 1,
-        configurado: true // Ya está configurado porque se copia la config
+        configurado: true, // Ya está configurado porque se copia la config
     };
 
     camposFormulario.push(campoDuplicado);
     renderizarCamposFormulario();
     actualizarContador();
 
-    mostrarToast(`Campo "${campo.etiqueta}" duplicado`, 'success');
+    mostrarToast(`Campo "${campo.etiqueta}" duplicado`, "success");
 }
 
 /**
  * Eliminar un campo
  */
 function eliminarCampo(campoId) {
-    const campo = camposFormulario.find(c => c.id === campoId);
+    const campo = camposFormulario.find((c) => c.id === campoId);
     if (!campo) return;
 
     if (!confirm(`¿Eliminar el campo "${campo.etiqueta}"?`)) {
         return;
     }
 
-    camposFormulario = camposFormulario.filter(c => c.id !== campoId);
+    camposFormulario = camposFormulario.filter((c) => c.id !== campoId);
     renderizarCamposFormulario();
     actualizarContador();
 
@@ -7428,10 +7667,11 @@ function eliminarCampo(campoId) {
 
     // Si no quedan campos, mostrar placeholder
     if (camposFormulario.length === 0) {
-        document.getElementById('placeholder-formulario-vacio').style.display = 'block';
+        document.getElementById("placeholder-formulario-vacio").style.display =
+            "block";
     }
 
-    mostrarToast(`Campo "${campo.etiqueta}" eliminado`, 'success');
+    mostrarToast(`Campo "${campo.etiqueta}" eliminado`, "success");
 }
 
 /**
@@ -7440,22 +7680,23 @@ function eliminarCampo(campoId) {
 function limpiarFormulario() {
     if (camposFormulario.length === 0) return;
 
-    if (!confirm('¿Deseas eliminar todos los campos del formulario?')) {
+    if (!confirm("¿Deseas eliminar todos los campos del formulario?")) {
         return;
     }
 
     camposFormulario = [];
     campoSeleccionado = null;
     limpiarFormularioConstructor();
-    mostrarToast('Formulario limpiado', 'info');
+    mostrarToast("Formulario limpiado", "info");
 }
 
 /**
  * Limpiar constructor visualmente
  */
 function limpiarFormularioConstructor() {
-    document.getElementById('formulario-campos-lista').innerHTML = '';
-    document.getElementById('placeholder-formulario-vacio').style.display = 'block';
+    document.getElementById("formulario-campos-lista").innerHTML = "";
+    document.getElementById("placeholder-formulario-vacio").style.display =
+        "block";
     ocultarPanelConfiguracion();
     actualizarContador();
 }
@@ -7464,9 +7705,9 @@ function limpiarFormularioConstructor() {
  * Mostrar panel de configuración para un campo
  */
 function mostrarPanelConfiguracion(campo) {
-    document.getElementById('config-campo-vacia').style.display = 'none';
-    const contenido = document.getElementById('config-campo-contenido');
-    contenido.style.display = 'block';
+    document.getElementById("config-campo-vacia").style.display = "none";
+    const contenido = document.getElementById("config-campo-contenido");
+    contenido.style.display = "block";
 
     // Generar formulario de configuración según el tipo de campo
     contenido.innerHTML = generarFormularioConfiguracion(campo);
@@ -7481,8 +7722,8 @@ function mostrarPanelConfiguracion(campo) {
  * Ocultar panel de configuración
  */
 function ocultarPanelConfiguracion() {
-    document.getElementById('config-campo-vacia').style.display = 'block';
-    document.getElementById('config-campo-contenido').style.display = 'none';
+    document.getElementById("config-campo-vacia").style.display = "block";
+    document.getElementById("config-campo-contenido").style.display = "none";
 }
 
 /**
@@ -7520,7 +7761,9 @@ function generarFormularioConfiguracion(campo) {
         <!-- Campo obligatorio -->
         <div class="mb-4">
             <label class="flex items-center cursor-pointer">
-                <input type="checkbox" id="config_obligatorio" ${campo.obligatorio ? 'checked' : ''}
+                <input type="checkbox" id="config_obligatorio" ${
+                    campo.obligatorio ? "checked" : ""
+                }
                     class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                 <span class="text-sm font-medium text-gray-700">Campo obligatorio</span>
             </label>
@@ -7533,34 +7776,42 @@ function generarFormularioConfiguracion(campo) {
             </label>
             <textarea id="config_ayuda" rows="2"
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                placeholder="Texto explicativo para el usuario">${campo.configuracion.ayuda || ''}</textarea>
+                placeholder="Texto explicativo para el usuario">${
+                    campo.configuracion.ayuda || ""
+                }</textarea>
         </div>
     `;
 
     // Configuración específica según tipo
-    let configuracionEspecifica = '';
+    let configuracionEspecifica = "";
 
     switch (campo.tipo) {
-        case 'texto_corto':
-        case 'email':
-        case 'telefono':
+        case "texto_corto":
+        case "email":
+        case "telefono":
             configuracionEspecifica = `
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Placeholder</label>
-                    <input type="text" id="config_placeholder" value="${campo.configuracion.placeholder || ''}"
+                    <input type="text" id="config_placeholder" value="${
+                        campo.configuracion.placeholder || ""
+                    }"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                         placeholder="Ej: Ingrese su dirección">
                 </div>
                 <div class="grid grid-cols-2 gap-2 mb-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Long. mínima</label>
-                        <input type="number" id="config_min_length" value="${campo.configuracion.min_length || ''}"
+                        <input type="number" id="config_min_length" value="${
+                            campo.configuracion.min_length || ""
+                        }"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                             placeholder="0">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Long. máxima</label>
-                        <input type="number" id="config_max_length" value="${campo.configuracion.max_length || ''}"
+                        <input type="number" id="config_max_length" value="${
+                            campo.configuracion.max_length || ""
+                        }"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                             placeholder="255">
                     </div>
@@ -7568,62 +7819,90 @@ function generarFormularioConfiguracion(campo) {
             `;
             break;
 
-        case 'texto_largo':
+        case "texto_largo":
             configuracionEspecifica = `
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Placeholder</label>
-                    <input type="text" id="config_placeholder" value="${campo.configuracion.placeholder || ''}"
+                    <input type="text" id="config_placeholder" value="${
+                        campo.configuracion.placeholder || ""
+                    }"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Filas visibles</label>
-                    <input type="number" id="config_rows" value="${campo.configuracion.rows || 4}"
+                    <input type="number" id="config_rows" value="${
+                        campo.configuracion.rows || 4
+                    }"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" min="2" max="10">
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Long. máxima</label>
-                    <input type="number" id="config_max_length" value="${campo.configuracion.max_length || 500}"
+                    <input type="number" id="config_max_length" value="${
+                        campo.configuracion.max_length || 500
+                    }"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 </div>
             `;
             break;
 
-        case 'numero':
-        case 'moneda':
+        case "numero":
+        case "moneda":
             configuracionEspecifica = `
                 <div class="grid grid-cols-2 gap-2 mb-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Valor mínimo</label>
-                        <input type="number" id="config_min_value" value="${campo.configuracion.min_value || ''}"
+                        <input type="number" id="config_min_value" value="${
+                            campo.configuracion.min_value || ""
+                        }"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Valor máximo</label>
-                        <input type="number" id="config_max_value" value="${campo.configuracion.max_value || ''}"
+                        <input type="number" id="config_max_value" value="${
+                            campo.configuracion.max_value || ""
+                        }"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                     </div>
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Valor por defecto</label>
-                    <input type="number" id="config_default_value" value="${campo.configuracion.default_value || ''}"
+                    <input type="number" id="config_default_value" value="${
+                        campo.configuracion.default_value || ""
+                    }"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 </div>
-                ${campo.tipo === 'moneda' ? `
+                ${
+                    campo.tipo === "moneda"
+                        ? `
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Moneda</label>
                     <select id="config_currency" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                        <option value="COP" ${campo.configuracion.currency === 'COP' ? 'selected' : ''}>COP - Peso Colombiano</option>
-                        <option value="USD" ${campo.configuracion.currency === 'USD' ? 'selected' : ''}>USD - Dólar</option>
-                        <option value="EUR" ${campo.configuracion.currency === 'EUR' ? 'selected' : ''}>EUR - Euro</option>
+                        <option value="COP" ${
+                            campo.configuracion.currency === "COP"
+                                ? "selected"
+                                : ""
+                        }>COP - Peso Colombiano</option>
+                        <option value="USD" ${
+                            campo.configuracion.currency === "USD"
+                                ? "selected"
+                                : ""
+                        }>USD - Dólar</option>
+                        <option value="EUR" ${
+                            campo.configuracion.currency === "EUR"
+                                ? "selected"
+                                : ""
+                        }>EUR - Euro</option>
                     </select>
                 </div>
-                ` : ''}
+                `
+                        : ""
+                }
             `;
             break;
 
-        case 'select':
-        case 'radio':
-        case 'checkbox':
+        case "select":
+        case "radio":
+        case "checkbox":
             const opciones = campo.configuracion.opciones || [];
             configuracionEspecifica = `
                 <div class="mb-4">
@@ -7632,47 +7911,66 @@ function generarFormularioConfiguracion(campo) {
                         <span class="text-red-500">*</span>
                     </label>
                     <div id="opciones-container" class="space-y-2 mb-2">
-                        ${opciones.map((opcion, index) => `
+                        ${opciones
+                            .map(
+                                (opcion, index) => `
                             <div class="opcion-item">
                                 <input type="text" class="opcion-valor" value="${opcion.valor}" placeholder="Valor">
                                 <input type="text" class="opcion-etiqueta" value="${opcion.etiqueta}" placeholder="Etiqueta">
                                 <button type="button" onclick="eliminarOpcion(this)">✕</button>
                             </div>
-                        `).join('')}
+                        `
+                            )
+                            .join("")}
                     </div>
                     <button type="button" onclick="agregarOpcion()" class="btn-agregar-opcion">
                         + Agregar Opción
                     </button>
                 </div>
-                ${campo.tipo === 'select' ? `
+                ${
+                    campo.tipo === "select"
+                        ? `
                 <div class="mb-4">
                     <label class="flex items-center cursor-pointer">
-                        <input type="checkbox" id="config_multiple" ${campo.configuracion.multiple ? 'checked' : ''}
+                        <input type="checkbox" id="config_multiple" ${
+                            campo.configuracion.multiple ? "checked" : ""
+                        }
                             class="mr-2 h-4 w-4 text-blue-600">
                         <span class="text-sm font-medium text-gray-700">Permitir selección múltiple</span>
                     </label>
                 </div>
-                ` : ''}
+                `
+                        : ""
+                }
             `;
             break;
 
-        case 'archivo':
-        case 'imagen':
+        case "archivo":
+        case "imagen":
             configuracionEspecifica = `
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Tamaño máximo (MB)</label>
-                    <input type="number" id="config_max_size" value="${campo.configuracion.max_size || 10}"
+                    <input type="number" id="config_max_size" value="${
+                        campo.configuracion.max_size || 10
+                    }"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" min="1" max="100">
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Tipos permitidos</label>
-                    <input type="text" id="config_allowed_types" value="${campo.configuracion.allowed_types || (campo.tipo === 'imagen' ? '.jpg,.png,.gif,.webp' : '.pdf,.doc,.docx')}"
+                    <input type="text" id="config_allowed_types" value="${
+                        campo.configuracion.allowed_types ||
+                        (campo.tipo === "imagen"
+                            ? ".jpg,.png,.gif,.webp"
+                            : ".pdf,.doc,.docx")
+                    }"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
                         placeholder=".pdf,.doc,.xlsx">
                 </div>
                 <div class="mb-4">
                     <label class="flex items-center cursor-pointer">
-                        <input type="checkbox" id="config_multiple_files" ${campo.configuracion.multiple_files ? 'checked' : ''}
+                        <input type="checkbox" id="config_multiple_files" ${
+                            campo.configuracion.multiple_files ? "checked" : ""
+                        }
                             class="mr-2 h-4 w-4 text-blue-600">
                         <span class="text-sm font-medium text-gray-700">Permitir múltiples archivos</span>
                     </label>
@@ -7680,34 +7978,54 @@ function generarFormularioConfiguracion(campo) {
             `;
             break;
 
-        case 'fecha':
+        case "fecha":
             configuracionEspecifica = `
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Fecha mínima</label>
-                    <input type="date" id="config_min_date" value="${campo.configuracion.min_date || ''}"
+                    <input type="date" id="config_min_date" value="${
+                        campo.configuracion.min_date || ""
+                    }"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Fecha máxima</label>
-                    <input type="date" id="config_max_date" value="${campo.configuracion.max_date || ''}"
+                    <input type="date" id="config_max_date" value="${
+                        campo.configuracion.max_date || ""
+                    }"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 </div>
             `;
             break;
 
-        case 'ubicacion':
+        case "ubicacion":
             configuracionEspecifica = `
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de geometría</label>
                     <select id="config_geometry_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                        <option value="point" ${campo.configuracion.geometry_type === 'point' ? 'selected' : ''}>Punto</option>
-                        <option value="polygon" ${campo.configuracion.geometry_type === 'polygon' ? 'selected' : ''}>Polígono</option>
-                        <option value="line" ${campo.configuracion.geometry_type === 'line' ? 'selected' : ''}>Línea</option>
+                        <option value="point" ${
+                            campo.configuracion.geometry_type === "point"
+                                ? "selected"
+                                : ""
+                        }>Punto</option>
+                        <option value="polygon" ${
+                            campo.configuracion.geometry_type === "polygon"
+                                ? "selected"
+                                : ""
+                        }>Polígono</option>
+                        <option value="line" ${
+                            campo.configuracion.geometry_type === "line"
+                                ? "selected"
+                                : ""
+                        }>Línea</option>
                     </select>
                 </div>
                 <div class="mb-4">
                     <label class="flex items-center cursor-pointer">
-                        <input type="checkbox" id="config_search_enabled" ${campo.configuracion.search_enabled !== false ? 'checked' : ''}
+                        <input type="checkbox" id="config_search_enabled" ${
+                            campo.configuracion.search_enabled !== false
+                                ? "checked"
+                                : ""
+                        }
                             class="mr-2 h-4 w-4 text-blue-600">
                         <span class="text-sm font-medium text-gray-700">Habilitar búsqueda de dirección</span>
                     </label>
@@ -7742,11 +8060,11 @@ function cargarValoresConfiguracion(campo) {
  * Agregar una opción (para select, radio, checkbox)
  */
 function agregarOpcion() {
-    const container = document.getElementById('opciones-container');
+    const container = document.getElementById("opciones-container");
     if (!container) return;
 
-    const div = document.createElement('div');
-    div.className = 'opcion-item';
+    const div = document.createElement("div");
+    div.className = "opcion-item";
     div.innerHTML = `
         <input type="text" class="opcion-valor" placeholder="Valor">
         <input type="text" class="opcion-etiqueta" placeholder="Etiqueta">
@@ -7768,18 +8086,19 @@ function eliminarOpcion(btn) {
 function guardarConfiguracionCampo() {
     if (!campoSeleccionado) return;
 
-    const campo = camposFormulario.find(c => c.id === campoSeleccionado);
+    const campo = camposFormulario.find((c) => c.id === campoSeleccionado);
     if (!campo) return;
 
     // Obtener valores comunes
-    const nombre = document.getElementById('config_nombre')?.value.trim();
-    const etiqueta = document.getElementById('config_etiqueta')?.value.trim();
-    const obligatorio = document.getElementById('config_obligatorio')?.checked || false;
-    const ayuda = document.getElementById('config_ayuda')?.value.trim();
+    const nombre = document.getElementById("config_nombre")?.value.trim();
+    const etiqueta = document.getElementById("config_etiqueta")?.value.trim();
+    const obligatorio =
+        document.getElementById("config_obligatorio")?.checked || false;
+    const ayuda = document.getElementById("config_ayuda")?.value.trim();
 
     // Validar campos obligatorios
     if (!nombre || !etiqueta) {
-        mostrarToast('El nombre y etiqueta son obligatorios', 'error');
+        mostrarToast("El nombre y etiqueta son obligatorios", "error");
         return;
     }
 
@@ -7791,70 +8110,111 @@ function guardarConfiguracionCampo() {
 
     // Obtener configuración específica según tipo
     switch (campo.tipo) {
-        case 'texto_corto':
-        case 'email':
-        case 'telefono':
-            campo.configuracion.placeholder = document.getElementById('config_placeholder')?.value.trim();
-            campo.configuracion.min_length = parseInt(document.getElementById('config_min_length')?.value) || null;
-            campo.configuracion.max_length = parseInt(document.getElementById('config_max_length')?.value) || null;
+        case "texto_corto":
+        case "email":
+        case "telefono":
+            campo.configuracion.placeholder = document
+                .getElementById("config_placeholder")
+                ?.value.trim();
+            campo.configuracion.min_length =
+                parseInt(document.getElementById("config_min_length")?.value) ||
+                null;
+            campo.configuracion.max_length =
+                parseInt(document.getElementById("config_max_length")?.value) ||
+                null;
             break;
 
-        case 'texto_largo':
-            campo.configuracion.placeholder = document.getElementById('config_placeholder')?.value.trim();
-            campo.configuracion.rows = parseInt(document.getElementById('config_rows')?.value) || 4;
-            campo.configuracion.max_length = parseInt(document.getElementById('config_max_length')?.value) || 500;
+        case "texto_largo":
+            campo.configuracion.placeholder = document
+                .getElementById("config_placeholder")
+                ?.value.trim();
+            campo.configuracion.rows =
+                parseInt(document.getElementById("config_rows")?.value) || 4;
+            campo.configuracion.max_length =
+                parseInt(document.getElementById("config_max_length")?.value) ||
+                500;
             break;
 
-        case 'numero':
-        case 'moneda':
-            campo.configuracion.min_value = parseFloat(document.getElementById('config_min_value')?.value) || null;
-            campo.configuracion.max_value = parseFloat(document.getElementById('config_max_value')?.value) || null;
-            campo.configuracion.default_value = parseFloat(document.getElementById('config_default_value')?.value) || null;
-            if (campo.tipo === 'moneda') {
-                campo.configuracion.currency = document.getElementById('config_currency')?.value || 'COP';
+        case "numero":
+        case "moneda":
+            campo.configuracion.min_value =
+                parseFloat(
+                    document.getElementById("config_min_value")?.value
+                ) || null;
+            campo.configuracion.max_value =
+                parseFloat(
+                    document.getElementById("config_max_value")?.value
+                ) || null;
+            campo.configuracion.default_value =
+                parseFloat(
+                    document.getElementById("config_default_value")?.value
+                ) || null;
+            if (campo.tipo === "moneda") {
+                campo.configuracion.currency =
+                    document.getElementById("config_currency")?.value || "COP";
             }
             break;
 
-        case 'select':
-        case 'radio':
-        case 'checkbox':
+        case "select":
+        case "radio":
+        case "checkbox":
             // Obtener opciones
             const opciones = [];
-            document.querySelectorAll('#opciones-container .opcion-item').forEach(item => {
-                const valor = item.querySelector('.opcion-valor')?.value.trim();
-                const etiqueta = item.querySelector('.opcion-etiqueta')?.value.trim();
-                if (valor && etiqueta) {
-                    opciones.push({ valor, etiqueta });
-                }
-            });
+            document
+                .querySelectorAll("#opciones-container .opcion-item")
+                .forEach((item) => {
+                    const valor = item
+                        .querySelector(".opcion-valor")
+                        ?.value.trim();
+                    const etiqueta = item
+                        .querySelector(".opcion-etiqueta")
+                        ?.value.trim();
+                    if (valor && etiqueta) {
+                        opciones.push({ valor, etiqueta });
+                    }
+                });
 
             if (opciones.length === 0) {
-                mostrarToast('Debes agregar al menos una opción', 'error');
+                mostrarToast("Debes agregar al menos una opción", "error");
                 return;
             }
 
             campo.configuracion.opciones = opciones;
 
-            if (campo.tipo === 'select') {
-                campo.configuracion.multiple = document.getElementById('config_multiple')?.checked || false;
+            if (campo.tipo === "select") {
+                campo.configuracion.multiple =
+                    document.getElementById("config_multiple")?.checked ||
+                    false;
             }
             break;
 
-        case 'archivo':
-        case 'imagen':
-            campo.configuracion.max_size = parseInt(document.getElementById('config_max_size')?.value) || 10;
-            campo.configuracion.allowed_types = document.getElementById('config_allowed_types')?.value.trim();
-            campo.configuracion.multiple_files = document.getElementById('config_multiple_files')?.checked || false;
+        case "archivo":
+        case "imagen":
+            campo.configuracion.max_size =
+                parseInt(document.getElementById("config_max_size")?.value) ||
+                10;
+            campo.configuracion.allowed_types = document
+                .getElementById("config_allowed_types")
+                ?.value.trim();
+            campo.configuracion.multiple_files =
+                document.getElementById("config_multiple_files")?.checked ||
+                false;
             break;
 
-        case 'fecha':
-            campo.configuracion.min_date = document.getElementById('config_min_date')?.value;
-            campo.configuracion.max_date = document.getElementById('config_max_date')?.value;
+        case "fecha":
+            campo.configuracion.min_date =
+                document.getElementById("config_min_date")?.value;
+            campo.configuracion.max_date =
+                document.getElementById("config_max_date")?.value;
             break;
 
-        case 'ubicacion':
-            campo.configuracion.geometry_type = document.getElementById('config_geometry_type')?.value || 'point';
-            campo.configuracion.search_enabled = document.getElementById('config_search_enabled')?.checked !== false;
+        case "ubicacion":
+            campo.configuracion.geometry_type =
+                document.getElementById("config_geometry_type")?.value ||
+                "point";
+            campo.configuracion.search_enabled =
+                document.getElementById("config_search_enabled")?.checked !==
+                false;
             break;
     }
 
@@ -7864,7 +8224,7 @@ function guardarConfiguracionCampo() {
     // Re-renderizar y actualizar
     renderizarCamposFormulario();
     actualizarContador();
-    mostrarToast(`Campo "${campo.etiqueta}" configurado`, 'success');
+    mostrarToast(`Campo "${campo.etiqueta}" configurado`, "success");
 }
 
 /**
@@ -7872,67 +8232,80 @@ function guardarConfiguracionCampo() {
  */
 async function guardarConfiguracionFormulario() {
     if (camposFormulario.length === 0) {
-        mostrarToast('Agrega al menos un campo al formulario', 'error');
+        mostrarToast("Agrega al menos un campo al formulario", "error");
         return;
     }
 
     // Verificar que todos los campos estén configurados
-    const sinConfigurar = camposFormulario.filter(c => !c.configurado);
+    const sinConfigurar = camposFormulario.filter((c) => !c.configurado);
     if (sinConfigurar.length > 0) {
         const result = await Swal.fire({
-            title: 'Campos sin configurar',
+            title: "Campos sin configurar",
             text: `Hay ${sinConfigurar.length} campo(s) sin configurar. ¿Deseas guardar de todas formas?`,
-            icon: 'warning',
+            icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: '#3B82F6',
-            cancelButtonColor: '#6B7280',
-            confirmButtonText: 'Sí, guardar',
-            cancelButtonText: 'Cancelar'
+            confirmButtonColor: "#3B82F6",
+            cancelButtonColor: "#6B7280",
+            confirmButtonText: "Sí, guardar",
+            cancelButtonText: "Cancelar",
         });
 
         if (!result.isConfirmed) {
-            console.log('❌ Usuario canceló el guardado');
+            console.log("❌ Usuario canceló el guardado");
             return;
         }
 
-        console.log('✅ Usuario confirmó guardar con campos sin configurar');
+        console.log("✅ Usuario confirmó guardar con campos sin configurar");
     }
 
     try {
-        console.log('🔍 ANTES DE GUARDAR - camposFormulario en memoria:', camposFormulario);
-        console.log('🔍 ANTES DE GUARDAR - Total de campos:', camposFormulario.length);
+        console.log(
+            "🔍 ANTES DE GUARDAR - camposFormulario en memoria:",
+            camposFormulario
+        );
+        console.log(
+            "🔍 ANTES DE GUARDAR - Total de campos:",
+            camposFormulario.length
+        );
 
         // Mostrar todos los campos en memoria antes de clasificar
-        console.log('📦 TODOS los campos en memoria:', camposFormulario);
-        console.log('📦 RESUMEN campos:', camposFormulario.map(c => ({
-            id: c.id,
-            etiqueta: c.etiqueta,
-            tipo_origen: c.tipo_origen,
-            slug: c.slug,
-            categoria: c.categoria,
-            campo_id: c.campo_id
-        })));
+        console.log("📦 TODOS los campos en memoria:", camposFormulario);
+        console.log(
+            "📦 RESUMEN campos:",
+            camposFormulario.map((c) => ({
+                id: c.id,
+                etiqueta: c.etiqueta,
+                tipo_origen: c.tipo_origen,
+                slug: c.slug,
+                categoria: c.categoria,
+                campo_id: c.campo_id,
+            }))
+        );
 
         // Separar campos por tipo_origen
         const camposPredefinidos = camposFormulario
-            .filter(c => {
-                const esPredefinido = c.tipo_origen === 'predefinido';
+            .filter((c) => {
+                const esPredefinido = c.tipo_origen === "predefinido";
                 if (esPredefinido) {
-                    console.log(`📋 PREDEFINIDO: "${c.etiqueta}" (slug: ${c.slug})`);
+                    console.log(
+                        `📋 PREDEFINIDO: "${c.etiqueta}" (slug: ${c.slug})`
+                    );
                 }
                 return esPredefinido;
             })
-            .map(c => c.slug);
+            .map((c) => c.slug);
 
         const camposPersonalizados = camposFormulario
-            .filter(c => {
-                const esPersonalizado = c.tipo_origen === 'personalizado';
+            .filter((c) => {
+                const esPersonalizado = c.tipo_origen === "personalizado";
                 if (esPersonalizado) {
-                    console.log(`✏️ PERSONALIZADO: "${c.etiqueta}" (id: ${c.id}, categoria: ${c.categoria})`);
+                    console.log(
+                        `✏️ PERSONALIZADO: "${c.etiqueta}" (id: ${c.id}, categoria: ${c.categoria})`
+                    );
                 }
                 return esPersonalizado;
             })
-            .map(c => ({
+            .map((c) => ({
                 tipo: c.tipo,
                 nombre: c.nombre,
                 etiqueta: c.etiqueta,
@@ -7940,60 +8313,82 @@ async function guardarConfiguracionFormulario() {
                 obligatorio: c.obligatorio,
                 configuracion: c.configuracion,
                 // Si tiene ID numérico, incluirlo para actualizar el campo existente
-                ...(c.id && typeof c.id === 'number' ? { id: c.id } : {})
+                ...(c.id && typeof c.id === "number" ? { id: c.id } : {}),
             }));
 
-        console.log('🔍 Filtrando campos de biblioteca...');
-        const camposBibliotecaFiltrados = camposFormulario.filter(c => {
-            const esBiblioteca = c.tipo_origen === 'biblioteca';
-            console.log(`   Evaluando "${c.etiqueta}": tipo_origen="${c.tipo_origen}", es biblioteca? ${esBiblioteca}`);
+        console.log("🔍 Filtrando campos de biblioteca...");
+        const camposBibliotecaFiltrados = camposFormulario.filter((c) => {
+            const esBiblioteca = c.tipo_origen === "biblioteca";
+            console.log(
+                `   Evaluando "${c.etiqueta}": tipo_origen="${c.tipo_origen}", es biblioteca? ${esBiblioteca}`
+            );
             if (esBiblioteca) {
                 console.log(`   ✅ ES BIBLIOTECA: "${c.etiqueta}"`, {
                     campo_id: c.campo_id,
                     id: c.id,
                     tipo_id: typeof c.id,
-                    categoria: c.categoria
+                    categoria: c.categoria,
                 });
             }
             return esBiblioteca;
         });
-        
-        console.log('📚 Campos de biblioteca filtrados:', camposBibliotecaFiltrados);
-        
-        const camposBiblioteca = camposBibliotecaFiltrados.map(c => {
-            // Para campos de biblioteca, usar campo_id si existe (nuevo del wizard), 
-            // o id si es numérico (existente de BD)
-            const resultado = c.campo_id || (typeof c.id === 'number' ? c.id : null);
-            console.log(`   → Mapeando "${c.etiqueta}": campo_id=${c.campo_id}, id=${c.id}, tipo_id=${typeof c.id}, resultado=${resultado}`);
-            return resultado;
-        }).filter(id => id !== null && id !== undefined); // Eliminar nulls y undefined
 
-        console.log('📋 RESUMEN - Predefinidos:', camposPredefinidos);
-        console.log('✏️ RESUMEN - Personalizados:', camposPersonalizados);
-        console.log('📚 RESUMEN - Biblioteca:', camposBiblioteca);
+        console.log(
+            "📚 Campos de biblioteca filtrados:",
+            camposBibliotecaFiltrados
+        );
+
+        const camposBiblioteca = camposBibliotecaFiltrados
+            .map((c) => {
+                // Para campos de biblioteca, usar campo_id si existe (nuevo del wizard),
+                // o id si es numérico (existente de BD)
+                const resultado =
+                    c.campo_id || (typeof c.id === "number" ? c.id : null);
+                console.log(
+                    `   → Mapeando "${c.etiqueta}": campo_id=${
+                        c.campo_id
+                    }, id=${
+                        c.id
+                    }, tipo_id=${typeof c.id}, resultado=${resultado}`
+                );
+                return resultado;
+            })
+            .filter((id) => id !== null && id !== undefined); // Eliminar nulls y undefined
+
+        console.log("📋 RESUMEN - Predefinidos:", camposPredefinidos);
+        console.log("✏️ RESUMEN - Personalizados:", camposPersonalizados);
+        console.log("📚 RESUMEN - Biblioteca:", camposBiblioteca);
 
         const datosEnviar = {
             campos_predefinidos: camposPredefinidos,
             campos_personalizados: camposPersonalizados,
-            campos_biblioteca: camposBiblioteca
+            campos_biblioteca: camposBiblioteca,
         };
 
-        console.log('💾 DATOS A ENVIAR AL BACKEND:', datosEnviar);
-        console.log('💾 Total de campos a enviar:', camposFormulario.length);
+        console.log("💾 DATOS A ENVIAR AL BACKEND:", datosEnviar);
+        console.log("💾 Total de campos a enviar:", camposFormulario.length);
 
-        const response = await fetch(`/admin/solicitudes/api/tipos/${tipoIdConfigurando}/campos-rapidos`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify(datosEnviar)
-        });
+        const response = await fetch(
+            `/admin/solicitudes/api/tipos/${tipoIdConfigurando}/campos-rapidos`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector(
+                        'meta[name="csrf-token"]'
+                    ).content,
+                },
+                body: JSON.stringify(datosEnviar),
+            }
+        );
 
         const data = await response.json();
 
         if (response.ok && data.success) {
-            mostrarToast(`✓ Formulario guardado exitosamente (${camposFormulario.length} campos)`, 'success');
+            mostrarToast(
+                `✓ Formulario guardado exitosamente (${camposFormulario.length} campos)`,
+                "success"
+            );
 
             // Cerrar modal después de guardar (sin pedir confirmación)
             setTimeout(() => {
@@ -8001,11 +8396,14 @@ async function guardarConfiguracionFormulario() {
                 cargarTiposSolicitud(); // Recargar la lista
             }, 1500);
         } else {
-            throw new Error(data.message || 'Error al guardar');
+            throw new Error(data.message || "Error al guardar");
         }
     } catch (error) {
-        console.error('Error al guardar configuración:', error);
-        mostrarToast('Error al guardar la configuración del formulario', 'error');
+        console.error("Error al guardar configuración:", error);
+        mostrarToast(
+            "Error al guardar la configuración del formulario",
+            "error"
+        );
     }
 }
 
@@ -8014,15 +8412,19 @@ async function guardarConfiguracionFormulario() {
  */
 function vistaPreviaFormulario() {
     if (camposFormulario.length === 0) {
-        mostrarToast('No hay campos para previsualizar', 'info');
+        mostrarToast("No hay campos para previsualizar", "info");
         return;
     }
 
-    console.log("📋 Mostrando vista previa del formulario (modalConfigurarFormulario)");
+    console.log(
+        "📋 Mostrando vista previa del formulario (modalConfigurarFormulario)"
+    );
     console.log("📝 Campos del formulario:", camposFormulario);
 
     // Obtener nombre del tipo (desde el modal o datos temporales)
-    const nombreTipo = document.getElementById('modal-tipo-nombre')?.textContent || 'Tipo de Solicitud';
+    const nombreTipo =
+        document.getElementById("modal-tipo-nombre")?.textContent ||
+        "Tipo de Solicitud";
 
     // Generar HTML del preview con el nuevo formato
     let htmlPreview = `
@@ -8109,16 +8511,20 @@ function vistaPreviaFormulario() {
     `;
 
     // Mostrar en modal HTML personalizado
-    const modalVistaPrevia = document.getElementById('modalVistaPreviaFormulario');
-    const contenidoVistaPrevia = document.getElementById('contenidoVistaPrevia');
+    const modalVistaPrevia = document.getElementById(
+        "modalVistaPreviaFormulario"
+    );
+    const contenidoVistaPrevia = document.getElementById(
+        "contenidoVistaPrevia"
+    );
 
     if (modalVistaPrevia && contenidoVistaPrevia) {
         contenidoVistaPrevia.innerHTML = htmlPreview;
-        modalVistaPrevia.classList.remove('hidden');
-        console.log('✅ Modal de vista previa abierto correctamente');
+        modalVistaPrevia.classList.remove("hidden");
+        console.log("✅ Modal de vista previa abierto correctamente");
     } else {
-        console.error('❌ No se encontró el modal de vista previa');
-        mostrarToast('Error al abrir vista previa', 'error');
+        console.error("❌ No se encontró el modal de vista previa");
+        mostrarToast("Error al abrir vista previa", "error");
     }
 }
 
@@ -8126,80 +8532,108 @@ function vistaPreviaFormulario() {
  * Generar HTML de los campos personalizados desde camposFormulario
  */
 function generarCamposPersonalizadosPreviewDesdeFormulario() {
-    let html = '';
+    let html = "";
 
     camposFormulario.forEach((campo, index) => {
         const obligatorio = campo.obligatorio || false;
-        const requiredMark = obligatorio ? '<span class="text-red-500 ml-1">*</span>' : '';
+        const requiredMark = obligatorio
+            ? '<span class="text-red-500 ml-1">*</span>'
+            : "";
         const etiqueta = campo.etiqueta || campo.nombre || `Campo ${index + 1}`;
-        const tipo = campo.tipo || 'text';
-        const ayuda = campo.configuracion?.ayuda ? `<p class="text-xs text-gray-500 mt-1">${campo.configuracion.ayuda}</p>` : '';
+        const tipo = campo.tipo || "text";
+        const ayuda = campo.configuracion?.ayuda
+            ? `<p class="text-xs text-gray-500 mt-1">${campo.configuracion.ayuda}</p>`
+            : "";
 
-        html += '<div>';
-        html += `<label class="block text-sm font-medium text-gray-700 mb-1">${obtenerIconoPorTipo(tipo)} ${etiqueta}${requiredMark}</label>`;
+        html += "<div>";
+        html += `<label class="block text-sm font-medium text-gray-700 mb-1">${obtenerIconoPorTipo(
+            tipo
+        )} ${etiqueta}${requiredMark}</label>`;
 
         switch (tipo) {
-            case 'texto_corto':
-            case 'email':
-            case 'telefono':
-                html += `<input type="text" placeholder="${campo.configuracion?.placeholder || ''}" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">`;
+            case "texto_corto":
+            case "email":
+            case "telefono":
+                html += `<input type="text" placeholder="${
+                    campo.configuracion?.placeholder || ""
+                }" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">`;
                 break;
 
-            case 'texto_largo':
-                html += `<textarea rows="${campo.configuracion?.rows || 4}" placeholder="${campo.configuracion?.placeholder || ''}" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"></textarea>`;
+            case "texto_largo":
+                html += `<textarea rows="${
+                    campo.configuracion?.rows || 4
+                }" placeholder="${
+                    campo.configuracion?.placeholder || ""
+                }" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"></textarea>`;
                 break;
 
-            case 'numero':
-            case 'moneda':
+            case "numero":
+            case "moneda":
                 html += `<input type="number" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">`;
                 break;
 
-            case 'fecha':
+            case "fecha":
                 html += `<input type="date" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">`;
                 break;
 
-            case 'select':
-                html += '<select disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"><option>Seleccione...</option>';
-                (campo.configuracion?.opciones || []).forEach(opcion => {
-                    html += `<option>${opcion.etiqueta || opcion.valor || opcion}</option>`;
+            case "select":
+                html +=
+                    '<select disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"><option>Seleccione...</option>';
+                (campo.configuracion?.opciones || []).forEach((opcion) => {
+                    html += `<option>${
+                        opcion.etiqueta || opcion.valor || opcion
+                    }</option>`;
                 });
-                html += '</select>';
+                html += "</select>";
                 break;
 
-            case 'radio':
+            case "radio":
                 html += '<div class="space-y-2">';
                 (campo.configuracion?.opciones || []).forEach((opcion, i) => {
                     html += `<label class="flex items-center">
-                        <input type="radio" name="${campo.nombre}" disabled class="mr-2">
-                        <span class="text-sm">${opcion.etiqueta || opcion.valor || opcion}</span>
+                        <input type="radio" name="${
+                            campo.nombre
+                        }" disabled class="mr-2">
+                        <span class="text-sm">${
+                            opcion.etiqueta || opcion.valor || opcion
+                        }</span>
                     </label>`;
                 });
-                html += '</div>';
+                html += "</div>";
                 break;
 
-            case 'checkbox':
+            case "checkbox":
                 html += '<div class="space-y-2">';
                 (campo.configuracion?.opciones || []).forEach((opcion, i) => {
                     html += `<label class="flex items-center">
                         <input type="checkbox" disabled class="mr-2">
-                        <span class="text-sm">${opcion.etiqueta || opcion.valor || opcion}</span>
+                        <span class="text-sm">${
+                            opcion.etiqueta || opcion.valor || opcion
+                        }</span>
                     </label>`;
                 });
-                html += '</div>';
+                html += "</div>";
                 break;
 
-            case 'archivo':
-            case 'imagen':
-                html += `<input type="file" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700" ${campo.configuracion?.multiple_files ? 'multiple' : ''}>`;
-                html += `<p class="text-xs text-gray-500 mt-1">Máx: ${campo.configuracion?.max_size || 10}MB. Tipos: ${campo.configuracion?.allowed_types || 'Todos'}</p>`;
+            case "archivo":
+            case "imagen":
+                html += `<input type="file" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700" ${
+                    campo.configuracion?.multiple_files ? "multiple" : ""
+                }>`;
+                html += `<p class="text-xs text-gray-500 mt-1">Máx: ${
+                    campo.configuracion?.max_size || 10
+                }MB. Tipos: ${
+                    campo.configuracion?.allowed_types || "Todos"
+                }</p>`;
                 break;
 
-            case 'direccion':
+            case "direccion":
                 html += `<input type="text" placeholder="Dirección completa" disabled class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700">`;
                 break;
 
-            case 'ubicacion':
-                html += '<div class="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500">🗺️ Mapa Interactivo</div>';
+            case "ubicacion":
+                html +=
+                    '<div class="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500">🗺️ Mapa Interactivo</div>';
                 break;
 
             default:
@@ -8207,7 +8641,7 @@ function generarCamposPersonalizadosPreviewDesdeFormulario() {
         }
 
         html += ayuda;
-        html += '</div>';
+        html += "</div>";
     });
 
     return html;

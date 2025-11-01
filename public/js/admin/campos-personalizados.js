@@ -1,4 +1,34 @@
 // ========================================
+// UTILIDADES
+// ========================================
+
+function mostrarToast(message, type = 'success') {
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer)
+            toast.addEventListener('mouseleave', Swal.resumeTimer)
+        }
+    });
+
+    const icons = {
+        'success': 'success',
+        'error': 'error',
+        'warning': 'warning',
+        'info': 'info'
+    };
+
+    Toast.fire({
+        icon: icons[type] || 'success',
+        title: message
+    });
+}
+
+// ========================================
 // ESTADO GLOBAL
 // ========================================
 
@@ -61,6 +91,15 @@ function configurarEscuchadores() {
         cargarCampos();
     });
 
+    // Items por página
+    const perPageSelect = document.getElementById('perPageSelect');
+    if (perPageSelect) {
+        perPageSelect.addEventListener('change', function(e) {
+            paginaActual = 1;
+            cargarCampos();
+        });
+    }
+
     // Cerrar dropdown al hacer clic fuera
     document.addEventListener('click', function(e) {
         if (!e.target.closest('[id^="menu-campo-"]') && !e.target.closest('button[onclick^="toggleMenuCampo"]')) {
@@ -77,8 +116,11 @@ async function cargarCampos() {
     try {
         mostrarLoader();
 
+        const perPageSelect = document.getElementById('perPageSelect');
+        const perPage = perPageSelect ? perPageSelect.value : 6;
         const params = new URLSearchParams({
             page: paginaActual,
+            per_page: perPage,
             ...filtrosActuales
         });
 
@@ -97,22 +139,16 @@ async function cargarCampos() {
         }
 
         const data = await response.json();
-        const campos = data.data || data;
+        const campos = data.campos.data || [];
+
+        const permissions = data.permissions || {};
+        window.userPermissions = permissions;
 
         if (!Array.isArray(campos) || campos.length === 0) {
             mostrarEstadoVacio();
         } else {
             renderizarCampos(campos);
-            // Renderizar paginación si hay datos paginados
-            if (data.last_page && data.last_page > 1) {
-                renderizarPaginacion(data);
-            } else {
-                // Si no hay paginación, limpiar el contenedor
-                const paginacionContainer = document.getElementById('paginacionContainer');
-                if (paginacionContainer) {
-                    paginacionContainer.innerHTML = '';
-                }
-            }
+            renderizarPaginacion(data.campos);
         }
 
         ocultarLoader();
@@ -267,44 +303,54 @@ function renderizarEnCards(campos, container) {
                 </div>
 
                 <div class="flex justify-end border-t border-gray-200 pt-3">
-                    <div style="position: relative; display: inline-block;">
+                    <div style="position: relative; z-index: 50; display: inline-block;">
                         <button onclick="toggleMenuCampo(event, ${campo.id})" class="text-gray-400 hover:text-gray-600 p-1" style="display: inline-flex; align-items: center; justify-content: center;">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
                             </svg>
                         </button>
-                        <div id="menu-campo-${campo.id}" class="hidden" style="position: absolute; right: 0; bottom: 100%; margin-bottom: 0.5rem; width: 12rem; border-radius: 0.375rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); background-color: white; border: 1px solid rgba(0, 0, 0, 0.05); z-index: 9999;">
+                        <div id="menu-campo-${campo.id}" class="hidden" style="position: fixed; width: 12rem; border-radius: 0.375rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); background-color: white; border: 1px solid rgba(0, 0, 0, 0.05); z-index: 9999;">
                             <div style="padding: 0.25rem 0;">
+                                ${window.userPermissions.canEdit ? `
                                 <a href="#" onclick="event.stopPropagation(); editarCampo(${campo.id}); return false;" style="display: flex; align-items: center; padding: 0.5rem 1rem; font-size: 0.875rem; color: #374151; text-decoration: none;" onmouseover="this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.backgroundColor='transparent'">
                                     <svg class="w-4 h-4" style="margin-right: 0.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                     </svg>
                                     Editar
                                 </a>
+                                ` : ''}
+                                ${window.userPermissions.canDuplicate ? `
                                 <a href="#" onclick="event.stopPropagation(); duplicarCampo(${campo.id}); return false;" style="display: flex; align-items: center; padding: 0.5rem 1rem; font-size: 0.875rem; color: #374151; text-decoration: none;" onmouseover="this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.backgroundColor='transparent'">
                                     <svg class="w-4 h-4" style="margin-right: 0.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                                     </svg>
                                     Duplicar
                                 </a>
+                                ` : ''}
+                                ${window.userPermissions.canVerUso ? `
                                 <a href="#" onclick="event.stopPropagation(); verUsoCampo(${campo.id}); return false;" style="display: flex; align-items: center; padding: 0.5rem 1rem; font-size: 0.875rem; color: #374151; text-decoration: none;" onmouseover="this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.backgroundColor='transparent'">
                                     <svg class="w-4 h-4" style="margin-right: 0.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                                     </svg>
                                     Ver uso
                                 </a>
+                                ` : ''}
+                                ${window.userPermissions.canActivate ? `
                                 <a href="#" onclick="event.stopPropagation(); toggleEstadoCampo(${campo.id}); return false;" style="display: flex; align-items: center; padding: 0.5rem 1rem; font-size: 0.875rem; color: #374151; text-decoration: none;" onmouseover="this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.backgroundColor='transparent'">
                                     <svg class="w-4 h-4" style="margin-right: 0.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M${campo.activo ? '18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' : '9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'}"></path>
                                     </svg>
                                     ${campo.activo ? 'Desactivar' : 'Activar'}
                                 </a>
+                                ` : ''}
+                                ${window.userPermissions.canDelete ? `
                                 <a href="#" onclick="event.stopPropagation(); eliminarCampo(${campo.id}); return false;" style="display: flex; align-items: center; padding: 0.5rem 1rem; font-size: 0.875rem; color: #dc2626; text-decoration: none;" onmouseover="this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.backgroundColor='transparent'">
                                     <svg class="w-4 h-4" style="margin-right: 0.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
                                     Eliminar
                                 </a>
+                                ` : ''}
                             </div>
                         </div>
                     </div>
@@ -324,7 +370,7 @@ function generarHTMLCampo(campo) {
     const tipoTexto = obtenerTextoTipo(campo.tipo);
 
     return `
-        <div style="overflow: auto;" class="p-4 hover:bg-gray-50 transition">
+        <div style="overflow: visible; position: relative;" class="p-4 hover:bg-gray-50 transition">
             <div class="flex items-start justify-between">
                 <div class="flex items-start gap-3 flex-1">
                     <span class="text-2xl">${campo.icono || '📄'}</span>
@@ -349,13 +395,13 @@ function generarHTMLCampo(campo) {
                 </div>
 
                 <!-- Menú de acciones -->
-                <div class="relative ml-4">
+                <div style="position: relative; z-index: 50;" class="ml-4">
                     <button onclick="toggleMenuCampo(event, ${campo.id})" class="text-gray-400 hover:text-gray-600 p-1" style="display: inline-flex; align-items: center; justify-content: center;">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
                         </svg>
                     </button>
-                    <div id="menu-campo-${campo.id}" class="hidden" style="position: absolute; right: 0; bottom: 100%; margin-bottom: 0.5rem; width: 12rem; border-radius: 0.375rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); background-color: white; border: 1px solid rgba(0, 0, 0, 0.05); z-index: 9999;">
+                    <div id="menu-campo-${campo.id}" class="hidden" style="position: fixed; width: 12rem; border-radius: 0.375rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); background-color: white; border: 1px solid rgba(0, 0, 0, 0.05); z-index: 9999;">
                         <div style="padding: 0.25rem 0;">
                             <a href="#" onclick="event.stopPropagation(); editarCampo(${campo.id}); return false;" style="display: flex; align-items: center; padding: 0.5rem 1rem; font-size: 0.875rem; color: #374151; text-decoration: none;" onmouseover="this.style.backgroundColor='#f3f4f6'" onmouseout="this.style.backgroundColor='transparent'">
                                 <svg class="w-4 h-4" style="margin-right: 0.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -445,120 +491,56 @@ function toggleCategoria(categoria) {
 // ========================================
 
 function renderizarPaginacion(data) {
-    // Buscar o crear el contenedor de paginación
-    let paginacionContainer = document.getElementById('paginacionContainer');
-    
-    if (!paginacionContainer) {
-        // Crear el contenedor después del contenedor de campos
-        const container = document.getElementById('camposContainer');
-        paginacionContainer = document.createElement('div');
-        paginacionContainer.id = 'paginacionContainer';
-        paginacionContainer.className = 'mt-6';
-        container.parentNode.insertBefore(paginacionContainer, container.nextSibling);
-    }
+    // Actualizar información de registros
+    document.getElementById('showingFrom').textContent = data.from || 0;
+    document.getElementById('showingTo').textContent = data.to || 0;
+    document.getElementById('totalCampos').textContent = data.total || 0;
 
-    const { current_page, last_page, from, to, total } = data;
+    const pagination = document.getElementById('pagination');
+    let html = '';
 
-    // Generar botones de paginación
-    let paginacionHTML = `
-        <div class="bg-white rounded-lg shadow-sm p-4">
-            <div class="flex items-center justify-between">
-                <!-- Información de registros -->
-                <div class="text-sm text-gray-700">
-                    Mostrando <span class="font-medium">${from || 0}</span> a 
-                    <span class="font-medium">${to || 0}</span> de 
-                    <span class="font-medium">${total || 0}</span> resultados
-                </div>
-
-                <!-- Botones de navegación -->
-                <div class="flex items-center space-x-2">
-                    <!-- Botón Anterior -->
-                    <button 
-                        onclick="cambiarPagina(${current_page - 1})" 
-                        ${current_page === 1 ? 'disabled' : ''}
-                        class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Anterior
-                    </button>
-
-                    <!-- Números de página -->
-                    <div class="hidden md:flex space-x-1">
-                        ${generarBotonesPaginas(current_page, last_page)}
-                    </div>
-
-                    <!-- Botón Siguiente -->
-                    <button 
-                        onclick="cambiarPagina(${current_page + 1})" 
-                        ${current_page === last_page ? 'disabled' : ''}
-                        class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Siguiente
-                    </button>
-                </div>
-            </div>
-        </div>
+    // Botón anterior
+    html += `
+        <button onclick="cambiarPagina(${data.current_page - 1})"
+                ${data.current_page === 1 ? 'disabled' : ''}
+                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${data.current_page === 1 ? 'cursor-not-allowed opacity-50' : ''}">
+            Anterior
+        </button>
     `;
 
-    paginacionContainer.innerHTML = paginacionHTML;
-}
-
-function generarBotonesPaginas(paginaActualParam, ultimaPagina) {
-    let botones = [];
-    const rango = 2; // Cuántas páginas mostrar a cada lado de la actual
-
-    // Primera página
-    if (paginaActualParam > rango + 1) {
-        botones.push(`
-            <button 
-                onclick="cambiarPagina(1)" 
-                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-                1
-            </button>
-        `);
-        if (paginaActualParam > rango + 2) {
-            botones.push('<span class="px-2 py-2 text-gray-500">...</span>');
+    // Páginas
+    for (let i = 1; i <= data.last_page; i++) {
+        if (i === 1 || i === data.last_page || (i >= data.current_page - 2 && i <= data.current_page + 2)) {
+            html += `
+                <button onclick="cambiarPagina(${i})"
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium ${
+                            i === data.current_page
+                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                : 'bg-white text-gray-500 hover:bg-gray-50'
+                        }">
+                    ${i}
+                </button>
+            `;
+        } else if (i === data.current_page - 3 || i === data.current_page + 3) {
+            html += '<span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>';
         }
     }
 
-    // Páginas alrededor de la actual
-    for (let i = Math.max(1, paginaActualParam - rango); i <= Math.min(ultimaPagina, paginaActualParam + rango); i++) {
-        botones.push(`
-            <button 
-                onclick="cambiarPagina(${i})" 
-                class="px-3 py-2 text-sm font-medium ${
-                    i === paginaActualParam 
-                        ? 'text-white bg-blue-600 border border-blue-600' 
-                        : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                } rounded-md"
-            >
-                ${i}
-            </button>
-        `);
-    }
+    // Botón siguiente
+    html += `
+        <button onclick="cambiarPagina(${data.current_page + 1})"
+                ${data.current_page === data.last_page ? 'disabled' : ''}
+                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${data.current_page === data.last_page ? 'cursor-not-allowed opacity-50' : ''}">
+            Siguiente
+        </button>
+    `;
 
-    // Última página
-    if (paginaActualParam < ultimaPagina - rango) {
-        if (paginaActualParam < ultimaPagina - rango - 1) {
-            botones.push('<span class="px-2 py-2 text-gray-500">...</span>');
-        }
-        botones.push(`
-            <button 
-                onclick="cambiarPagina(${ultimaPagina})" 
-                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-                ${ultimaPagina}
-            </button>
-        `);
-    }
-
-    return botones.join('');
+    pagination.innerHTML = html;
 }
 
-function cambiarPagina(nuevaPagina) {
-    paginaActual = nuevaPagina;
+function cambiarPagina(page) {
+    paginaActual = page;
     cargarCampos();
-    // Scroll hacia arriba para ver los resultados
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -567,6 +549,7 @@ function cambiarPagina(nuevaPagina) {
 // ========================================
 function toggleMenuCampo(event, id) {
     event.stopPropagation();
+    const button = event.currentTarget;
     const menu = document.getElementById(`menu-campo-${id}`);
     
     if (!menu) return;
@@ -578,6 +561,27 @@ function toggleMenuCampo(event, id) {
     
     // Si el menú estaba cerrado, abrirlo
     if (!estaAbierto) {
+        // Obtener posición del botón
+        const buttonRect = button.getBoundingClientRect();
+        const menuHeight = 240; // Altura aproximada del menú
+        const spaceBelow = window.innerHeight - buttonRect.bottom;
+        const spaceAbove = buttonRect.top;
+        
+        // Decidir si abrir hacia arriba o hacia abajo
+        if (spaceBelow < menuHeight && spaceAbove > spaceBelow) {
+            // Abrir hacia arriba
+            menu.style.top = '';
+            menu.style.bottom = (window.innerHeight - buttonRect.top + 8) + 'px';
+        } else {
+            // Abrir hacia abajo
+            menu.style.bottom = '';
+            menu.style.top = (buttonRect.bottom + 8) + 'px';
+        }
+        
+        // Posicionar a la derecha del botón
+        menu.style.right = (window.innerWidth - buttonRect.right) + 'px';
+        menu.style.left = '';
+        
         menu.classList.remove('hidden');
     }
 }
@@ -886,17 +890,23 @@ function generarHTMLWizard(titulo, modoEdicion) {
 
             <!-- Footer -->
             <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between rounded-b-2xl">
-                <button type="button" onclick="cerrarWizard()" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                    Cancelar
+                <button type="button" onclick="cerrarWizard()" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                 </svg>  Cancelar
                 </button>
                 <div class="flex gap-2">
                     <button type="button" id="btnAnterior" onclick="pasoAnteriorWizard()"
-                        class="hidden px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                        ← Anterior
+                        class="hidden px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>  Anterior
                     </button>
                     <button type="button" id="btnSiguiente" onclick="pasoSiguienteWizard()"
-                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        Siguiente →
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>  Siguiente
                     </button>
                 </div>
             </div>
@@ -2766,5 +2776,35 @@ function obtenerTextoTipo(tipo) {
     };
 
     return tipos[tipo] || tipo;
+}
+
+// ========================================
+// FUNCIONES DE LOADER
+// ========================================
+
+function mostrarLoader() {
+    const loader = document.getElementById('loader');
+    if (loader) {
+        loader.classList.remove('hidden');
+    }
+}
+
+function ocultarLoader() {
+    const loader = document.getElementById('loader');
+    if (loader) {
+        loader.classList.add('hidden');
+    }
+}
+
+function mostrarEstadoVacio() {
+    const emptyState = document.getElementById('emptyState');
+    const camposContainer = document.getElementById('camposContainer');
+    
+    if (emptyState) {
+        emptyState.classList.remove('hidden');
+    }
+    if (camposContainer) {
+        camposContainer.innerHTML = '';
+    }
 }
 

@@ -333,25 +333,44 @@ class RoleController extends Controller
     }
 
     /**
-     * Obtener todos los permisos del sistema
+     * Obtener todos los permisos del sistema agrupados por menú
      */
     public function getPermisos(Request $request)
     {
         try {
             $permisos = Permission::all()->map(function ($permiso) {
+                // Extraer el módulo del nombre del permiso (ej: "usuarios.ver" -> "usuarios")
+                $partes = explode('.', $permiso->name);
+                $moduloBase = $partes[0] ?? 'general';
+
+                // Mapear módulos a secciones del menú
+                $seccionMenu = $this->mapearModuloASeccionMenu($moduloBase);
+
                 return [
                     'id' => $permiso->id,
                     'name' => $permiso->name,
                     'display_name' => $permiso->display_name ?? $permiso->name,
-                    'module' => $permiso->module ?? 'General',
+                    'module' => $permiso->module ?? ucfirst($moduloBase),
+                    'seccion_menu' => $seccionMenu,
                     'description' => $permiso->description,
                     'guard_name' => $permiso->guard_name,
                 ];
             });
 
+            // Agrupar permisos por sección del menú
+            $permisosAgrupados = $permisos->groupBy('seccion_menu')->map(function ($items, $seccion) {
+                return [
+                    'seccion' => $seccion,
+                    'icono' => $this->obtenerIconoSeccion($seccion),
+                    'orden' => $this->obtenerOrdenSeccion($seccion),
+                    'permisos' => $items->values()->toArray()
+                ];
+            })->sortBy('orden')->values();
+
             return response()->json([
                 'success' => true,
-                'permissions' => $permisos
+                'permissions' => $permisos,
+                'permissions_grouped' => $permisosAgrupados
             ]);
         } catch (\Exception $e) {
             Log::error('Error al listar permisos', [
@@ -363,6 +382,87 @@ class RoleController extends Controller
                 'message' => 'Error al cargar los permisos'
             ], 500);
         }
+    }
+
+    /**
+     * Mapear módulo de permiso a sección del menú
+     */
+    private function mapearModuloASeccionMenu($modulo)
+    {
+        $mapeo = [
+            // Solicitudes
+            'solicitudes' => 'Solicitudes',
+
+            // Áreas y Equipos
+            'areas' => 'Áreas y Equipos',
+            'equipos' => 'Áreas y Equipos',
+            'dependencias' => 'Áreas y Equipos',
+
+            // Configuración
+            'tipos_solicitud' => 'Configuración',
+            'estados' => 'Configuración',
+            'plantillas' => 'Configuración',
+            'campos_personalizados' => 'Configuración',
+            'categorias' => 'Configuración',
+            'festivos' => 'Configuración',
+            'configuracion' => 'Configuración',
+            'configuracion_general' => 'Configuración',
+
+            // Usuarios y Roles
+            'usuarios' => 'Usuarios y Roles',
+            'roles' => 'Usuarios y Roles',
+
+            // Documentos
+            'documentos' => 'Documentos',
+
+            // Auditoría y Monitoreo
+            'auditoria' => 'Auditoría y Monitoreo',
+            'monitoreo' => 'Auditoría y Monitoreo',
+            'logs' => 'Auditoría y Monitoreo',
+
+            // Reportes
+            'reportes' => 'Reportes',
+        ];
+
+        return $mapeo[$modulo] ?? 'Otros';
+    }
+
+    /**
+     * Obtener icono para cada sección del menú
+     */
+    private function obtenerIconoSeccion($seccion)
+    {
+        $iconos = [
+            'Solicitudes' => '📋',
+            'Áreas y Equipos' => '👥',
+            'Configuración' => '⚙️',
+            'Usuarios y Roles' => '👤',
+            'Documentos' => '📄',
+            'Auditoría y Monitoreo' => '📊',
+            'Reportes' => '📈',
+            'Otros' => '📁',
+        ];
+
+        return $iconos[$seccion] ?? '📁';
+    }
+
+    /**
+     * Obtener orden de visualización para cada sección
+     */
+    private function obtenerOrdenSeccion($seccion)
+    {
+        $orden = [
+            'Solicitudes' => 1,
+            'Áreas y Equipos' => 2,
+            'Configuración' => 3,
+            'Usuarios y Roles' => 4,
+            'Documentos' => 5,
+            'Auditoría y Monitoreo' => 6,
+            'Reportes' => 7,
+            'Otros' => 99,
+        ];
+
+        return $orden[$seccion] ?? 100;
     }
 
     /**
@@ -425,14 +525,14 @@ class RoleController extends Controller
         try {
             $slug = $request->input('slug');
             $ignoreId = $request->input('ignore_id'); // ID del rol que se está editando (para ignorarlo)
-            
+
             if (empty($slug)) {
                 return response()->json([
                     'available' => false,
                     'message' => 'El slug no puede estar vacío'
                 ]);
             }
-            
+
             // Validar formato del slug
             if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
                 return response()->json([
@@ -440,16 +540,16 @@ class RoleController extends Controller
                     'message' => 'El slug solo puede contener letras minúsculas, números y guiones'
                 ]);
             }
-            
+
             // Verificar si el slug ya existe
             $query = Role::where('slug', $slug);
-            
+
             if ($ignoreId) {
                 $query->where('id', '!=', $ignoreId);
             }
-            
+
             $exists = $query->exists();
-            
+
             return response()->json([
                 'available' => !$exists,
                 'message' => $exists ? 'Este slug ya está en uso' : 'Slug disponible'
@@ -459,7 +559,7 @@ class RoleController extends Controller
                 'error' => $e->getMessage(),
                 'slug' => $request->input('slug')
             ]);
-            
+
             return response()->json([
                 'available' => false,
                 'message' => 'Error al validar el slug'

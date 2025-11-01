@@ -10,7 +10,7 @@
     <!-- fav Icons -->
 
     <link rel="icon" href="{{ asset('images/favicon.ico') }}">
- 
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -213,6 +213,7 @@
                         </svg>
                     </button>
                     <ul x-show="open" x-transition class="pl-10 mt-2 space-y-1">
+                         
                         <li>
                             <a href="{{ route('admin.solicitudes.create') }}"
                                 class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.solicitudes.create') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
@@ -231,15 +232,7 @@
                                 <span class="ml-2">Bandeja de Solicitudes</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="{{ route('admin.configurarSolicitudes.index') }}"
-                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configurarSolicitudes.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span class="ml-2">Tipos de Solicitud</span>
-                            </a>
-                        </li>
+
                         <li>
                             <a href="#"
                                 class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-gray-700">
@@ -268,6 +261,7 @@
                         </svg>
                     </button>
                     <ul x-show="open" x-transition class="pl-10 mt-2 space-y-1">
+                        @can('areas.ver')
                         <li>
                             <a href="{{ route('admin.equipos-areas.dependencias.index') }}"
                                 class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos-areas.dependencias.index') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
@@ -277,15 +271,18 @@
                                 <span class="ml-2">Áreas</span>
                             </a>
                         </li>
-                       <li>
+                        @endcan
+                        @can('equipos.ver')
+                        <li>
                             <a href="{{ route('admin.equipos-areas.equipos.index') }}"
-                               class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos-areas.equipos.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos-areas.equipos.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path>
-                                </svg>                  
+                                </svg>
                                 <span class="ml-2">Equipos</span>
                             </a>
                         </li>
+                        @endcan
                         <li>
                             <a href="{{ route('admin.equipos-areas.dependencias.organigrama') }}"
                                 class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos-areas.dependencias.organigrama') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
@@ -313,16 +310,30 @@
                         </svg>
                     </button>
                     <ul x-show="open" x-transition class="pl-10 mt-2 space-y-1">
-                        <!-- Flujos y Estados -->
+                        <!-- Tipos de Solicitud -->
+                        @can('tipos_solicitud.ver')
                         <li>
-                            <a href="#"
-                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-gray-700">
+                            <a href="{{ route('admin.configuracion.tipos.index') }}"
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.tipos.*') || request()->routeIs('admin.configurarSolicitudes.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="ml-2">Tipos de Solicitud</span>
+                            </a>
+                        </li>
+                        @endcan
+                        <!-- Flujos y Estados -->
+                        @can('estados.ver')
+                        <li>
+                            <a href="{{ route('admin.configuracion.estados.index') }}"
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.estados.*') || request()->routeIs('admin.configurarSolicitudes.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd"></path>
                                 </svg>
                                 <span class="ml-2">Estados</span>
                             </a>
                         </li>
+                        @endcan
 
                         <li>
                             <a href="{{ route('admin.configuracion.radicados-consecutivos.index') }}"
@@ -349,6 +360,7 @@
                                 </svg>
                             </button>
                             <ul x-show="openDocs" x-transition class="pl-8 mt-1 space-y-1">
+                                @can('plantillas.ver')
                                 <li>
                                     <a href="{{ route('admin.configuracion.documentos.plantillas') }}"
                                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.documentos.plantillas') || request()->routeIs('admin.configuracion.plantillas') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600' }} text-sm">
@@ -359,9 +371,21 @@
                                         <span class="ml-2">Plantillas de Documento</span>
                                     </a>
                                 </li>
+                                @endcan
                             </ul>
                         </li>
-                        
+                        <!-- Biblioteca de Campos Personalizados -->
+                        @can('campos_personalizados.ver')
+                        <li>
+                            <a href="{{ route('admin.configuracion.campos-personalizados.index') }}"
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.campos-personalizados.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                                </svg>
+                                <span class="ml-2">Campos Personalizados</span>
+                            </a>
+                        </li>
+                        @endcan
                         <!-- Parámetros Generales (con submenú) -->
                         <li x-data="{ openParams: {{ request()->routeIs('admin.configuracion.parametros.*') || request()->routeIs('admin.configuracion.categorias') || request()->routeIs('admin.configuracion.festivos') ? 'true' : 'false' }} }">
                             <button @click="openParams = !openParams"
@@ -377,6 +401,7 @@
                                 </svg>
                             </button>
                             <ul x-show="openParams" x-transition class="pl-8 mt-1 space-y-1">
+                                @can('configuracion_general.ver')
                                 <li>
                                     <a href="{{ route('admin.configuracion.parametros.configuracion-general.index') }}"
                                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.parametros.configuracion-general.index') || request()->routeIs('admin.configuracion.configuracion-general.index') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600' }} text-sm">
@@ -386,6 +411,8 @@
                                         <span class="ml-2">Configuración General</span>
                                     </a>
                                 </li>
+                                @endcan
+                                @can('categorias.ver')
                                 <li>
                                     <a href="{{ route('admin.configuracion.parametros.categorias.index') }}"
                                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.parametros.categorias.index') || request()->routeIs('admin.configuracion.categorias.index') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600' }} text-sm">
@@ -396,6 +423,8 @@
                                         <span class="ml-2">Categorías</span>
                                     </a>
                                 </li>
+                                @endcan
+                                @can('festivos.ver')
                                 <li>
                                     <a href="{{ route('admin.configuracion.parametros.festivos.index') }}"
                                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.parametros.festivos.index') || request()->routeIs('admin.configuracion.festivos.index') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600' }} text-sm">
@@ -405,24 +434,18 @@
                                         <span class="ml-2">Festivos</span>
                                     </a>
                                 </li>
+                                @endcan
                             </ul>
                         </li>
 
-                        <!-- Biblioteca de Campos Personalizados -->
-                        <li>
-                            <a href="{{ route('admin.configuracion.campos-personalizados.index') }}"
-                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.campos-personalizados.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
-                                </svg>
-                                <span class="ml-2">Biblioteca de Campos Personalizados</span>
-                            </a>
-                        </li>
+
                     </ul>
                 </li>
 
                 <!-- Usuarios y Roles -->
+                @can('usuarios.ver')
                 <li>
+
                     <a href="{{ route('admin.usuarios.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.usuarios.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -430,9 +453,11 @@
                         </svg>
                         <span class="ml-3">Usuarios y Roles</span>
                     </a>
-                </li>
 
+                </li>
+                @endcan
                 <!-- Auditoría y Monitoreo -->
+                
                 <li>
                     <a href="{{ route('admin.activity-logs.index') }}"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.activity-logs.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}">
@@ -444,6 +469,7 @@
                 </li>
 
                 <!-- Reportes -->
+                @can('reportes.ver')
                 <li>
                     <a href="#"
                         class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-gray-900">
@@ -453,7 +479,7 @@
                         <span class="ml-3">Reportes</span>
                     </a>
                 </li>
-
+                @endcan
                 @endrole
             </ul>
         </div>
