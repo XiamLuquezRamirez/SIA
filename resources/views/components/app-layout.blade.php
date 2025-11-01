@@ -333,9 +333,7 @@
                                 <span class="ml-2">Estados</span>
                             </a>
                         </li>
-<<<<<<< HEAD
                         @endcan
-=======
 
                         <li>
                             <a href="{{ route('admin.configuracion.radicados-consecutivos.index') }}"
@@ -347,7 +345,6 @@
                             </a>
                         </li>
                         
->>>>>>> 784efc428a786a0ade084cbee4fe362b9664be92
                         <!-- Documentos (con submenú) -->
                         <li x-data="{ openDocs: {{ request()->routeIs('admin.configuracion.documentos.*') || request()->routeIs('admin.configuracion.plantillas') || request()->routeIs('admin.configuracion.consecutivos') ? 'true' : 'false' }} }">
                             <button @click="openDocs = !openDocs"
@@ -374,10 +371,7 @@
                                         <span class="ml-2">Plantillas de Documento</span>
                                     </a>
                                 </li>
-<<<<<<< HEAD
                                 @endcan
-=======
->>>>>>> 784efc428a786a0ade084cbee4fe362b9664be92
                             </ul>
                         </li>
                         <!-- Biblioteca de Campos Personalizados -->
