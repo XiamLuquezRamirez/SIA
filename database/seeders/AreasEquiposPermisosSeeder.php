@@ -101,31 +101,7 @@ class AreasEquiposPermisosSeeder extends Seeder
                 'name' => 'equipos.ver_detalle',
                 'description' => 'Ver detalles completos de un equipo',
                 'guard_name' => 'web'
-            ],
-
-            // ========================================
-            // GESTIÓN DE DEPENDENCIAS (Alias para Áreas)
-            // ========================================
-            [
-                'name' => 'dependencias.ver',
-                'description' => 'Ver lista de dependencias',
-                'guard_name' => 'web'
-            ],
-            [
-                'name' => 'dependencias.crear',
-                'description' => 'Crear nuevas dependencias',
-                'guard_name' => 'web'
-            ],
-            [
-                'name' => 'dependencias.editar',
-                'description' => 'Editar dependencias existentes',
-                'guard_name' => 'web'
-            ],
-            [
-                'name' => 'dependencias.eliminar',
-                'description' => 'Eliminar dependencias',
-                'guard_name' => 'web'
-            ],
+            ]
         ];
 
         $this->command->info('Creando permisos de Áreas y Equipos...');
@@ -170,10 +146,6 @@ class AreasEquiposPermisosSeeder extends Seeder
                 'equipos.asignar_lider',
                 'equipos.gestionar_miembros',
                 'equipos.ver_detalle',
-                'dependencias.ver',
-                'dependencias.crear',
-                'dependencias.editar',
-                'dependencias.eliminar',
             ])->get();
             $director->givePermissionTo($permisosDirector);
             $this->command->info("✓ Permisos asignados al Director OAPM");
@@ -193,7 +165,6 @@ class AreasEquiposPermisosSeeder extends Seeder
                 'equipos.asignar_lider',
                 'equipos.gestionar_miembros',
                 'equipos.ver_detalle',
-                'dependencias.ver',
             ])->get();
             $coordinador->givePermissionTo($permisosCoordinador);
             $this->command->info("✓ Permisos asignados al Coordinador de Área");
@@ -208,7 +179,6 @@ class AreasEquiposPermisosSeeder extends Seeder
                 'equipos.ver',
                 'equipos.ver_detalle',
                 'equipos.gestionar_miembros',
-                'dependencias.ver',
             ])->get();
             $lider->givePermissionTo($permisosLider);
             $this->command->info("✓ Permisos asignados al Líder de Equipo");
@@ -220,7 +190,6 @@ class AreasEquiposPermisosSeeder extends Seeder
             $permisosFuncionario = Permission::whereIn('name', [
                 'areas.ver',
                 'equipos.ver',
-                'dependencias.ver',
             ])->get();
             $funcionario->givePermissionTo($permisosFuncionario);
             $this->command->info("✓ Permisos asignados al Funcionario");

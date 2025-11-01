@@ -12,6 +12,12 @@ class DependenciasController extends Controller
 {
     public function index(Request $request)
     {
+        if(!auth()->user()->can('areas.ver')) {
+            $error = 'No tienes permisos para gestionar las áreas';
+            $esta_logueado = auth()->check();
+            return view('sin-permisos', ['error' => $error, 'esta_logueado' => $esta_logueado]);
+        }
+
         if ($request->ajax()) {
             $query = Dependencia::with(['coordinador', 'equipos', 'funcionarios'])->orderBy('id', 'desc');
 
@@ -42,7 +48,18 @@ class DependenciasController extends Controller
             // Paginación
             $perPage = $request->get('per_page', 15);
             $dependencias = $query->paginate($perPage);
-            return response()->json($dependencias);
+            return response()->json(
+                [
+                    'dependencias' => $dependencias,
+                    'permissions' => [
+                        'canCreate' => auth()->user()->can('areas.crear'),
+                        'canEditar' => auth()->user()->can('areas.editar'),
+                        'canEliminar' => auth()->user()->can('areas.eliminar'),
+                        'canActivar' => auth()->user()->can('areas.activar'),
+                        'canVerDetalle' => auth()->user()->can('areas.ver_detalle'),
+                    ]
+                ]
+            );
         }
 
         return view('admin.dependencias.index');

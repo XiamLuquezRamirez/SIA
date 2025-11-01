@@ -6,12 +6,14 @@
                 <h1 class="text-2xl font-bold text-gray-800">Gestión de Áreas</h1>
                 <p class="text-gray-600 text-sm">Administrar áreas del sistema</p>
             </div>
-            <button onclick="abrirModalCrearDependencia()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Nueva Área
-            </button>
+            @can('areas.crear')
+                <button onclick="abrirModalCrearDependencia()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Nueva Área
+                </button>
+            @endcan
         </div>
 
          <!-- Filtros y Búsqueda -->

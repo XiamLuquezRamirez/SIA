@@ -181,8 +181,11 @@ async function cargarDependencias() {
         if (!response.ok) throw new Error('Error al cargar dependencias');
 
         const data = await response.json();
-        renderizarDependencias(data.data);
-        renderizarPaginacion(data);
+        var dependencias = data.dependencias.data;
+        var permissions = data.permissions;
+        window.userPermissions = permissions;
+        renderizarDependencias(dependencias);
+        renderizarPaginacion(data.dependencias);
         actualizarIndicadorFiltros();
         
     } catch (error) {
@@ -261,10 +264,12 @@ function renderizarDependencias(dependencias) {
                 </div>
             </td>
             <td class="px-6 py-4">
-               <label class="relative inline-flex items-center cursor-pointer">
-                    <input id="check_dependencia_${dependencia.id}" type="checkbox" class="sr-only peer" ${dependencia.activo ? 'checked' : ''} onchange="alternarEstadoDependencia(${dependencia.id}, this.checked)">
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                </label>
+                ${window.userPermissions.canActivar ? `
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input id="check_dependencia_${dependencia.id}" type="checkbox" class="sr-only peer" ${dependencia.activo ? 'checked' : ''} onchange="alternarEstadoDependencia(${dependencia.id}, this.checked)">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                    </label>
+                ` : ''}
             </td>
             <td class="px-6 py-4 text-center">
                 <div class="relative inline-block text-left" x-data="{ open: false }">
@@ -275,9 +280,15 @@ function renderizarDependencias(dependencias) {
                     </button>
                     <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                         <div class="py-1">
-                            <a href="#" onclick="verDependencia(${dependencia.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ver Detalle</a>
-                            <a href="#" onclick="editarDependencia(${dependencia.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
-                             <a href="#" onclick="eliminarDependencia(${dependencia.id}); return false;" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</a>
+                            ${window.userPermissions.canVerDetalle ? `
+                                <a href="#" onclick="verDependencia(${dependencia.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ver Detalle</a>
+                            ` : ''}
+                            ${window.userPermissions.canEditar ? `
+                                <a href="#" onclick="editarDependencia(${dependencia.id}); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar</a>
+                            ` : ''}
+                            ${window.userPermissions.canEliminar ? `
+                                <a href="#" onclick="eliminarDependencia(${dependencia.id}); return false;" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</a>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
