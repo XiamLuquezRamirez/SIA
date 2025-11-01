@@ -182,12 +182,11 @@ class ProfileController extends Controller
 
         $validated = $request->validate([
             'current_password' => ['required', 'string'],
-            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+            'new_password' => ['required', 'string', 'min:8'],
         ], [
             'current_password.required' => 'La contraseña actual es requerida',
             'new_password.required' => 'La nueva contraseña es requerida',
             'new_password.min' => 'La nueva contraseña debe tener al menos 8 caracteres',
-            'new_password.confirmed' => 'Las contraseñas no coinciden',
         ]);
 
         // Verify current password

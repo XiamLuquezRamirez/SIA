@@ -70,25 +70,40 @@ class LoginController extends Controller
             $seguridadController->registrarSesion($request);
 
             // Redirigir según rol
+            $ruta = '';
             if ($user->hasRole(['Super Administrador', 'Director OAPM'])) {
-                return redirect()->intended('/admin/dashboard');
+                $ruta = '/admin/dashboard';
             } elseif ($user->hasRole('Ciudadano')) {
-                return redirect()->intended('/portal/mis-solicitudes');
+                $ruta = '/portal/mis-solicitudes';
             } else {
-                return redirect()->intended('/dashboard');
+                $ruta = '/dashboard';
             }
-        }
 
-        // Si falla la autenticación
-        throw ValidationException::withMessages([
-            'email' => 'Las credenciales no coinciden con nuestros registros.',
-        ]);
+            return json_encode([
+                'success' => true,
+                'message' => 'Sesión iniciada correctamente',
+                'ruta' => $ruta,
+            ]);
+        } else {
+            return json_encode([
+                'success' => false,
+                'message' => 'Las credenciales no coinciden con nuestros registros.',
+            ]);
+        }
     }
 
     public function logout(Request $request)
     {
         $user = Auth::user();
+        $ip_privada = $request->ip();
 
+        $request->merge([
+            'ip_privada' => $request->ip(),
+        ]);
+
+
+        $seguridadController = new SeguridadController();
+        $seguridadController->cambiarEstadoSesion($request);
         // Registrar logout antes de cerrar la sesión
         if ($user) {
             ActivityLog::logLogout($user);

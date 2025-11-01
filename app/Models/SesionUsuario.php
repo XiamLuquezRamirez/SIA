@@ -20,7 +20,9 @@ class SesionUsuario extends Model
         'ip',
         'navegador',
         'ip_privada',
-        'estado'
+        'estado',
+        'tipo_dispositivo',
+        'nombre_dispositivo',
     ];
 
     // Relación con el modelo Usuario

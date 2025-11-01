@@ -382,6 +382,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('seguridad')->name('seguridad.')->group(function () {
         Route::get('/', [App\Http\Controllers\SeguridadController::class, 'index'])->name('index');
         Route::get('registrar-sesion', [App\Http\Controllers\SeguridadController::class, 'registrarSesion'])->name('registrar-sesion');
+        Route::get('datos-seguridad', [App\Http\Controllers\SeguridadController::class, 'datosSeguridad'])->name('datos-seguridad');
     });
 });
 

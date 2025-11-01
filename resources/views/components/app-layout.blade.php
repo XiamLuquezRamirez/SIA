@@ -164,6 +164,7 @@
                         <div class="px-2">
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
+                                <input type="hidden" name="ip_publica" id="ip_publica">
                                 <button type="submit" class="user-logout flex items-center w-full px-2 py-2 text-sm text-red-600">
                                     <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -501,6 +502,27 @@
         channel.bind('user-notification', function(data) {
             numero_notificaciones++;
         });
+
+
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            obtenerIpPublica().then(ip => {
+                document.getElementById('ip_publica').value = ip;
+            });
+        });
+
+        async function obtenerIpPublica() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                if (!res.ok) throw new Error('Respuesta no OK');
+                const data = await res.json();
+                return data.ip; // cadena con la IP pública
+            } catch (err) {
+                console.error('No se pudo obtener la IP pública:', err);
+                return null;
+            }
+        }
     </script>
     @endpush
 
