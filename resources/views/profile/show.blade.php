@@ -93,6 +93,8 @@
                         @endif
                     </div>
                 </div>
+
+              
             </div>
 
             <!-- Profile Information -->
@@ -193,7 +195,7 @@
                 @if($activityLogs->isNotEmpty())
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200">
                     <div class="px-6 py-4 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-900">Actividad Reciente</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Últimos Accesos</h3>
                     </div>
 
                     <div class="px-6 py-4">
@@ -220,6 +222,9 @@
                                                 </div>
                                                 <div class="text-right text-sm whitespace-nowrap text-gray-500">
                                                     <time datetime="{{ $log->created_at }}">{{ $log->created_at->diffForHumans() }}</time>
+                                                </div>
+                                                <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                    <p class="text-sm text-gray-900">{{ $log->ip_address }}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -250,35 +255,6 @@
                                 <dd class="mt-1 text-sm text-gray-900">{{ $user->updated_at->format('d/m/Y H:i') }}</dd>
                             </div>
                         </dl>
-                    </div>
-                </div>
-
-                <!-- Password Security -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900">Seguridad</h3>
-                            <p class="text-sm text-gray-600 mt-1">Gestiona la seguridad de tu cuenta</p>
-                        </div>
-                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                        </svg>
-                    </div>
-
-                    <div class="px-6 py-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h4 class="text-sm font-medium text-gray-900">Contraseña</h4>
-                                <p class="text-sm text-gray-500">Actualiza tu contraseña periódicamente para mantener tu cuenta segura</p>
-                            </div>
-                            <button onclick="openPasswordModal()"
-                                    class="inline-flex items-center px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-900 transition-colors">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                                </svg>
-                                Cambiar Contraseña
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -468,6 +444,7 @@
             const formData = new FormData(this);
 
             try {
+                mostrarSwalCargando('Subiendo foto, por favor espere...');
                 const response = await fetch('{{ route("profile.photo.update") }}', {
                     method: 'POST',
                     headers: {
@@ -477,6 +454,7 @@
                 });
 
                 const data = await response.json();
+                Swal.close();
 
                 if (data.success) {
                     await Swal.fire({
@@ -515,6 +493,7 @@
 
             if (result.isConfirmed) {
                 try {
+                    mostrarSwalCargando('Eliminando foto, por favor espere...');
                     const response = await fetch('{{ route("profile.photo.delete") }}', {
                         method: 'DELETE',
                         headers: {
@@ -524,7 +503,7 @@
                     });
 
                     const data = await response.json();
-
+                    Swal.close();
                     if (data.success) {
                         await Swal.fire({
                             title: 'Éxito',
@@ -595,8 +574,21 @@
 
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
+            
+            var password = data.new_password;
+            var password_confirmation = data.new_password_confirmation;
+            if (password !== password_confirmation) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Las contraseñas no coinciden',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
 
             try {
+                mostrarSwalCargando('Actualizando contraseña, por favor espere...');
                 const response = await fetch('{{ route("profile.password.update") }}', {
                     method: 'PUT',
                     headers: {
@@ -607,7 +599,7 @@
                 });
 
                 const result = await response.json();
-
+                Swal.close();
                 if (result.success) {
                     closePasswordModal();
                     await Swal.fire({
@@ -655,5 +647,23 @@
                 closePasswordModal();
             }
         });
+
+
+        function mostrarSwalCargando(mensaje) {
+            Swal.fire({
+                title: mensaje,
+                icon: 'info',
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                allowClose: false,
+                allowEscapeKey: false,
+                progressBar: true,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+
     </script>
 </x-app-layout>

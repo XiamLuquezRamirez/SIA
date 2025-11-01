@@ -37,6 +37,8 @@ Route::middleware('guest')->group(function () {
 
 // Rutas protegidas (requieren autenticación)
 Route::middleware(['auth'])->group(function () {
+    // Habilitar autorización de canales privados
+    Broadcast::routes(['middleware' => ['auth']]);
     // Logout
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
@@ -47,7 +49,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/', [App\Http\Controllers\ProfileController::class, 'show'])->name('show');
         Route::get('/edit', [App\Http\Controllers\ProfileController::class, 'edit'])->name('edit');
-        Route::put('/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('update');
+        Route::post('/update', [App\Http\Controllers\ProfileController::class, 'update'])->name('update');
         Route::post('/photo', [App\Http\Controllers\ProfileController::class, 'updatePhoto'])->name('photo.update');
         Route::delete('/photo', [App\Http\Controllers\ProfileController::class, 'deletePhoto'])->name('photo.delete');
         Route::put('/password', [App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('password.update');
@@ -189,10 +191,14 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('plantillas', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'index'])->name('plantillas');
                 Route::get('plantillas/crear', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'create'])->name('plantillas.crear');
                 Route::get('plantillas/{id}/editar', [App\Http\Controllers\Admin\PlantillaDocumentoController::class, 'edit'])->name('plantillas.editar');
+            });
 
-                Route::get('consecutivos', function () {
-                    return view('admin.configuracion.consecutivos');
-                })->name('consecutivos');
+            // Radicados y Consecutivos
+            Route::prefix('radicados-consecutivos')->name('radicados-consecutivos.')->group(function () {
+                Route::resource('/', App\Http\Controllers\Admin\ConfiguracionRadicadosController::class);
+                Route::get('tipos-solicitud-select', [App\Http\Controllers\Admin\ConfiguracionRadicadosController::class, 'getTiposSolicitudes'])->name('get.tipos.solicitudes');
+                Route::post('guardar', [App\Http\Controllers\Admin\ConfiguracionRadicadosController::class, 'guardarConfiguracionRadicado'])->name('guardar');
+                Route::post('editar', [App\Http\Controllers\Admin\ConfiguracionRadicadosController::class, 'editarConfiguracionRadicado'])->name('editar');
             });
             
             // Parámetros Generales (con sub-rutas)
@@ -397,4 +403,25 @@ Route::middleware(['auth'])->group(function () {
         // });
 
     });
+
+    // ========================================
+    // 🔔 NOTIFICACIONES
+    // ========================================
+    Route::prefix('notificaciones')->name('notificaciones.')->group(function () {
+       Route::get('enviar/{user_id}/{message}', [App\Http\Controllers\NotificationsController::class, 'enviarNotificacion'])->name('enviar');
+       Route::get('configurar', [App\Http\Controllers\NotificationsController::class, 'configurarNotificaciones'])->name('configurar');
+       Route::post('guardar-configuracion', [App\Http\Controllers\NotificationsController::class, 'guardarConfiguracion'])->name('guardar-configuracion');
+       Route::get('obtener-configuracion', [App\Http\Controllers\NotificationsController::class, 'obtenerConfiguracion'])->name('obtener-configuracion');
+    });
+
+    // ========================================
+    // 🔒 SEGURIDAD Y PRIVACIDAD
+    // ========================================
+    Route::prefix('seguridad')->name('seguridad.')->group(function () {
+        Route::get('/', [App\Http\Controllers\SeguridadController::class, 'index'])->name('index');
+        Route::get('registrar-sesion', [App\Http\Controllers\SeguridadController::class, 'registrarSesion'])->name('registrar-sesion');
+        Route::get('datos-seguridad', [App\Http\Controllers\SeguridadController::class, 'datosSeguridad'])->name('datos-seguridad');
+    });
 });
+
+

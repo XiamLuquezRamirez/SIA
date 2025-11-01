@@ -64,7 +64,7 @@
                             <rect x="0" y="0" width="36" height="36" fill-opacity="0" />
                         </svg>
                         <!-- Badge de notificaciones -->
-                        <span class="notification-badge badge-pulse absolute -top-1 -right-1 w-5 h-5 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                        <span id="notification-badge" class="notification-badge badge-pulse absolute -top-1 -right-1 w-5 h-5 text-white text-xs rounded-full flex items-center justify-center">0</span>
                     </button>
 
                     <!-- Icono de Mensajes -->
@@ -131,7 +131,7 @@
                         <!-- Opciones del menú -->
                         <ul class="py-2">
                             <li>
-                                <a href="#" class="user-menu-item flex items-center px-4 py-2 text-sm text-gray-700">
+                                <a href="{{ route('profile.show') }}" class="user-menu-item flex items-center px-4 py-2 text-sm text-gray-700">
                                     <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                                     </svg>
@@ -139,19 +139,18 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="#" class="user-menu-item flex items-center px-4 py-2 text-sm text-gray-700">
-                                    <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.146 3.248a2 2 0 0 1 3.708 0A7.003 7.003 0 0 1 19 10v4.697l1.832 2.748A1 1 0 0 1 20 19h-4.535a3.501 3.501 0 0 1-6.93 0H4a1 1 0 0 1-.832-1.555L5 14.697V10c0-3.224 2.18-5.94 5.146-6.752zM10.586 19a1.5 1.5 0 0 0 2.829 0h-2.83zM12 5a5 5 0 0 0-5 5v5a1 1 0 0 1-.168.555L5.869 17H18.13l-.963-1.445A1 1 0 0 1 17 15v-5a5 5 0 0 0-5-5z" />
+                                <a href="{{ route('notificaciones.configurar') }}" class="user-menu-item flex items-center px-4 py-2 text-sm text-gray-700">
+                                    <svg fill="#9ca3af" viewBox="0 0 24 24" id="notification-bell" data-name="Line Color" xmlns="http://www.w3.org/2000/svg" class="icon line-color w-4 h-4 mr-3">
+                                        <path id="secondary" d="M15,18H9a3,3,0,0,0,3,3h0A3,3,0,0,0,15,18Z" style="fill: none; stroke: #9ca3af; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path>
+                                        <path id="primary" d="M19.38,14.38a2.12,2.12,0,0,1,.62,1.5h0A2.12,2.12,0,0,1,17.88,18H6.12A2.12,2.12,0,0,1,4,15.88H4a2.12,2.12,0,0,1,.62-1.5L6,13V9a6,6,0,0,1,6-6h0a6,6,0,0,1,6,6v4Z" style="fill: none; stroke: #9ca3af; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path>
                                     </svg>
                                     Notificaciones
                                 </a>
                             </li>
                             <li>
-                                <a href="#" class="user-menu-item flex items-center px-4 py-2 text-sm text-gray-700">
-                                    <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M27.137,34.75H7.862a4.8,4.8,0,0,1-4.79-4.791V15.614a4.8,4.8,0,0,1,4.79-4.791H27.137a4.8,4.8,0,0,1,4.791,4.791V29.959A4.8,4.8,0,0,1,27.137,34.75ZM7.862,13.323a2.292,2.292,0,0,0-2.29,2.291V29.959a2.292,2.292,0,0,0,2.29,2.291H27.137a2.293,2.293,0,0,0,2.291-2.291V15.614a2.293,2.293,0,0,0-2.291-2.291Z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M25.537,13.323a1.25,1.25,0,0,1-1.25-1.25V8.608a5.409,5.409,0,0,0-1.935-4.082A7.253,7.253,0,0,0,17.5,2.75c-3.744,0-6.79,2.628-6.79,5.858v3.465a1.25,1.25,0,0,1-2.5,0V8.608C8.207,4,12.375.25,17.5.25a9.748,9.748,0,0,1,6.511,2.4,7.869,7.869,0,0,1,2.779,5.955v3.465A1.25,1.25,0,0,1,25.537,13.323Z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.5,25.779a1.25,1.25,0,0,1-1.25-1.25V21.2a1.25,1.25,0,0,1,2.5,0v3.334A1.25,1.25,0,0,1,17.5,25.779Z" />
+                                <a href="{{ route('seguridad.index') }}" class="user-menu-item flex items-center px-4 py-2 text-sm text-gray-700">
+                                    <svg fill="#9ca3af" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="icon line-color w-4 h-4 mr-3">
+                                        <path d="M12,13a1.49,1.49,0,0,0-1,2.61V17a1,1,0,0,0,2,0V15.61A1.49,1.49,0,0,0,12,13Zm5-4V7A5,5,0,0,0,7,7V9a3,3,0,0,0-3,3v7a3,3,0,0,0,3,3H17a3,3,0,0,0,3-3V12A3,3,0,0,0,17,9ZM9,7a3,3,0,0,1,6,0V9H9Zm9,12a1,1,0,0,1-1,1H7a1,1,0,0,1-1-1V12a1,1,0,0,1,1-1H17a1,1,0,0,1,1,1Z"/>
                                     </svg>
                                     Seguridad
                                 </a>
@@ -165,6 +164,7 @@
                         <div class="px-2">
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
+                                <input type="hidden" name="ip_publica" id="ip_publica">
                                 <button type="submit" class="user-logout flex items-center w-full px-2 py-2 text-sm text-red-600">
                                     <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -264,7 +264,7 @@
                         @can('areas.ver')
                         <li>
                             <a href="{{ route('admin.equipos-areas.dependencias.index') }}"
-                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos-areas.dependencias.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos-areas.dependencias.index') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path>
                                 </svg>
@@ -285,7 +285,7 @@
                         @endcan
                         <li>
                             <a href="{{ route('admin.equipos-areas.dependencias.organigrama') }}"
-                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 text-gray-700">
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.equipos-areas.dependencias.organigrama') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }}">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm11 1H6v8l4-2 4 2V6z" clip-rule="evenodd"></path>
                                 </svg>
@@ -333,7 +333,21 @@
                                 <span class="ml-2">Estados</span>
                             </a>
                         </li>
+<<<<<<< HEAD
                         @endcan
+=======
+
+                        <li>
+                            <a href="{{ route('admin.configuracion.radicados-consecutivos.index') }}"
+                                class="flex items-center p-2 rounded-lg hover:bg-gray-100 {{ request()->routeIs('admin.configuracion.radicados-consecutivos.*') ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-700' }} text-sm">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="ml-2">Radicados y Consecutivos</span>
+                            </a>
+                        </li>
+                        
+>>>>>>> 784efc428a786a0ade084cbee4fe362b9664be92
                         <!-- Documentos (con submenú) -->
                         <li x-data="{ openDocs: {{ request()->routeIs('admin.configuracion.documentos.*') || request()->routeIs('admin.configuracion.plantillas') || request()->routeIs('admin.configuracion.consecutivos') ? 'true' : 'false' }} }">
                             <button @click="openDocs = !openDocs"
@@ -360,7 +374,10 @@
                                         <span class="ml-2">Plantillas de Documento</span>
                                     </a>
                                 </li>
+<<<<<<< HEAD
                                 @endcan
+=======
+>>>>>>> 784efc428a786a0ade084cbee4fe362b9664be92
                             </ul>
                         </li>
                         <!-- Biblioteca de Campos Personalizados -->
@@ -493,7 +510,56 @@
         {{ $slot }}
     </div>
 
+    
+    @push('scripts')
+    <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
+    <script>
+        var user_id = "{{ auth()->user()->id }}";
+        console.log(user_id);
+        Pusher.logToConsole = true;
+
+        const pusher = new Pusher('61a473ca6a82b3f42a34', {
+            cluster: 'us2',
+            authEndpoint: '/broadcasting/auth',
+            auth: {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            }
+        });
+
+        var channel = pusher.subscribe('users.' + user_id);
+        var notificationBadge = document.getElementById('notification-badge');
+        var numero_notificaciones = notificationBadge.textContent;
+        channel.bind('user-notification', function(data) {
+            numero_notificaciones++;
+        });
+
+
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            obtenerIpPublica().then(ip => {
+                document.getElementById('ip_publica').value = ip;
+            });
+        });
+
+        async function obtenerIpPublica() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                if (!res.ok) throw new Error('Respuesta no OK');
+                const data = await res.json();
+                return data.ip; // cadena con la IP pública
+            } catch (err) {
+                console.error('No se pudo obtener la IP pública:', err);
+                return null;
+            }
+        }
+    </script>
+    @endpush
+
     @stack('scripts')
+
 </body>
 
 </html>

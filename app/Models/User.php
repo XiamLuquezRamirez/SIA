@@ -88,6 +88,7 @@ class User extends Authenticatable
     public function recentActivityLogs($limit = 20)
     {
         return $this->activityLogs()
+            ->where('log_name', 'auth')
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();

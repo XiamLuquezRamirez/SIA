@@ -59,7 +59,6 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'apellidos' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'telefono' => ['nullable', 'string', 'max:20'],
             'celular' => ['nullable', 'string', 'max:20'],
             'direccion' => ['nullable', 'string', 'max:500'],
@@ -79,6 +78,7 @@ class ProfileController extends Controller
             'subject_type' => 'App\Models\User',
             'subject_id' => $user->id,
             'event' => 'updated',
+            'ip_address' => $request->ip(),
             'properties' => json_encode([
                 'old' => $oldValues,
                 'attributes' => $validated
@@ -121,6 +121,7 @@ class ProfileController extends Controller
             'subject_type' => 'App\Models\User',
             'subject_id' => $user->id,
             'event' => 'photo_updated',
+            'ip_address' => $request->ip(),
             'properties' => json_encode([
                 'old_photo' => $user->foto_url,
                 'new_photo' => $path
@@ -181,12 +182,11 @@ class ProfileController extends Controller
 
         $validated = $request->validate([
             'current_password' => ['required', 'string'],
-            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+            'new_password' => ['required', 'string', 'min:8'],
         ], [
             'current_password.required' => 'La contraseña actual es requerida',
             'new_password.required' => 'La nueva contraseña es requerida',
             'new_password.min' => 'La nueva contraseña debe tener al menos 8 caracteres',
-            'new_password.confirmed' => 'Las contraseñas no coinciden',
         ]);
 
         // Verify current password
@@ -219,6 +219,8 @@ class ProfileController extends Controller
         // Log the activity
         ActivityLog::create([
             'user_id' => $user->id,
+            'user_name' => $user->nombre . ' ' . $user->apellidos,
+            'user_email' => $user->email,
             'log_name' => 'user_profile',
             'description' => 'Usuario cambió su contraseña',
             'subject_type' => 'App\Models\User',

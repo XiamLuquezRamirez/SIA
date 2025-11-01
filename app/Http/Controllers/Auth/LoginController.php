@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use App\Http\Controllers\SeguridadController;
 
 class LoginController extends Controller
 {
@@ -62,26 +63,47 @@ class LoginController extends Controller
             // Registrar login exitoso
             ActivityLog::logLogin($user);
 
-            // Redirigir según rol
-            if ($user->hasRole(['Super Administrador', 'Director OAPM'])) {
-                return redirect()->intended('/admin/dashboard');
-            } elseif ($user->hasRole('Ciudadano')) {
-                return redirect()->intended('/portal/mis-solicitudes');
-            } else {
-                return redirect()->intended('/dashboard');
-            }
-        }
+            // Registrar sesión
+            $seguridadController = new SeguridadController();
+            $request->ip_privada = request()->ip();
 
-        // Si falla la autenticación
-        throw ValidationException::withMessages([
-            'email' => 'Las credenciales no coinciden con nuestros registros.',
-        ]);
+            $seguridadController->registrarSesion($request);
+
+            // Redirigir según rol
+            $ruta = '';
+            if ($user->hasRole(['Super Administrador', 'Director OAPM'])) {
+                $ruta = '/admin/dashboard';
+            } elseif ($user->hasRole('Ciudadano')) {
+                $ruta = '/portal/mis-solicitudes';
+            } else {
+                $ruta = '/dashboard';
+            }
+
+            return json_encode([
+                'success' => true,
+                'message' => 'Sesión iniciada correctamente',
+                'ruta' => $ruta,
+            ]);
+        } else {
+            return json_encode([
+                'success' => false,
+                'message' => 'Las credenciales no coinciden con nuestros registros.',
+            ]);
+        }
     }
 
     public function logout(Request $request)
     {
         $user = Auth::user();
+        $ip_privada = $request->ip();
 
+        $request->merge([
+            'ip_privada' => $request->ip(),
+        ]);
+
+
+        $seguridadController = new SeguridadController();
+        $seguridadController->cambiarEstadoSesion($request);
         // Registrar logout antes de cerrar la sesión
         if ($user) {
             ActivityLog::logLogout($user);

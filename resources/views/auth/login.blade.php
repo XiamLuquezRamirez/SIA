@@ -23,7 +23,7 @@
             @endif
 
             <!-- Formulario -->
-            <form method="POST" action="{{ route('login') }}" x-data="{ showPassword: false }">
+            <form id="loginForm" method="POST" action="{{ route('login') }}" x-data="{ showPassword: false }">
                 @csrf
 
                 <!-- Email -->
@@ -84,6 +84,7 @@
                     <label class="flex items-center">
                         <input
                             type="checkbox"
+                            id="remember"
                             name="remember"
                             class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                         >
@@ -94,8 +95,11 @@
                     </a>
                 </div>
 
+                <input type="hidden" name="ip_publica" id="ip_publica">
+
                 <!-- Botón Submit -->
                 <button
+                    id="btn_login"
                     type="submit"
                     class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
                 >
@@ -113,4 +117,85 @@
             <p class="text-xs text-yellow-700">Password: admin123</p>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            obtenerIpPublica().then(ip => {
+                document.getElementById('ip_publica').value = ip;
+            });
+        });
+
+        async function obtenerIpPublica() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                if (!res.ok) throw new Error('Respuesta no OK');
+                const data = await res.json();
+                return data.ip; // cadena con la IP pública
+            } catch (err) {
+                console.error('No se pudo obtener la IP pública:', err);
+                return null;
+            }
+        }
+
+        document.getElementById('btn_login').addEventListener('click', function() {
+            event.preventDefault();
+            iniciarSesion();
+        });
+
+        async function iniciarSesion() {
+            var btn_login = document.getElementById('btn_login');
+            var text_btn_login = btn_login.textContent;
+            btn_login.textContent = 'Iniciando sesión...';
+            btn_login.disabled = true;
+            btn_login.classList.add('opacity-50');
+            btn_login.classList.add('cursor-not-allowed');
+            btn_login.classList.remove('bg-green-600');
+            btn_login.classList.add('bg-gray-400');
+
+            const formData = new FormData(document.getElementById('loginForm'));
+            formData.append('ip_publica', document.getElementById('ip_publica').value);
+            formData.append('email', document.getElementById('email').value);
+            formData.append('password', document.getElementById('password').value);
+            formData.append('remember', document.getElementById('remember').checked);
+
+            const response = await fetch('{{ route("login") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            try {
+                if (result.success) {
+                    window.location.href = result.ruta;
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: result.message,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    title: 'Error',
+                    text: error.message || 'Error al iniciar sesión',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            } finally {
+                btn_login.textContent = text_btn_login;
+                btn_login.disabled = false;
+                btn_login.classList.remove('opacity-50');
+                btn_login.classList.remove('cursor-not-allowed');
+                btn_login.classList.add('bg-green-600');
+                btn_login.classList.remove('bg-gray-400');
+                btn_login.classList.add('hover:bg-green-700');
+                btn_login.classList.remove('hover:bg-gray-500');
+            }
+        }       
+    </script>
 </x-guest-layout>
